@@ -44,6 +44,7 @@ def create_app(config_name=None):
     from app.routes.student_routes import student_bp
     from app.routes.admin_routes import admin_bp
     from app.routes.attendance_routes import attendance_bp
+    from app.scanner import scanner
     
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -51,6 +52,7 @@ def create_app(config_name=None):
     app.register_blueprint(student_bp, url_prefix='/students')
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(attendance_bp, url_prefix='/attendance')
+    app.register_blueprint(scanner)  # Scanner blueprint with its own URL prefix
     
     # Error handlers
     @app.errorhandler(404)
