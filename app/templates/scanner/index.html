@@ -47,6 +47,14 @@
         background: #000;
     }
 
+    #cameraVideo {
+        width: 100%;
+        height: 400px;
+        border-radius: 12px;
+        object-fit: cover;
+        background: #000;
+    }
+
     .camera-placeholder {
         text-align: center;
         color: #718096;
@@ -409,7 +417,9 @@
             </h3>
             
             <div class="camera-preview" id="cameraPreview">
-                <div class="camera-placeholder">
+                <video id="cameraVideo" style="width: 100%; height: 400px; border-radius: 12px; display: none;"></video>
+                <canvas id="qrCanvas" style="display: none;"></canvas>
+                <div class="camera-placeholder" id="cameraPlaceholder">
                     <i class="fas fa-qrcode"></i>
                     <h4>Ready to Scan</h4>
                     <p>Click "Start Camera" to begin scanning QR codes</p>
@@ -542,12 +552,14 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script>
 class ScannerApp {
     constructor() {
-        this.camera = null;
+        this.cameraStream = null;
         this.scanning = false;
         this.currentSession = null;
+        this.scanningInterval = null;
         
         this.init();
     }
@@ -557,12 +569,21 @@ class ScannerApp {
         this.loadSessionData();
         this.loadRecentScans();
         this.loadTodayStats();
+        this.checkCameraSupport();
         
         // Auto-refresh every 30 seconds
         setInterval(() => {
             this.loadRecentScans();
             this.loadTodayStats();
         }, 30000);
+    }
+
+    checkCameraSupport() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            document.getElementById('startCameraBtn').disabled = true;
+            document.getElementById('startCameraBtn').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Camera Not Supported';
+            this.showAlert('warning', 'Camera is not supported in this browser. Please use manual input or image upload.');
+        }
     }
 
     bindEvents() {
@@ -616,18 +637,29 @@ class ScannerApp {
         try {
             this.showAlert('info', 'Starting camera...', false);
             
-            // For demo purposes, we'll simulate camera activation
-            // In a real implementation, you'd use getUserMedia() here
-            
+            // Request camera access
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: 'environment', // Use back camera if available
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                }
+            });
+
+            const video = document.getElementById('cameraVideo');
+            const placeholder = document.getElementById('cameraPlaceholder');
             const cameraPreview = document.getElementById('cameraPreview');
+            
+            video.srcObject = stream;
+            video.play();
+            
+            // Hide placeholder and show video
+            placeholder.style.display = 'none';
+            video.style.display = 'block';
             cameraPreview.classList.add('camera-active');
-            cameraPreview.innerHTML = `
-                <div style="color: white; text-align: center;">
-                    <i class="fas fa-video" style="font-size: 4rem; margin-bottom: 1rem;"></i>
-                    <h4>Camera Active</h4>
-                    <p>Point camera at QR code to scan</p>
-                </div>
-            `;
+            
+            // Store stream reference
+            this.cameraStream = stream;
 
             document.getElementById('startCameraBtn').disabled = true;
             document.getElementById('stopCameraBtn').disabled = false;
@@ -635,21 +667,54 @@ class ScannerApp {
 
             this.hideAlerts();
             this.showAlert('success', 'Camera started successfully!');
+            
+            // Start continuous scanning
+            this.startContinuousScanning();
 
         } catch (error) {
-            this.showAlert('error', 'Failed to start camera: ' + error.message);
+            console.error('Camera access error:', error);
+            let errorMessage = 'Failed to start camera: ';
+            
+            if (error.name === 'NotAllowedError') {
+                errorMessage += 'Camera permission denied. Please allow camera access and try again.';
+            } else if (error.name === 'NotFoundError') {
+                errorMessage += 'No camera found on this device.';
+            } else if (error.name === 'NotSupportedError') {
+                errorMessage += 'Camera not supported in this browser.';
+            } else {
+                errorMessage += error.message;
+            }
+            
+            this.showAlert('error', errorMessage);
         }
     }
 
     stopCamera() {
+        // Stop camera stream
+        if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(track => track.stop());
+            this.cameraStream = null;
+        }
+        
+        // Stop scanning
+        if (this.scanningInterval) {
+            clearInterval(this.scanningInterval);
+            this.scanningInterval = null;
+        }
+
+        const video = document.getElementById('cameraVideo');
+        const placeholder = document.getElementById('cameraPlaceholder');
         const cameraPreview = document.getElementById('cameraPreview');
+        
+        video.style.display = 'none';
+        placeholder.style.display = 'block';
         cameraPreview.classList.remove('camera-active');
-        cameraPreview.innerHTML = `
-            <div class="camera-placeholder">
-                <i class="fas fa-qrcode"></i>
-                <h4>Camera Stopped</h4>
-                <p>Click "Start Camera" to begin scanning QR codes</p>
-            </div>
+        
+        // Reset placeholder content
+        placeholder.innerHTML = `
+            <i class="fas fa-qrcode"></i>
+            <h4>Camera Stopped</h4>
+            <p>Click "Start Camera" to begin scanning QR codes</p>
         `;
 
         document.getElementById('startCameraBtn').disabled = false;
@@ -659,9 +724,72 @@ class ScannerApp {
         this.showAlert('info', 'Camera stopped');
     }
 
+    startContinuousScanning() {
+        // Check for QR codes every 500ms
+        this.scanningInterval = setInterval(() => {
+            this.scanForQRCode();
+        }, 500);
+    }
+
+    scanForQRCode() {
+        const video = document.getElementById('cameraVideo');
+        const canvas = document.getElementById('qrCanvas');
+        const ctx = canvas.getContext('2d');
+
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            // Try to detect QR code (simplified detection)
+            // In a real implementation, you'd use a library like jsQR
+            const qrCode = this.detectQRCode(imageData);
+            
+            if (qrCode) {
+                this.showScanAnimation();
+                this.processQRCode(qrCode);
+                
+                // Stop continuous scanning temporarily to prevent duplicates
+                clearInterval(this.scanningInterval);
+                setTimeout(() => {
+                    if (this.cameraStream) {
+                        this.startContinuousScanning();
+                    }
+                }, 2000);
+            }
+        }
+    }
+
+    detectQRCode(imageData) {
+        // Use jsQR library for QR code detection
+        if (typeof jsQR !== 'undefined') {
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            return code ? code.data : null;
+        }
+        
+        // Fallback: return null for manual scanning
+        return null;
+    }
+
+    showScanAnimation() {
+        const overlay = document.getElementById('scanOverlay');
+        overlay.classList.add('active');
+        
+        setTimeout(() => {
+            overlay.classList.remove('active');
+        }, 1000);
+    }
+
     async scanQRCode() {
         if (!this.currentSession) {
             this.showAlert('error', 'Please select a session first');
+            return;
+        }
+
+        if (!this.cameraStream) {
+            this.showAlert('error', 'Please start the camera first');
             return;
         }
 
@@ -673,8 +801,18 @@ class ScannerApp {
             document.getElementById('scanBtn').disabled = true;
             document.getElementById('scanBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scanning...';
 
-            // Simulate QR code detection (in real implementation, this would process camera feed)
-            await this.simulateQRScan();
+            // Capture current frame
+            const video = document.getElementById('cameraVideo');
+            const canvas = document.getElementById('qrCanvas');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // For demo purposes, simulate QR detection
+            // In production, you would use a QR detection library here
+            await this.simulateQRDetection();
 
         } catch (error) {
             this.showAlert('error', 'Scan failed: ' + error.message);
@@ -686,8 +824,8 @@ class ScannerApp {
         }
     }
 
-    async simulateQRScan() {
-        // Simulate scanning delay
+    async simulateQRDetection() {
+        // Simulate processing delay
         await new Promise(resolve => setTimeout(resolve, 2000));
         
         // Simulate finding a QR code (for demo)
@@ -940,7 +1078,14 @@ class ScannerApp {
 
 // Initialize the scanner app when the page loads
 document.addEventListener('DOMContentLoaded', function() {
-    new ScannerApp();
+    window.scannerApp = new ScannerApp();
+});
+
+// Cleanup when page is unloaded
+window.addEventListener('beforeunload', function() {
+    if (window.scannerApp && window.scannerApp.cameraStream) {
+        window.scannerApp.stopCamera();
+    }
 });
 </script>
 {% endblock %}

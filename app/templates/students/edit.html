@@ -1,0 +1,615 @@
+{% extends "dashboard_base.html" %}
+
+{% block page_title %}Edit {{ student.get_full_name() }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-student-header {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .student-avatar-small {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.5rem;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .form-container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .form-section {
+        padding: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .required {
+        color: #ef4444;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        background-color: #ffffff;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #f59e0b;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    }
+
+    .form-control.is-invalid {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+
+    .invalid-feedback {
+        display: block;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: #ef4444;
+    }
+
+    .form-actions {
+        padding: 1.5rem 2rem;
+        background: #f9fafb;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .btn-warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border: none;
+        padding: 0.875rem 2rem;
+        border-radius: 10px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+        text-decoration: none;
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #6b7280;
+        border: none;
+        padding: 0.875rem 2rem;
+        border-radius: 10px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-secondary:hover {
+        background: #4b5563;
+        text-decoration: none;
+        color: white;
+    }
+
+    .btn-outline-secondary {
+        background: transparent;
+        border: 2px solid #6b7280;
+        padding: 0.875rem 2rem;
+        border-radius: 10px;
+        color: #6b7280;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-outline-secondary:hover {
+        background: #6b7280;
+        color: white;
+        text-decoration: none;
+    }
+
+    .help-text {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+
+    .input-group {
+        position: relative;
+    }
+
+    .input-group .form-control {
+        padding-left: 3rem;
+    }
+
+    .input-group-text {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6b7280;
+        z-index: 10;
+        pointer-events: none;
+    }
+
+    .readonly-info {
+        background: #f8fafc;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #f59e0b;
+    }
+
+    .readonly-info h6 {
+        color: #1f2937;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .readonly-info p {
+        color: #6b7280;
+        margin: 0;
+        font-size: 0.875rem;
+    }
+
+    .form-changes {
+        background: #fef3c7;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid #fbbf24;
+        margin-bottom: 1.5rem;
+        display: none;
+    }
+
+    .form-changes.show {
+        display: block;
+    }
+
+    .form-changes h6 {
+        color: #92400e;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-changes ul {
+        margin: 0;
+        color: #92400e;
+        font-size: 0.875rem;
+    }
+
+    @media (max-width: 768px) {
+        .edit-student-header {
+            padding: 1.5rem;
+        }
+
+        .edit-student-header .d-flex {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .form-section {
+            padding: 1.5rem;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .form-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-student-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+            <div class="student-avatar-small">
+                {{ student.first_name[0] }}{{ student.last_name[0] }}
+            </div>
+            <div>
+                <h1 class="mb-1">
+                    <i class="fas fa-user-edit me-2"></i>
+                    Edit Student
+                </h1>
+                <p class="mb-0 opacity-75">{{ student.get_full_name() }} - {{ student.student_no }}</p>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('students.view_student', id=student.id) }}" class="btn-outline-secondary">
+                <i class="fas fa-eye"></i>
+                View Details
+            </a>
+            <a href="{{ url_for('students.list_students') }}" class="btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Back to List
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Readonly Information -->
+<div class="readonly-info">
+    <h6>
+        <i class="fas fa-info-circle me-2"></i>
+        Read-only Information
+    </h6>
+    <p>
+        <strong>Student Number:</strong> {{ student.student_no }} (cannot be changed) |
+        <strong>Date Created:</strong> {{ student.date_created.strftime('%B %d, %Y') }} |
+        <strong>Status:</strong> {% if student.is_active %}Active{% else %}Inactive{% endif %}
+    </p>
+</div>
+
+<!-- Change Detection -->
+<div id="form-changes" class="form-changes">
+    <h6>
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        Unsaved Changes Detected
+    </h6>
+    <ul id="changes-list"></ul>
+</div>
+
+<form method="POST" class="form-container" id="edit-form">
+    <!-- Basic Information Section -->
+    <div class="form-section">
+        <h3 class="section-title">
+            <i class="fas fa-user me-2"></i>
+            Basic Information
+        </h3>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="first_name">
+                    First Name <span class="required">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-user"></i>
+                    </span>
+                    <input type="text" 
+                           id="first_name" 
+                           name="first_name" 
+                           class="form-control {% if 'first_name' in errors %}is-invalid{% endif %}"
+                           value="{{ student.first_name }}"
+                           placeholder="First name"
+                           required>
+                </div>
+                {% if 'first_name' in errors %}
+                <div class="invalid-feedback">{{ errors.first_name }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="last_name">
+                    Last Name <span class="required">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-user"></i>
+                    </span>
+                    <input type="text" 
+                           id="last_name" 
+                           name="last_name" 
+                           class="form-control {% if 'last_name' in errors %}is-invalid{% endif %}"
+                           value="{{ student.last_name }}"
+                           placeholder="Last name"
+                           required>
+                </div>
+                {% if 'last_name' in errors %}
+                <div class="invalid-feedback">{{ errors.last_name }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="email">
+                Email Address <span class="required">*</span>
+            </label>
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-envelope"></i>
+                </span>
+                <input type="email" 
+                       id="email" 
+                       name="email" 
+                       class="form-control {% if 'email' in errors %}is-invalid{% endif %}"
+                       value="{{ student.email }}"
+                       placeholder="student@university.edu"
+                       required>
+            </div>
+            <div class="help-text">Student's institutional email address</div>
+            {% if 'email' in errors %}
+            <div class="invalid-feedback">{{ errors.email }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Academic Information Section -->
+    <div class="form-section">
+        <h3 class="section-title">
+            <i class="fas fa-graduation-cap me-2"></i>
+            Academic Information
+        </h3>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="department">
+                    Department <span class="required">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-building"></i>
+                    </span>
+                    <select id="department" 
+                            name="department" 
+                            class="form-control {% if 'department' in errors %}is-invalid{% endif %}"
+                            required>
+                        <option value="">Select Department</option>
+                        <option value="Computer Science" {% if student.department == 'Computer Science' %}selected{% endif %}>Computer Science</option>
+                        <option value="Information Technology" {% if student.department == 'Information Technology' %}selected{% endif %}>Information Technology</option>
+                        <option value="Engineering" {% if student.department == 'Engineering' %}selected{% endif %}>Engineering</option>
+                        <option value="Business Administration" {% if student.department == 'Business Administration' %}selected{% endif %}>Business Administration</option>
+                        <option value="Arts and Sciences" {% if student.department == 'Arts and Sciences' %}selected{% endif %}>Arts and Sciences</option>
+                        <option value="Education" {% if student.department == 'Education' %}selected{% endif %}>Education</option>
+                    </select>
+                </div>
+                {% if 'department' in errors %}
+                <div class="invalid-feedback">{{ errors.department }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="year_level">
+                    Year Level <span class="required">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-calendar"></i>
+                    </span>
+                    <select id="year_level" 
+                            name="year_level" 
+                            class="form-control {% if 'year_level' in errors %}is-invalid{% endif %}"
+                            required>
+                        <option value="">Select Year</option>
+                        <option value="1" {% if student.year_level == 1 %}selected{% endif %}>1st Year</option>
+                        <option value="2" {% if student.year_level == 2 %}selected{% endif %}>2nd Year</option>
+                        <option value="3" {% if student.year_level == 3 %}selected{% endif %}>3rd Year</option>
+                        <option value="4" {% if student.year_level == 4 %}selected{% endif %}>4th Year</option>
+                        <option value="5" {% if student.year_level == 5 %}selected{% endif %}>5th Year</option>
+                    </select>
+                </div>
+                {% if 'year_level' in errors %}
+                <div class="invalid-feedback">{{ errors.year_level }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="section">
+                Section <span class="required">*</span>
+            </label>
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-users"></i>
+                </span>
+                <input type="text" 
+                       id="section" 
+                       name="section" 
+                       class="form-control {% if 'section' in errors %}is-invalid{% endif %}"
+                       value="{{ student.section }}"
+                       placeholder="e.g., CS-1A, IT-2B"
+                       required>
+            </div>
+            <div class="help-text">Class section or group assignment</div>
+            {% if 'section' in errors %}
+            <div class="invalid-feedback">{{ errors.section }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+        <div>
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                All fields marked with <span class="required">*</span> are required
+            </small>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('students.view_student', id=student.id) }}" class="btn-secondary">
+                <i class="fas fa-times"></i>
+                Cancel
+            </a>
+            <button type="submit" class="btn-warning">
+                <i class="fas fa-save"></i>
+                Update Student
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('edit-form');
+    const formChanges = document.getElementById('form-changes');
+    const changesList = document.getElementById('changes-list');
+    
+    // Store original values
+    const originalValues = {};
+    const formElements = form.querySelectorAll('input, select');
+    
+    formElements.forEach(element => {
+        originalValues[element.name] = element.value;
+    });
+    
+    // Track changes
+    function checkChanges() {
+        const changes = [];
+        
+        formElements.forEach(element => {
+            const fieldName = element.name;
+            const originalValue = originalValues[fieldName];
+            const currentValue = element.value;
+            
+            if (originalValue !== currentValue) {
+                const label = form.querySelector(`label[for="${element.id}"]`)?.textContent?.replace('*', '').trim() || fieldName;
+                changes.push(`${label}: "${originalValue}" → "${currentValue}"`);
+            }
+        });
+        
+        if (changes.length > 0) {
+            changesList.innerHTML = changes.map(change => `<li>${change}</li>`).join('');
+            formChanges.classList.add('show');
+        } else {
+            formChanges.classList.remove('show');
+        }
+    }
+    
+    // Add change listeners
+    formElements.forEach(element => {
+        element.addEventListener('input', checkChanges);
+        element.addEventListener('change', checkChanges);
+    });
+    
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const requiredFields = form.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+            return false;
+        }
+        
+        // Confirm if there are changes
+        const hasChanges = formChanges.classList.contains('show');
+        if (hasChanges) {
+            const confirmUpdate = confirm('Are you sure you want to save these changes?');
+            if (!confirmUpdate) {
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
+    
+    // Real-time validation
+    const inputs = form.querySelectorAll('input, select');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.hasAttribute('required') && !this.value.trim()) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
+        
+        input.addEventListener('input', function() {
+            if (this.classList.contains('is-invalid') && this.value.trim()) {
+                this.classList.remove('is-invalid');
+            }
+        });
+    });
+    
+    // Warn about unsaved changes when leaving page
+    window.addEventListener('beforeunload', function(e) {
+        if (formChanges.classList.contains('show')) {
+            e.preventDefault();
+            e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+            return e.returnValue;
+        }
+    });
+    
+    // Remove beforeunload listener when form is submitted
+    form.addEventListener('submit', function() {
+        window.removeEventListener('beforeunload', arguments.callee);
+    });
+});
+</script>
+{% endblock %}

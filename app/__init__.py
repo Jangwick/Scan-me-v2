@@ -37,6 +37,25 @@ def create_app(config_name=None):
         from app.models import User
         return User.query.get(int(user_id))
     
+    # Template context processors
+    @app.context_processor
+    def utility_processor():
+        def get_avatar_color(name):
+            """Generate consistent avatar colors based on name"""
+            colors = [
+                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)'
+            ]
+            # Simple hash based on string
+            hash_value = sum(ord(char) for char in str(name))
+            return colors[hash_value % len(colors)]
+        
+        return dict(get_avatar_color=get_avatar_color)
+    
     # Register blueprints
     from app.routes.main_routes import main_bp
     from app.routes.auth_routes import auth_bp
