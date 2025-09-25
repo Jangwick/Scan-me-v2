@@ -1,0 +1,620 @@
+<!-- QR Code Scanner Interface -->
+{% extends "base.html" %}
+
+{% block title %}QR Scanner - ScanMe Attendance System{% endblock %}
+
+{% block head %}
+<style>
+    .scanner-container {
+        padding: 2rem 0;
+        min-height: calc(100vh - 120px);
+    }
+    
+    .scanner-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .scanner-header {
+        background: linear-gradient(45deg, var(--bs-success), var(--bs-info));
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .scanner-header h3 {
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .scanner-status {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        font-weight: 500;
+        margin-top: 1rem;
+    }
+    
+    .scanner-controls {
+        padding: 2rem;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .form-floating .form-select {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-floating .form-select:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .scanner-input {
+        padding: 2rem;
+    }
+    
+    .qr-input-group {
+        position: relative;
+        margin-bottom: 2rem;
+    }
+    
+    .qr-input {
+        border: 3px solid #e9ecef;
+        border-radius: 16px;
+        padding: 1.5rem 5rem 1.5rem 1.5rem;
+        font-size: 1.1rem;
+        font-family: 'Courier New', monospace;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+    
+    .qr-input:focus {
+        border-color: var(--bs-success);
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        outline: none;
+    }
+    
+    .scan-btn {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: linear-gradient(45deg, var(--bs-success), var(--bs-info));
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        color: white;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .scan-btn:hover {
+        transform: translateY(-50%) scale(1.05);
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+    }
+    
+    .scan-btn:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        transform: translateY(-50%);
+    }
+    
+    .upload-section {
+        border-top: 1px solid #e9ecef;
+        padding-top: 2rem;
+        margin-top: 1rem;
+    }
+    
+    .upload-area {
+        border: 3px dashed #dee2e6;
+        border-radius: 16px;
+        padding: 3rem 2rem;
+        text-align: center;
+        background: #f8f9fa;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .upload-area:hover {
+        border-color: var(--bs-primary);
+        background: rgba(13, 110, 253, 0.05);
+    }
+    
+    .upload-area.dragover {
+        border-color: var(--bs-success);
+        background: rgba(40, 167, 69, 0.1);
+    }
+    
+    .upload-icon {
+        font-size: 3rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+    
+    .upload-area:hover .upload-icon {
+        color: var(--bs-primary);
+    }
+    
+    .result-section {
+        padding: 2rem;
+        min-height: 200px;
+    }
+    
+    .scan-result {
+        margin-top: 1rem;
+    }
+    
+    .student-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, var(--bs-primary), var(--bs-success));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
+        margin-right: 1rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .recent-scans {
+        margin-top: 2rem;
+    }
+    
+    .scan-history-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+        transition: background 0.3s ease;
+    }
+    
+    .scan-history-item:hover {
+        background: #f8f9fa;
+    }
+    
+    .scan-time {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-left: auto;
+    }
+    
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .loading-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .loading-spinner {
+        text-align: center;
+        color: var(--bs-primary);
+    }
+    
+    .loading-spinner i {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .scanner-container {
+            padding: 1rem 0;
+        }
+        
+        .scanner-header {
+            padding: 1.5rem;
+        }
+        
+        .scanner-controls,
+        .scanner-input,
+        .result-section {
+            padding: 1.5rem;
+        }
+        
+        .qr-input {
+            padding-right: 4rem;
+        }
+        
+        .scan-btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .student-avatar {
+            width: 50px;
+            height: 50px;
+            font-size: 1.2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="scanner-container">
+    <div class="container">
+        <div class="row">
+            <!-- Main Scanner Panel -->
+            <div class="col-lg-8">
+                <div class="scanner-card">
+                    <!-- Header -->
+                    <div class="scanner-header">
+                        <h3><i class="fas fa-qrcode me-2"></i>QR Code Scanner</h3>
+                        <p class="mb-0">Scan student QR codes for attendance</p>
+                        <div class="scanner-status" id="scannerStatus">
+                            <i class="fas fa-circle text-success me-2"></i>Ready to Scan
+                        </div>
+                    </div>
+                    
+                    <!-- Controls -->
+                    <div class="scanner-controls">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select" id="room-select" required>
+                                        <option value="">Select Room</option>
+                                        {% for room in rooms %}
+                                            <option value="{{ room.id }}" data-capacity="{{ room.capacity }}">
+                                                {{ room.name }} ({{ room.building }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <label for="room-select">Room</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select" id="session-select">
+                                        <option value="">Active Session</option>
+                                        {% for session in sessions %}
+                                            <option value="{{ session.id }}">
+                                                {{ session.name }} ({{ session.start_time.strftime('%H:%M') }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <label for="session-select">Session</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Scanner Input -->
+                    <div class="scanner-input">
+                        <div class="qr-input-group">
+                            <input type="text" 
+                                   class="qr-input" 
+                                   id="qr-input" 
+                                   placeholder="Scan QR code or enter manually"
+                                   autocomplete="off"
+                                   spellcheck="false">
+                            <button type="button" class="scan-btn" id="scan-btn">
+                                <i class="fas fa-search me-2"></i>Scan
+                            </button>
+                        </div>
+                        
+                        <!-- Upload Section -->
+                        <div class="upload-section">
+                            <h6 class="mb-3">
+                                <i class="fas fa-cloud-upload-alt me-2"></i>
+                                Upload QR Code Image
+                            </h6>
+                            
+                            <div class="upload-area" id="upload-area">
+                                <div class="upload-icon">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                                <h6>Drop image here or click to browse</h6>
+                                <p class="text-muted mb-0">Supports JPG, PNG, WebP formats</p>
+                                <input type="file" 
+                                       id="qr-file" 
+                                       accept="image/*" 
+                                       style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Results -->
+                    <div class="result-section">
+                        <h6><i class="fas fa-clipboard-list me-2"></i>Scan Result</h6>
+                        
+                        <div id="scan-result">
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-qrcode fa-3x mb-3"></i>
+                                <p>Scan a QR code to see student information</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Loading Overlay -->
+                        <div class="loading-overlay" id="loading-overlay">
+                            <div class="loading-spinner">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <div>Processing scan...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Room Information -->
+                <div id="room-info">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-door-open me-2"></i>
+                                Room Information
+                            </h6>
+                        </div>
+                        <div class="card-body text-center text-muted">
+                            <i class="fas fa-info-circle fa-2x mb-2"></i>
+                            <p>Select a room to view information</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Statistics -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Today's Statistics
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6 mb-3">
+                                <div class="stat-value text-primary" id="total-scans">0</div>
+                                <div class="stat-label">Total Scans</div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="stat-value text-success" id="unique-students">0</div>
+                                <div class="stat-label">Unique Students</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-value text-warning" id="late-arrivals">0</div>
+                                <div class="stat-label">Late Arrivals</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-value text-info" id="on-time">0</div>
+                                <div class="stat-label">On Time</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Scans -->
+                <div id="recent-scans">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-history me-2"></i>
+                                Recent Scans
+                            </h6>
+                        </div>
+                        <div class="card-body text-center text-muted">
+                            <i class="fas fa-clock fa-2x mb-2"></i>
+                            <p>No recent scans</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize scanner when page loads
+    ScanMe.scanner.init();
+    
+    // Additional scanner-specific functionality
+    const uploadArea = document.getElementById('upload-area');
+    const qrFileInput = document.getElementById('qr-file');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    
+    // File upload drag and drop
+    uploadArea.addEventListener('click', () => {
+        qrFileInput.click();
+    });
+    
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type.startsWith('image/')) {
+            qrFileInput.files = files;
+            const event = new Event('change', { bubbles: true });
+            qrFileInput.dispatchEvent(event);
+        }
+    });
+    
+    // Auto-focus QR input
+    const qrInput = document.getElementById('qr-input');
+    if (qrInput) {
+        qrInput.focus();
+        
+        // Keep focus on input
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.scanner-input')) {
+                setTimeout(() => qrInput.focus(), 100);
+            }
+        });
+    }
+    
+    // Update statistics periodically
+    function updateStatistics() {
+        fetch('/scanner/api/statistics')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('total-scans').textContent = data.total_scans || 0;
+                    document.getElementById('unique-students').textContent = data.unique_students || 0;
+                    document.getElementById('late-arrivals').textContent = data.late_arrivals || 0;
+                    document.getElementById('on-time').textContent = data.on_time || 0;
+                }
+            })
+            .catch(error => console.error('Error updating statistics:', error));
+    }
+    
+    // Initial stats load
+    updateStatistics();
+    
+    // Update stats every 30 seconds
+    setInterval(updateStatistics, 30000);
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        // ESC to clear input
+        if (e.key === 'Escape') {
+            qrInput.value = '';
+            qrInput.focus();
+        }
+        
+        // F1 to focus room selection
+        if (e.key === 'F1') {
+            e.preventDefault();
+            document.getElementById('room-select').focus();
+        }
+        
+        // F2 to focus session selection
+        if (e.key === 'F2') {
+            e.preventDefault();
+            document.getElementById('session-select').focus();
+        }
+    });
+    
+    // Sound notification for successful scans
+    function playSuccessSound() {
+        // Create audio context for sound feedback
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'square';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.2);
+    }
+    
+    // Override the scanner's processQRCode function to add sound
+    const originalProcessQRCode = ScanMe.scanner.processQRCode;
+    ScanMe.scanner.processQRCode = async function(qrData) {
+        const result = await originalProcessQRCode.call(this, qrData);
+        
+        // Play success sound if scan was successful
+        if (result !== false) {
+            try {
+                playSuccessSound();
+            } catch (error) {
+                console.log('Audio feedback not available');
+            }
+        }
+        
+        return result;
+    };
+    
+    // Auto-refresh room info when room changes
+    const roomSelect = document.getElementById('room-select');
+    if (roomSelect) {
+        roomSelect.addEventListener('change', function() {
+            if (this.value) {
+                ScanMe.scanner.updateRoomInfo();
+                
+                // Update scanner status
+                const status = document.getElementById('scannerStatus');
+                status.innerHTML = '<i class="fas fa-circle text-success me-2"></i>Ready to Scan';
+            }
+        });
+    }
+    
+    // Session change handling
+    const sessionSelect = document.getElementById('session-select');
+    if (sessionSelect) {
+        sessionSelect.addEventListener('change', function() {
+            // Could add session-specific functionality here
+            console.log('Session changed to:', this.value);
+        });
+    }
+    
+    // Initial room selection if only one room available
+    if (roomSelect && roomSelect.options.length === 2) { // 1 default + 1 room
+        roomSelect.selectedIndex = 1;
+        const event = new Event('change');
+        roomSelect.dispatchEvent(event);
+    }
+});
+</script>
+{% endblock %}

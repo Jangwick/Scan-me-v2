@@ -1,0 +1,28 @@
+# Core Flask packages
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+Flask-WTF==1.2.1
+WTForms==3.1.1
+
+# Security packages
+Werkzeug==3.0.1
+bcrypt==4.1.2
+email_validator==2.3.0
+
+# QR Code packages (simplified - no camera scanning initially)
+qrcode[pil]==7.4.2
+Pillow==10.1.0
+
+# Data processing packages
+pandas==2.1.4
+openpyxl==3.1.2
+reportlab==4.0.8
+
+# Utility packages
+python-dotenv==1.0.0
+click==8.1.7
+
+# Optional: Add these later if camera scanning is needed
+# opencv-python==4.8.1.78
+# pyzbar==0.1.9

@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - ScanMe Attendance System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        border-left: 4px solid;
+        transition: transform 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    .stat-card.stat-primary { border-left-color: #0d6efd; }
+    .stat-card.stat-success { border-left-color: #198754; }
+    .stat-card.stat-info { border-left-color: #0dcaf0; }
+    .stat-card.stat-warning { border-left-color: #ffc107; }
+    
+    .recent-activity {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .room-occupancy-bar {
+        height: 8px;
+        border-radius: 4px;
+        background-color: #e9ecef;
+        overflow: hidden;
+    }
+    
+    .occupancy-fill {
+        height: 100%;
+        transition: width 0.5s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+            </h1>
+            <p class="text-muted">Welcome back, {{ current_user.get_display_name() }}!</p>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card stat-card stat-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="small text-muted mb-1">Today's Scans</div>
+                            <div class="h4 mb-0" id="today-scans">{{ stats.today_scans or 0 }}</div>
+                        </div>
+                        <div class="text-primary">
+                            <i class="fas fa-qrcode fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card stat-card stat-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="small text-muted mb-1">Active Students</div>
+                            <div class="h4 mb-0" id="unique-students">{{ stats.unique_students_today or 0 }}</div>
+                        </div>
+                        <div class="text-success">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card stat-card stat-info h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="small text-muted mb-1">Active Sessions</div>
+                            <div class="h4 mb-0" id="active-sessions">{{ stats.active_sessions or 0 }}</div>
+                        </div>
+                        <div class="text-info">
+                            <i class="fas fa-calendar fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card stat-card stat-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="small text-muted mb-1">Attendance Rate</div>
+                            <div class="h4 mb-0" id="attendance-rate">{{ "%.1f" | format(stats.attendance_rate or 0) }}%</div>
+                        </div>
+                        <div class="text-warning">
+                            <i class="fas fa-percentage fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Recent Activity -->
+        <div class="col-xl-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-clock me-2"></i>Recent Activity
+                    </h6>
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshRecentActivity()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="recent-activity" id="recent-activity">
+                        {% if recent_scans %}
+                            {% for scan in recent_scans %}
+                            <div class="d-flex align-items-center p-3 border-bottom">
+                                <div class="me-3">
+                                    <div class="avatar bg-{{ 'success' if not scan.is_late else 'warning' }} text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="fas fa-{{ 'check' if not scan.is_late else 'clock' }}"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">{{ scan.student_name }}</div>
+                                    <div class="small text-muted">
+                                        {{ scan.room_name }} • {{ scan.scan_time }}
+                                        {% if scan.is_late %}<span class="badge bg-warning ms-1">Late</span>{% endif %}
+                                        {% if scan.is_duplicate %}<span class="badge bg-info ms-1">Duplicate</span>{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center p-4 text-muted">
+                                <i class="fas fa-info-circle fa-2x mb-2"></i>
+                                <p class="mb-0">No recent activity</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if permissions.can_view_reports %}
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('attendance.reports') }}" class="btn btn-primary btn-sm">
+                        View All Records
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Room Occupancy -->
+        <div class="col-xl-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-door-open me-2"></i>Room Occupancy
+                    </h6>
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshRoomOccupancy()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="room-occupancy">
+                        {% if permissions.can_view_reports and room_occupancy %}
+                            {% for room in room_occupancy[:8] %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="fw-bold">{{ room.full_name }}</small>
+                                    <small class="text-muted">
+                                        {{ room.current_occupancy }}/{{ room.capacity }}
+                                        ({{ room.occupancy_percentage }}%)
+                                    </small>
+                                </div>
+                                <div class="room-occupancy-bar">
+                                    <div class="occupancy-fill bg-{{ room.status_color }}" 
+                                         style="width: {{ room.occupancy_percentage }}%"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% elif not permissions.can_view_reports %}
+                            <div class="text-center text-muted">
+                                <i class="fas fa-lock fa-2x mb-2"></i>
+                                <p class="mb-0">Access restricted</p>
+                            </div>
+                        {% else %}
+                            <div class="text-center text-muted">
+                                <i class="fas fa-door-open fa-2x mb-2"></i>
+                                <p class="mb-0">No room data available</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Today's Summary -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-calendar-day me-2"></i>Today's Summary
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-2">
+                            <div class="border-end">
+                                <div class="h4 mb-0 text-primary">{{ today_summary.total_scans or 0 }}</div>
+                                <small class="text-muted">Total Scans</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="border-end">
+                                <div class="h4 mb-0 text-success">{{ today_summary.unique_students or 0 }}</div>
+                                <small class="text-muted">Students</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="border-end">
+                                <div class="h4 mb-0 text-warning">{{ today_summary.late_arrivals or 0 }}</div>
+                                <small class="text-muted">Late Arrivals</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="border-end">
+                                <div class="h4 mb-0 text-info">{{ today_summary.duplicates or 0 }}</div>
+                                <small class="text-muted">Duplicates</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="border-end">
+                                <div class="h4 mb-0 text-secondary">{{ today_summary.active_rooms or 0 }}</div>
+                                <small class="text-muted">Active Rooms</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="h4 mb-0 text-primary">{{ today_summary.peak_hour or 'N/A' }}</div>
+                            <small class="text-muted">Peak Hour</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh dashboard data every 30 seconds
+    setInterval(function() {
+        refreshStats();
+        refreshRecentActivity();
+        refreshRoomOccupancy();
+    }, 30000);
+    
+    function refreshStats() {
+        fetch('/api/dashboard/stats')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.error) {
+                    document.getElementById('today-scans').textContent = data.today_scans || 0;
+                    document.getElementById('unique-students').textContent = data.unique_students_today || 0;
+                    document.getElementById('active-sessions').textContent = data.active_sessions || 0;
+                    document.getElementById('attendance-rate').textContent = (data.attendance_rate || 0).toFixed(1) + '%';
+                }
+            })
+            .catch(error => console.error('Error refreshing stats:', error));
+    }
+    
+    function refreshRecentActivity() {
+        fetch('/api/dashboard/recent-activity?limit=10')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.error && Array.isArray(data)) {
+                    updateRecentActivity(data);
+                }
+            })
+            .catch(error => console.error('Error refreshing recent activity:', error));
+    }
+    
+    function refreshRoomOccupancy() {
+        {% if permissions.can_view_reports %}
+        fetch('/api/dashboard/room-occupancy')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.error && Array.isArray(data)) {
+                    updateRoomOccupancy(data.slice(0, 8));
+                }
+            })
+            .catch(error => console.error('Error refreshing room occupancy:', error));
+        {% endif %}
+    }
+    
+    function updateRecentActivity(activities) {
+        const container = document.getElementById('recent-activity');
+        if (activities.length === 0) {
+            container.innerHTML = `
+                <div class="text-center p-4 text-muted">
+                    <i class="fas fa-info-circle fa-2x mb-2"></i>
+                    <p class="mb-0">No recent activity</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = activities.map(scan => `
+            <div class="d-flex align-items-center p-3 border-bottom">
+                <div class="me-3">
+                    <div class="avatar bg-${scan.is_late ? 'warning' : 'success'} text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        <i class="fas fa-${scan.is_late ? 'clock' : 'check'}"></i>
+                    </div>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-bold">${scan.student_name}</div>
+                    <div class="small text-muted">
+                        ${scan.room_name} • ${scan.scan_time}
+                        ${scan.is_late ? '<span class="badge bg-warning ms-1">Late</span>' : ''}
+                        ${scan.is_duplicate ? '<span class="badge bg-info ms-1">Duplicate</span>' : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    function updateRoomOccupancy(rooms) {
+        const container = document.getElementById('room-occupancy');
+        if (rooms.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted">
+                    <i class="fas fa-door-open fa-2x mb-2"></i>
+                    <p class="mb-0">No room data available</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = rooms.map(room => `
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <small class="fw-bold">${room.full_name}</small>
+                    <small class="text-muted">
+                        ${room.current_occupancy}/${room.capacity}
+                        (${room.occupancy_percentage}%)
+                    </small>
+                </div>
+                <div class="room-occupancy-bar">
+                    <div class="occupancy-fill bg-${room.status_color}" 
+                         style="width: ${room.occupancy_percentage}%"></div>
+                </div>
+            </div>
+        `).join('');
+    }
+</script>
+{% endblock %}

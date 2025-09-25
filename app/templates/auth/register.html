@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - ScanMe</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Custom Auth CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body class="auth-page">
+    <div class="auth-container register-container">
+        <div class="auth-card">
+            <!-- Header -->
+            <div class="auth-header">
+                <h1><i class="fas fa-user-plus"></i> Join ScanMe</h1>
+                <p>Create your account to get started</p>
+                <div class="feature-badges">
+                    <div class="feature-badge">
+                        <i class="fas fa-shield-alt"></i> Secure
+                    </div>
+                    <div class="feature-badge">
+                        <i class="fas fa-bolt"></i> Fast Setup
+                    </div>
+                    <div class="feature-badge">
+                        <i class="fas fa-mobile-alt"></i> Mobile Ready
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form -->
+            <div class="auth-form">
+                <form method="POST" action="{{ url_for('auth.register') }}" id="registerForm">
+                    {{ form.hidden_tag() }}
+                    
+                    <!-- Name Fields -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="first_name" class="form-label">
+                                <i class="fas fa-user me-1"></i> First Name
+                            </label>
+                            {{ form.first_name(class="form-input", placeholder="Enter your first name") }}
+                            {% if form.first_name.errors %}
+                                <div class="error-message">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    {{ form.first_name.errors[0] }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="last_name" class="form-label">
+                                <i class="fas fa-user me-1"></i> Last Name
+                            </label>
+                            {{ form.last_name(class="form-input", placeholder="Enter your last name") }}
+                            {% if form.last_name.errors %}
+                                <div class="error-message">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    {{ form.last_name.errors[0] }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Email Field -->
+                    <div class="form-group">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope me-1"></i> Email Address
+                        </label>
+                        {{ form.email(class="form-input", placeholder="Enter your email address") }}
+                        {% if form.email.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.email.errors[0] }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Username Field -->
+                    <div class="form-group">
+                        <label for="username" class="form-label">
+                            <i class="fas fa-at me-1"></i> Username
+                        </label>
+                        {{ form.username(class="form-input", placeholder="Choose a unique username") }}
+                        {% if form.username.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.username.errors[0] }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Role Selection -->
+                    <div class="form-group">
+                        <label for="role" class="form-label">
+                            <i class="fas fa-user-tag me-1"></i> Account Type
+                        </label>
+                        {{ form.role(class="form-select") }}
+                        {% if form.role.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.role.errors[0] }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Password Fields -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock me-1"></i> Password
+                            </label>
+                            {{ form.password(class="form-input", placeholder="Create a strong password") }}
+                            {% if form.password.errors %}
+                                <div class="error-message">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    {{ form.password.errors[0] }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm_password" class="form-label">
+                                <i class="fas fa-lock me-1"></i> Confirm Password
+                            </label>
+                            {{ form.confirm_password(class="form-input", placeholder="Confirm your password") }}
+                            {% if form.confirm_password.errors %}
+                                <div class="error-message">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    {{ form.confirm_password.errors[0] }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Terms and Conditions -->
+                    <div class="form-checkbox">
+                        {{ form.agree_terms() }}
+                        <label for="agree_terms">
+                            I agree to the 
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms of Service</a>
+                            and 
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">Privacy Policy</a>
+                        </label>
+                        {% if form.agree_terms.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.agree_terms.errors[0] }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <button type="submit" class="auth-button success">
+                        <i class="fas fa-user-plus"></i>
+                        Create Account
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Footer -->
+            <div class="auth-footer">
+                <p>
+                    Already have an account?
+                    <a href="{{ url_for('auth.login') }}">
+                        <i class="fas fa-sign-in-alt me-1"></i>
+                        Sign in here
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Terms Modal -->
+    <div class="modal fade" id="termsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Terms of Service</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>1. Acceptance of Terms</h6>
+                    <p>By using ScanMe, you agree to these terms and conditions.</p>
+                    
+                    <h6>2. Service Description</h6>
+                    <p>ScanMe is an attendance management system that uses QR codes for tracking.</p>
+                    
+                    <h6>3. User Responsibilities</h6>
+                    <p>Users are responsible for maintaining the confidentiality of their account information.</p>
+                    
+                    <h6>4. Data Usage</h6>
+                    <p>We collect and use data in accordance with our Privacy Policy.</p>
+                    
+                    <h6>5. Service Availability</h6>
+                    <p>We strive to maintain service availability but cannot guarantee 100% uptime.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Privacy Modal -->
+    <div class="modal fade" id="privacyModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Privacy Policy</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>1. Information We Collect</h6>
+                    <p>We collect information necessary for attendance tracking and account management.</p>
+                    
+                    <h6>2. How We Use Information</h6>
+                    <p>Information is used to provide and improve our services.</p>
+                    
+                    <h6>3. Information Sharing</h6>
+                    <p>We do not sell or share personal information with third parties.</p>
+                    
+                    <h6>4. Data Security</h6>
+                    <p>We implement security measures to protect your information.</p>
+                    
+                    <h6>5. Contact Us</h6>
+                    <p>For privacy concerns, contact us through our support channels.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div id="flash-messages" style="position: fixed; top: 20px; right: 20px; z-index: 10000;">
+                {% for message in messages %}
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Form Enhancement Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('registerForm');
+            const inputs = form.querySelectorAll('.form-input');
+            const submitBtn = form.querySelector('.auth-button');
+            const passwordField = document.getElementById('password');
+            const confirmPasswordField = document.getElementById('confirm_password');
+            
+            // Add input validation styling
+            inputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    validateField(this);
+                });
+                
+                input.addEventListener('input', function() {
+                    this.classList.remove('error');
+                    if (this.value.trim() !== '') {
+                        this.classList.add('success');
+                    }
+                });
+            });
+            
+            // Password confirmation validation
+            confirmPasswordField.addEventListener('input', function() {
+                if (passwordField.value !== this.value) {
+                    this.classList.add('error');
+                    this.classList.remove('success');
+                } else if (this.value !== '') {
+                    this.classList.add('success');
+                    this.classList.remove('error');
+                }
+            });
+            
+            function validateField(field) {
+                const value = field.value.trim();
+                
+                if (value === '') {
+                    field.classList.add('error');
+                    field.classList.remove('success');
+                    return false;
+                }
+                
+                // Email validation
+                if (field.type === 'email' || field.name === 'email') {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(value)) {
+                        field.classList.add('error');
+                        field.classList.remove('success');
+                        return false;
+                    }
+                }
+                
+                // Password validation
+                if (field.name === 'password' && value.length < 8) {
+                    field.classList.add('error');
+                    field.classList.remove('success');
+                    return false;
+                }
+                
+                field.classList.add('success');
+                field.classList.remove('error');
+                return true;
+            }
+            
+            // Form submission with loading state
+            form.addEventListener('submit', function(e) {
+                let isValid = true;
+                
+                // Validate all fields
+                inputs.forEach(input => {
+                    if (!validateField(input)) {
+                        isValid = false;
+                    }
+                });
+                
+                // Check terms agreement
+                const termsCheckbox = document.getElementById('agree_terms');
+                if (!termsCheckbox.checked) {
+                    isValid = false;
+                }
+                
+                if (isValid) {
+                    submitBtn.innerHTML = '<i class="fas fa-spinner spinner"></i> Creating Account...';
+                    submitBtn.disabled = true;
+                } else {
+                    e.preventDefault();
+                }
+            });
+            
+            // Auto-dismiss flash messages
+            setTimeout(function() {
+                const flashMessages = document.getElementById('flash-messages');
+                if (flashMessages) {
+                    flashMessages.style.opacity = '0';
+                    setTimeout(() => flashMessages.remove(), 500);
+                }
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!-- Login Form Template -->
+{% extends "auth/auth_base.html" %}
+
+{% block title %}Login - ScanMe Attendance System{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="login-card">
+                    <!-- Header -->
+                    <div class="login-header">
+                        <h2><i class="fas fa-qrcode me-2"></i>ScanMe</h2>
+                        <p>Attendance Management System</p>
+                        
+                        <ul class="features-list">
+                            <li><i class="fas fa-check"></i> QR Code Scanning</li>
+                            <li><i class="fas fa-check"></i> Real-time Tracking</li>
+                            <li><i class="fas fa-check"></i> Automated Reports</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Login Form -->
+                    <div class="login-form">
+                        <form method="POST" action="{{ url_for('auth.login') }}" id="loginForm" data-validate>
+                            {{ form.hidden_tag() }}
+                            
+                            <!-- Username Field -->
+                            <div class="form-floating">
+                                {{ form.username(class="form-control", placeholder="Username or Email", required=True) }}
+                                {{ form.username.label(class="form-label") }}
+                                {% if form.username.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.username.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Password Field -->
+                            <div class="form-floating">
+                                {{ form.password(class="form-control", placeholder="Password", required=True) }}
+                                {{ form.password.label(class="form-label") }}
+                                {% if form.password.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.password.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Remember Me -->
+                            <div class="form-check mb-3">
+                                {{ form.remember_me(class="form-check-input", id="rememberMe") }}
+                                {{ form.remember_me.label(class="form-check-label", for="rememberMe") }}
+                            </div>
+                            
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn btn-primary btn-login" id="loginBtn">
+                                <i class="fas fa-sign-in-alt me-2"></i>
+                                Sign In
+                            </button>
+                            
+                            <!-- Forgot Password -->
+                            <div class="forgot-password">
+                                <a href="{{ url_for('auth.forgot_password') }}">
+                                    <i class="fas fa-key me-1"></i>
+                                    Forgot your password?
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Register Link -->
+                    <div class="register-link">
+                        <p class="mb-0">
+                            Don't have an account? 
+                            <a href="{{ url_for('auth.register') }}">
+                                Sign up here <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    
+    // Smooth animations
+    const loginCard = document.querySelector('.login-card');
+    if (loginCard) {
+        loginCard.style.opacity = '0';
+        loginCard.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            loginCard.style.transition = 'all 0.6s ease-out';
+            loginCard.style.opacity = '1';
+            loginCard.style.transform = 'translateY(0)';
+        }, 100);
+    }
+    
+    // Form validation
+    loginForm.addEventListener('submit', function(e) {
+        const username = document.querySelector('#username').value.trim();
+        const password = document.querySelector('#password').value;
+        
+        if (!username || !password) {
+            e.preventDefault();
+            alert('Please fill in all fields.');
+            return false;
+        }
+        
+        // Show loading state
+        loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Signing In...';
+        loginBtn.disabled = true;
+    });
+    
+    // Focus first input
+    const firstInput = document.querySelector('#username');
+    if (firstInput) {
+        setTimeout(() => firstInput.focus(), 500);
+    }
+});
+</script>
+{% endblock %}

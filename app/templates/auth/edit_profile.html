@@ -1,0 +1,56 @@
+<!-- Edit Profile Form Template -->
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - ScanMe Attendance System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-user-edit me-2"></i>Edit Profile</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('auth.edit_profile') }}" id="editProfileForm">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Username Field -->
+                        <div class="form-floating mb-3">
+                            {{ form.username(class="form-control", placeholder="Username", required=True) }}
+                            {{ form.username.label(class="form-label") }}
+                            {% if form.username.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.username.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Email Field -->
+                        <div class="form-floating mb-3">
+                            {{ form.email(class="form-control", placeholder="Email Address", required=True) }}
+                            {{ form.email.label(class="form-label") }}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.email.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>
+                            Update Profile
+                        </button>
+                        
+                        <a href="{{ url_for('main.profile') }}" class="btn btn-secondary ms-2">
+                            <i class="fas fa-times me-1"></i>
+                            Cancel
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

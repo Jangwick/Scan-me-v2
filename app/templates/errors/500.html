@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}500 - Server Error - ScanMe{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="error-page text-center">
+                <div class="error-code mb-4">
+                    <h1 class="display-1 text-danger fw-bold">500</h1>
+                </div>
+                
+                <div class="error-message mb-4">
+                    <h2 class="h3 mb-3">Internal Server Error</h2>
+                    <p class="text-muted">
+                        Something went wrong on our server. We're working to fix the issue.
+                        Please try again in a few moments.
+                    </p>
+                </div>
+                
+                <div class="error-illustration mb-4">
+                    <i class="fas fa-exclamation-triangle fa-5x text-warning opacity-50"></i>
+                </div>
+                
+                <div class="error-actions">
+                    <a href="{{ url_for('main.index') }}" class="btn btn-primary me-3">
+                        <i class="fas fa-home me-2"></i>Go Home
+                    </a>
+                    
+                    <button onclick="location.reload()" class="btn btn-outline-primary">
+                        <i class="fas fa-redo me-2"></i>Try Again
+                    </button>
+                </div>
+                
+                <div class="error-help mt-4">
+                    <small class="text-muted">
+                        Error persists? Please 
+                        <a href="mailto:support@scanme.system">contact support</a> 
+                        with details about what you were doing.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-page {
+    padding: 60px 0;
+}
+
+.error-code h1 {
+    font-size: 8rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+    .error-code h1 {
+        font-size: 6rem;
+    }
+    
+    .error-page {
+        padding: 40px 0;
+    }
+}
+</style>
+{% endblock %}
