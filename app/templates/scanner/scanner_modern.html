@@ -1,0 +1,946 @@
+{% extends "dashboard_base.html" %}
+
+{% block page_title %}QR Code Scanner{% endblock %}
+
+{% block extra_css %}
+<style>
+    .scanner-main {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 2rem;
+        height: calc(100vh - 120px);
+    }
+
+    .scanner-area {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .camera-container {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .camera-preview {
+        width: 100%;
+        max-width: 500px;
+        height: 400px;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        border: 3px dashed #cbd5e0;
+        margin: 0 auto 1.5rem;
+    }
+
+    .camera-active {
+        border-color: #4c6ef5;
+        background: #000;
+    }
+
+    .camera-placeholder {
+        text-align: center;
+        color: #718096;
+    }
+
+    .camera-placeholder i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .scan-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 250px;
+        height: 250px;
+        border: 3px solid #4c6ef5;
+        border-radius: 12px;
+        display: none;
+    }
+
+    .scan-overlay.active {
+        display: block;
+        animation: scanPulse 2s infinite;
+    }
+
+    @keyframes scanPulse {
+        0%, 100% { 
+            border-color: #4c6ef5; 
+            box-shadow: 0 0 0 0 rgba(76, 110, 245, 0.4);
+        }
+        50% { 
+            border-color: #10b981; 
+            box-shadow: 0 0 0 20px rgba(76, 110, 245, 0);
+        }
+    }
+
+    .scanner-controls {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .control-btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .control-btn.primary {
+        background: linear-gradient(135deg, #4c6ef5 0%, #667eea 100%);
+        color: white;
+    }
+
+    .control-btn.success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+
+    .control-btn.secondary {
+        background: #f8fafc;
+        color: #4a5568;
+        border: 1px solid #e2e8f0;
+    }
+
+    .control-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .control-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .manual-input {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+    }
+
+    .input-group {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .qr-input {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: border-color 0.2s ease;
+    }
+
+    .qr-input:focus {
+        outline: none;
+        border-color: #4c6ef5;
+        box-shadow: 0 0 0 3px rgba(76, 110, 245, 0.1);
+    }
+
+    .sidebar-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .info-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .info-card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .info-card-body {
+        padding: 1.5rem;
+    }
+
+    .session-selector {
+        margin-bottom: 1rem;
+    }
+
+    .session-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        background: white;
+        font-size: 0.9rem;
+        transition: border-color 0.2s ease;
+    }
+
+    .session-select:focus {
+        outline: none;
+        border-color: #4c6ef5;
+    }
+
+    .stats-mini {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .stat-mini {
+        text-align: center;
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 10px;
+    }
+
+    .stat-mini-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2d3748;
+    }
+
+    .stat-mini-label {
+        font-size: 0.75rem;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .recent-scans {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .scan-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
+        transition: background-color 0.2s ease;
+    }
+
+    .scan-item:hover {
+        background-color: #f8fafc;
+    }
+
+    .scan-item:last-child {
+        border-bottom: none;
+    }
+
+    .scan-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: white;
+        margin-right: 1rem;
+        font-size: 0.875rem;
+    }
+
+    .scan-info {
+        flex: 1;
+    }
+
+    .scan-name {
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 0.9rem;
+    }
+
+    .scan-meta {
+        font-size: 0.75rem;
+        color: #718096;
+        margin-top: 0.125rem;
+    }
+
+    .scan-status {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .status-success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-error {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .alert-custom {
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        border: none;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .alert-success {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #065f46;
+    }
+
+    .alert-error {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #991b1b;
+    }
+
+    .alert-info {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
+    }
+
+    .upload-area {
+        border: 3px dashed #cbd5e0;
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .upload-area:hover {
+        border-color: #4c6ef5;
+        background-color: #f8fafc;
+    }
+
+    .upload-area.dragover {
+        border-color: #10b981;
+        background-color: #f0fdf4;
+    }
+
+    @media (max-width: 1200px) {
+        .scanner-main {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .sidebar-panel {
+            flex-direction: row;
+            overflow-x: auto;
+        }
+
+        .info-card {
+            min-width: 300px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .scanner-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .control-btn {
+            justify-content: center;
+        }
+
+        .stats-mini {
+            grid-template-columns: 1fr;
+        }
+
+        .sidebar-panel {
+            flex-direction: column;
+        }
+
+        .info-card {
+            min-width: auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="scanner-main">
+    <!-- Main Scanner Area -->
+    <div class="scanner-area">
+        <!-- Success/Error Alerts -->
+        <div id="scanAlerts"></div>
+
+        <!-- Camera/Scanner Section -->
+        <div class="camera-container">
+            <h3 class="mb-3">
+                <i class="fas fa-camera me-2"></i>
+                QR Code Scanner
+            </h3>
+            
+            <div class="camera-preview" id="cameraPreview">
+                <div class="camera-placeholder">
+                    <i class="fas fa-qrcode"></i>
+                    <h4>Ready to Scan</h4>
+                    <p>Click "Start Camera" to begin scanning QR codes</p>
+                </div>
+                <div class="scan-overlay" id="scanOverlay"></div>
+            </div>
+
+            <div class="scanner-controls">
+                <button class="control-btn primary" id="startCameraBtn">
+                    <i class="fas fa-camera"></i>
+                    Start Camera
+                </button>
+                <button class="control-btn secondary" id="stopCameraBtn" disabled>
+                    <i class="fas fa-stop"></i>
+                    Stop Camera
+                </button>
+                <button class="control-btn success" id="scanBtn" disabled>
+                    <i class="fas fa-qrcode"></i>
+                    Scan QR Code
+                </button>
+            </div>
+        </div>
+
+        <!-- Manual Input Section -->
+        <div class="manual-input">
+            <h5>
+                <i class="fas fa-keyboard me-2"></i>
+                Manual QR Code Entry
+            </h5>
+            <p class="text-muted small mb-3">Enter QR code data manually or upload an image</p>
+            
+            <div class="input-group">
+                <input type="text" 
+                       class="qr-input" 
+                       id="manualQrInput" 
+                       placeholder="Enter QR code data (e.g., student ID, QR code content)"
+                       maxlength="100">
+                <button class="control-btn success" id="processManualBtn">
+                    <i class="fas fa-check"></i>
+                    Process
+                </button>
+            </div>
+
+            <div class="mt-3">
+                <div class="upload-area" id="imageUploadArea">
+                    <i class="fas fa-image mb-2" style="font-size: 2rem; color: #718096;"></i>
+                    <p class="mb-1">Drop QR code image here or click to upload</p>
+                    <small class="text-muted">Supports JPG, PNG, GIF up to 5MB</small>
+                    <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Panel -->
+    <div class="sidebar-panel">
+        <!-- Session Info -->
+        <div class="info-card">
+            <div class="info-card-header">
+                <i class="fas fa-calendar-alt"></i>
+                Current Session
+            </div>
+            <div class="info-card-body">
+                <div class="session-selector">
+                    <select class="session-select" id="sessionSelect">
+                        <option value="">Select Session...</option>
+                        {% if sessions %}
+                            {% for session in sessions %}
+                            <option value="{{ session.id }}" 
+                                    {% if session.is_active %}selected{% endif %}>
+                                {{ session.name }} - {{ session.room.name }}
+                            </option>
+                            {% endfor %}
+                        {% else %}
+                            <option value="">No sessions available</option>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <div class="stats-mini">
+                    <div class="stat-mini">
+                        <div class="stat-mini-value" id="sessionScans">0</div>
+                        <div class="stat-mini-label">Scans Today</div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-value" id="sessionStudents">0</div>
+                        <div class="stat-mini-label">Students</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Scans -->
+        <div class="info-card">
+            <div class="info-card-header">
+                <i class="fas fa-clock"></i>
+                Recent Scans
+            </div>
+            <div class="info-card-body p-0">
+                <div class="recent-scans" id="recentScansList">
+                    <div class="text-center p-3 text-muted">
+                        <i class="fas fa-inbox mb-2" style="font-size: 2rem;"></i>
+                        <p class="mb-0 small">No recent scans</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="info-card">
+            <div class="info-card-header">
+                <i class="fas fa-chart-bar"></i>
+                Today's Stats
+            </div>
+            <div class="info-card-body">
+                <div class="stats-mini">
+                    <div class="stat-mini">
+                        <div class="stat-mini-value" id="totalScansToday">0</div>
+                        <div class="stat-mini-label">Total Scans</div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-value" id="uniqueStudentsToday">0</div>
+                        <div class="stat-mini-label">Unique Students</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+class ScannerApp {
+    constructor() {
+        this.camera = null;
+        this.scanning = false;
+        this.currentSession = null;
+        
+        this.init();
+    }
+
+    init() {
+        this.bindEvents();
+        this.loadSessionData();
+        this.loadRecentScans();
+        this.loadTodayStats();
+        
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            this.loadRecentScans();
+            this.loadTodayStats();
+        }, 30000);
+    }
+
+    bindEvents() {
+        // Camera controls
+        document.getElementById('startCameraBtn').addEventListener('click', () => this.startCamera());
+        document.getElementById('stopCameraBtn').addEventListener('click', () => this.stopCamera());
+        document.getElementById('scanBtn').addEventListener('click', () => this.scanQRCode());
+
+        // Manual input
+        document.getElementById('processManualBtn').addEventListener('click', () => this.processManualInput());
+        document.getElementById('manualQrInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.processManualInput();
+            }
+        });
+
+        // Image upload
+        const uploadArea = document.getElementById('imageUploadArea');
+        const fileInput = document.getElementById('imageUpload');
+        
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                this.processImageUpload(files[0]);
+            }
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                this.processImageUpload(e.target.files[0]);
+            }
+        });
+
+        // Session selector
+        document.getElementById('sessionSelect').addEventListener('change', (e) => {
+            this.currentSession = e.target.value;
+            this.loadSessionStats();
+        });
+    }
+
+    async startCamera() {
+        try {
+            this.showAlert('info', 'Starting camera...', false);
+            
+            // For demo purposes, we'll simulate camera activation
+            // In a real implementation, you'd use getUserMedia() here
+            
+            const cameraPreview = document.getElementById('cameraPreview');
+            cameraPreview.classList.add('camera-active');
+            cameraPreview.innerHTML = `
+                <div style="color: white; text-align: center;">
+                    <i class="fas fa-video" style="font-size: 4rem; margin-bottom: 1rem;"></i>
+                    <h4>Camera Active</h4>
+                    <p>Point camera at QR code to scan</p>
+                </div>
+            `;
+
+            document.getElementById('startCameraBtn').disabled = true;
+            document.getElementById('stopCameraBtn').disabled = false;
+            document.getElementById('scanBtn').disabled = false;
+
+            this.hideAlerts();
+            this.showAlert('success', 'Camera started successfully!');
+
+        } catch (error) {
+            this.showAlert('error', 'Failed to start camera: ' + error.message);
+        }
+    }
+
+    stopCamera() {
+        const cameraPreview = document.getElementById('cameraPreview');
+        cameraPreview.classList.remove('camera-active');
+        cameraPreview.innerHTML = `
+            <div class="camera-placeholder">
+                <i class="fas fa-qrcode"></i>
+                <h4>Camera Stopped</h4>
+                <p>Click "Start Camera" to begin scanning QR codes</p>
+            </div>
+        `;
+
+        document.getElementById('startCameraBtn').disabled = false;
+        document.getElementById('stopCameraBtn').disabled = true;
+        document.getElementById('scanBtn').disabled = true;
+
+        this.showAlert('info', 'Camera stopped');
+    }
+
+    async scanQRCode() {
+        if (!this.currentSession) {
+            this.showAlert('error', 'Please select a session first');
+            return;
+        }
+
+        try {
+            this.scanning = true;
+            const overlay = document.getElementById('scanOverlay');
+            overlay.classList.add('active');
+            
+            document.getElementById('scanBtn').disabled = true;
+            document.getElementById('scanBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scanning...';
+
+            // Simulate QR code detection (in real implementation, this would process camera feed)
+            await this.simulateQRScan();
+
+        } catch (error) {
+            this.showAlert('error', 'Scan failed: ' + error.message);
+        } finally {
+            this.scanning = false;
+            document.getElementById('scanOverlay').classList.remove('active');
+            document.getElementById('scanBtn').disabled = false;
+            document.getElementById('scanBtn').innerHTML = '<i class="fas fa-qrcode"></i> Scan QR Code';
+        }
+    }
+
+    async simulateQRScan() {
+        // Simulate scanning delay
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Simulate finding a QR code (for demo)
+        const mockStudentId = 'STU' + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        await this.processQRCode(mockStudentId);
+    }
+
+    async processManualInput() {
+        const input = document.getElementById('manualQrInput');
+        const qrData = input.value.trim();
+
+        if (!qrData) {
+            this.showAlert('error', 'Please enter QR code data');
+            return;
+        }
+
+        if (!this.currentSession) {
+            this.showAlert('error', 'Please select a session first');
+            return;
+        }
+
+        await this.processQRCode(qrData);
+        input.value = '';
+    }
+
+    async processImageUpload(file) {
+        if (!file.type.startsWith('image/')) {
+            this.showAlert('error', 'Please select an image file');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            this.showAlert('error', 'File size must be less than 5MB');
+            return;
+        }
+
+        if (!this.currentSession) {
+            this.showAlert('error', 'Please select a session first');
+            return;
+        }
+
+        try {
+            this.showAlert('info', 'Processing image...', false);
+
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('session_id', this.currentSession);
+
+            const response = await fetch('/scanner/api/scan-image', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showAlert('success', `Successfully processed: ${result.student_name}`);
+                this.loadRecentScans();
+                this.loadTodayStats();
+                this.loadSessionStats();
+            } else {
+                this.showAlert('error', result.message || 'Failed to process image');
+            }
+
+        } catch (error) {
+            this.showAlert('error', 'Failed to process image: ' + error.message);
+        }
+    }
+
+    async processQRCode(qrData) {
+        try {
+            this.showAlert('info', 'Processing QR code...', false);
+
+            const response = await fetch('/scanner/api/scan-qr', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    qr_data: qrData,
+                    session_id: this.currentSession
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showAlert('success', `✅ Successfully scanned: ${result.student_name || 'Student'}`);
+                this.loadRecentScans();
+                this.loadTodayStats();
+                this.loadSessionStats();
+            } else {
+                this.showAlert('error', result.message || 'Failed to process QR code');
+            }
+
+        } catch (error) {
+            this.showAlert('error', 'Failed to process QR code: ' + error.message);
+        }
+    }
+
+    async loadSessionData() {
+        try {
+            const response = await fetch('/scanner/api/sessions');
+            const sessions = await response.json();
+
+            const select = document.getElementById('sessionSelect');
+            select.innerHTML = '<option value="">Select Session...</option>';
+
+            if (sessions.length > 0) {
+                sessions.forEach(session => {
+                    const option = document.createElement('option');
+                    option.value = session.id;
+                    option.textContent = `${session.name} - ${session.room_name}`;
+                    if (session.is_active) {
+                        option.selected = true;
+                        this.currentSession = session.id;
+                    }
+                    select.appendChild(option);
+                });
+
+                if (this.currentSession) {
+                    this.loadSessionStats();
+                }
+            }
+
+        } catch (error) {
+            console.error('Failed to load sessions:', error);
+        }
+    }
+
+    async loadSessionStats() {
+        if (!this.currentSession) return;
+
+        try {
+            const response = await fetch(`/scanner/api/session-stats/${this.currentSession}`);
+            const stats = await response.json();
+
+            document.getElementById('sessionScans').textContent = stats.scans_today || 0;
+            document.getElementById('sessionStudents').textContent = stats.unique_students || 0;
+
+        } catch (error) {
+            console.error('Failed to load session stats:', error);
+        }
+    }
+
+    async loadRecentScans() {
+        try {
+            const response = await fetch('/scanner/api/recent-scans?limit=10');
+            const scans = await response.json();
+
+            const container = document.getElementById('recentScansList');
+
+            if (scans.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center p-3 text-muted">
+                        <i class="fas fa-inbox mb-2" style="font-size: 2rem;"></i>
+                        <p class="mb-0 small">No recent scans</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = scans.map(scan => {
+                const avatarColor = this.getAvatarColor(scan.student_name);
+                const statusClass = scan.is_late ? 'status-warning' : 'status-success';
+                const statusText = scan.is_late ? 'Late' : 'On Time';
+
+                return `
+                    <div class="scan-item">
+                        <div class="scan-avatar" style="background: ${avatarColor};">
+                            ${scan.student_name.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="scan-info">
+                            <div class="scan-name">${scan.student_name}</div>
+                            <div class="scan-meta">${scan.room_name} • ${scan.time_ago}</div>
+                        </div>
+                        <div class="scan-status ${statusClass}">${statusText}</div>
+                    </div>
+                `;
+            }).join('');
+
+        } catch (error) {
+            console.error('Failed to load recent scans:', error);
+        }
+    }
+
+    async loadTodayStats() {
+        try {
+            const response = await fetch('/scanner/api/today-stats');
+            const stats = await response.json();
+
+            document.getElementById('totalScansToday').textContent = stats.total_scans || 0;
+            document.getElementById('uniqueStudentsToday').textContent = stats.unique_students || 0;
+
+        } catch (error) {
+            console.error('Failed to load today stats:', error);
+        }
+    }
+
+    getAvatarColor(name) {
+        const colors = [
+            'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+            'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+            'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+            'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)'
+        ];
+        const hash = name.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+        return colors[hash % colors.length];
+    }
+
+    showAlert(type, message, autoHide = true) {
+        const alertContainer = document.getElementById('scanAlerts');
+        const alertId = 'alert_' + Date.now();
+        
+        const iconMap = {
+            success: 'check-circle',
+            error: 'exclamation-triangle',
+            info: 'info-circle',
+            warning: 'exclamation-circle'
+        };
+
+        const alert = document.createElement('div');
+        alert.id = alertId;
+        alert.className = `alert-custom alert-${type}`;
+        alert.innerHTML = `
+            <i class="fas fa-${iconMap[type]}"></i>
+            <span>${message}</span>
+            <button type="button" class="btn-close ms-auto" onclick="document.getElementById('${alertId}').remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+
+        alertContainer.appendChild(alert);
+
+        if (autoHide) {
+            setTimeout(() => {
+                if (document.getElementById(alertId)) {
+                    document.getElementById(alertId).remove();
+                }
+            }, 5000);
+        }
+    }
+
+    hideAlerts() {
+        document.getElementById('scanAlerts').innerHTML = '';
+    }
+}
+
+// Initialize the scanner app when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    new ScannerApp();
+});
+</script>
+{% endblock %}
