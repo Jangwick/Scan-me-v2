@@ -1,0 +1,618 @@
+{% extends "dashboard_base.html" %}
+
+{% block page_title %}Add Room{% endblock %}
+
+{% block extra_css %}
+<style>
+    .add-room-header {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-container {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-section {
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #8b5cf6;
+    }
+
+    .form-section h5 {
+        color: #1f2937;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-group label .required {
+        color: #ef4444;
+        margin-left: 0.25rem;
+    }
+
+    .form-control {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+        font-size: 1rem;
+    }
+
+    .form-control:focus {
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        outline: none;
+    }
+
+    .form-select {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+        background: white;
+        cursor: pointer;
+    }
+
+    .form-select:focus {
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        outline: none;
+    }
+
+    .capacity-input {
+        position: relative;
+    }
+
+    .capacity-input input {
+        padding-right: 3rem;
+    }
+
+    .capacity-icon {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6b7280;
+        pointer-events: none;
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .form-check-input {
+        border: 2px solid #e5e7eb;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    .form-check-input:checked {
+        background-color: #8b5cf6;
+        border-color: #8b5cf6;
+    }
+
+    .form-check-input:focus {
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+
+    .form-check-label {
+        font-weight: 500;
+        color: #374151;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    .room-preview {
+        background: #f3f4f6;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        border: 2px dashed #d1d5db;
+    }
+
+    .room-preview h6 {
+        color: #1f2937;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+
+    .preview-card {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .preview-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .preview-room-number {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .preview-room-type {
+        background: #8b5cf6;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .preview-info {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .btn {
+        padding: 0.875rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: none;
+        font-size: 1rem;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        color: white;
+    }
+
+    .btn-outline-secondary {
+        background: transparent;
+        border: 2px solid #6b7280;
+        color: #6b7280;
+    }
+
+    .btn-outline-secondary:hover {
+        background: #6b7280;
+        color: white;
+        text-decoration: none;
+    }
+
+    .invalid-feedback {
+        display: block;
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .is-invalid {
+        border-color: #ef4444;
+    }
+
+    .is-invalid:focus {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+
+    @media (max-width: 768px) {
+        .add-room-header {
+            padding: 1.5rem;
+        }
+
+        .add-room-header .d-flex {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .form-container {
+            padding: 1.5rem;
+        }
+
+        .form-section {
+            padding: 1rem;
+        }
+
+        .features-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .preview-info {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="add-room-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="mb-1">
+                <i class="fas fa-plus-square me-2"></i>
+                Add New Room
+            </h1>
+            <p class="mb-0 opacity-75">Create a new classroom or facility</p>
+        </div>
+        <a href="{{ url_for('admin.manage_rooms') }}" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left"></i>
+            Back to Rooms
+        </a>
+    </div>
+</div>
+
+<div class="form-container">
+    <form method="POST" id="addRoomForm">
+        <!-- Basic Information Section -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-info-circle me-2"></i>
+                Basic Information
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="number">
+                            Room Number
+                            <span class="required">*</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="number" 
+                               name="number" 
+                               placeholder="e.g., 101, A-205, Lab-01"
+                               required
+                               maxlength="20">
+                        <div class="invalid-feedback" id="numberError"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="name">Room Name</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="name" 
+                               name="name" 
+                               placeholder="e.g., Computer Lab, Main Hall"
+                               maxlength="100">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="type">
+                            Room Type
+                            <span class="required">*</span>
+                        </label>
+                        <select class="form-select" id="type" name="type" required>
+                            <option value="">Select room type</option>
+                            <option value="classroom">Classroom</option>
+                            <option value="laboratory">Laboratory</option>
+                            <option value="lecture_hall">Lecture Hall</option>
+                            <option value="seminar_room">Seminar Room</option>
+                            <option value="conference_room">Conference Room</option>
+                            <option value="computer_lab">Computer Lab</option>
+                            <option value="workshop">Workshop</option>
+                            <option value="auditorium">Auditorium</option>
+                            <option value="library">Library</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <div class="invalid-feedback" id="typeError"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="capacity">
+                            Capacity
+                            <span class="required">*</span>
+                        </label>
+                        <div class="capacity-input">
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="capacity" 
+                                   name="capacity" 
+                                   placeholder="Maximum occupancy"
+                                   required
+                                   min="1"
+                                   max="1000">
+                            <i class="fas fa-users capacity-icon"></i>
+                        </div>
+                        <div class="invalid-feedback" id="capacityError"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Location Section -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-map-marker-alt me-2"></i>
+                Location Details
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="building">Building</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="building" 
+                               name="building" 
+                               placeholder="e.g., Main Building, Science Block"
+                               maxlength="50">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="floor">Floor</label>
+                        <select class="form-select" id="floor" name="floor">
+                            <option value="">Select floor</option>
+                            <option value="basement">Basement</option>
+                            <option value="ground">Ground Floor</option>
+                            <option value="1">1st Floor</option>
+                            <option value="2">2nd Floor</option>
+                            <option value="3">3rd Floor</option>
+                            <option value="4">4th Floor</option>
+                            <option value="5">5th Floor</option>
+                            <option value="6">6th Floor</option>
+                            <option value="7">7th Floor</option>
+                            <option value="8">8th Floor</option>
+                            <option value="9">9th Floor</option>
+                            <option value="10">10th Floor</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea class="form-control" 
+                          id="description" 
+                          name="description" 
+                          rows="3" 
+                          placeholder="Additional details about the room..."
+                          maxlength="500"></textarea>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-cogs me-2"></i>
+                Room Features
+            </h5>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <input class="form-check-input" type="checkbox" id="projector" name="features" value="projector">
+                    <label class="form-check-label" for="projector">
+                        <i class="fas fa-video me-1"></i>
+                        Projector
+                    </label>
+                </div>
+                <div class="feature-item">
+                    <input class="form-check-input" type="checkbox" id="whiteboard" name="features" value="whiteboard">
+                    <label class="form-check-label" for="whiteboard">
+                        <i class="fas fa-chalkboard me-1"></i>
+                        Whiteboard
+                    </label>
+                </div>
+                <div class="feature-item">
+                    <input class="form-check-input" type="checkbox" id="computer" name="features" value="computer">
+                    <label class="form-check-label" for="computer">
+                        <i class="fas fa-desktop me-1"></i>
+                        Computer
+                    </label>
+                </div>
+                <div class="feature-item">
+                    <input class="form-check-input" type="checkbox" id="air_conditioning" name="features" value="air_conditioning">
+                    <label class="form-check-label" for="air_conditioning">
+                        <i class="fas fa-snowflake me-1"></i>
+                        Air Conditioning
+                    </label>
+                </div>
+                <div class="feature-item">
+                    <input class="form-check-input" type="checkbox" id="sound_system" name="features" value="sound_system">
+                    <label class="form-check-label" for="sound_system">
+                        <i class="fas fa-volume-up me-1"></i>
+                        Sound System
+                    </label>
+                </div>
+                <div class="feature-item">
+                    <input class="form-check-input" type="checkbox" id="wifi" name="features" value="wifi">
+                    <label class="form-check-label" for="wifi">
+                        <i class="fas fa-wifi me-1"></i>
+                        WiFi Access
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Preview -->
+        <div class="room-preview">
+            <h6>
+                <i class="fas fa-eye me-2"></i>
+                Live Preview
+            </h6>
+            <div class="preview-card">
+                <div class="preview-header">
+                    <div class="preview-room-number" id="previewNumber">Room ---</div>
+                    <div class="preview-room-type" id="previewType">---</div>
+                </div>
+                <div class="preview-info">
+                    <div><strong>Capacity:</strong> <span id="previewCapacity">---</span></div>
+                    <div><strong>Building:</strong> <span id="previewBuilding">---</span></div>
+                    <div><strong>Floor:</strong> <span id="previewFloor">---</span></div>
+                    <div><strong>Features:</strong> <span id="previewFeatures">None</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="d-flex gap-3 justify-content-end mt-4">
+            <a href="{{ url_for('admin.manage_rooms') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i>
+                Cancel
+            </a>
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-plus-square"></i>
+                Create Room
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Live preview functionality
+function updatePreview() {
+    const number = document.getElementById('number').value || '---';
+    const name = document.getElementById('name').value;
+    const type = document.getElementById('type').value || '---';
+    const capacity = document.getElementById('capacity').value || '---';
+    const building = document.getElementById('building').value || '---';
+    const floor = document.getElementById('floor').value || '---';
+    
+    // Update preview elements
+    document.getElementById('previewNumber').textContent = 
+        `Room ${number}${name ? ` (${name})` : ''}`;
+    document.getElementById('previewType').textContent = 
+        type === '---' ? '---' : type.replace('_', ' ').toUpperCase();
+    document.getElementById('previewCapacity').textContent = 
+        capacity === '---' ? '---' : `${capacity} people`;
+    document.getElementById('previewBuilding').textContent = building;
+    document.getElementById('previewFloor').textContent = floor === '---' ? '---' : 
+        floor === 'basement' ? 'Basement' :
+        floor === 'ground' ? 'Ground Floor' : 
+        `${floor}${getOrdinalSuffix(floor)} Floor`;
+    
+    // Update features
+    const checkedFeatures = Array.from(document.querySelectorAll('input[name="features"]:checked'))
+        .map(cb => cb.nextElementSibling.textContent.trim());
+    document.getElementById('previewFeatures').textContent = 
+        checkedFeatures.length > 0 ? checkedFeatures.join(', ') : 'None';
+}
+
+function getOrdinalSuffix(num) {
+    const j = num % 10;
+    const k = num % 100;
+    if (j === 1 && k !== 11) return 'st';
+    if (j === 2 && k !== 12) return 'nd';
+    if (j === 3 && k !== 13) return 'rd';
+    return 'th';
+}
+
+// Add event listeners for live preview
+document.getElementById('number').addEventListener('input', updatePreview);
+document.getElementById('name').addEventListener('input', updatePreview);
+document.getElementById('type').addEventListener('change', updatePreview);
+document.getElementById('capacity').addEventListener('input', updatePreview);
+document.getElementById('building').addEventListener('input', updatePreview);
+document.getElementById('floor').addEventListener('change', updatePreview);
+document.querySelectorAll('input[name="features"]').forEach(cb => {
+    cb.addEventListener('change', updatePreview);
+});
+
+// Form validation
+document.getElementById('addRoomForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    let isValid = true;
+    const formData = new FormData(this);
+    
+    // Clear previous errors
+    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+    document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+    
+    // Room number validation
+    const number = formData.get('number');
+    if (!number || number.trim().length === 0) {
+        document.getElementById('number').classList.add('is-invalid');
+        document.getElementById('numberError').textContent = 'Room number is required';
+        isValid = false;
+    }
+    
+    // Room type validation
+    const type = formData.get('type');
+    if (!type) {
+        document.getElementById('type').classList.add('is-invalid');
+        document.getElementById('typeError').textContent = 'Please select a room type';
+        isValid = false;
+    }
+    
+    // Capacity validation
+    const capacity = parseInt(formData.get('capacity'));
+    if (!capacity || capacity < 1 || capacity > 1000) {
+        document.getElementById('capacity').classList.add('is-invalid');
+        document.getElementById('capacityError').textContent = 'Capacity must be between 1 and 1000';
+        isValid = false;
+    }
+    
+    if (isValid) {
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Room...';
+        submitBtn.disabled = true;
+        
+        // Submit form
+        this.submit();
+    } else {
+        // Scroll to first error
+        const firstError = document.querySelector('.is-invalid');
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstError.focus();
+        }
+    }
+});
+
+// Initialize preview
+updatePreview();
+</script>
+{% endblock %}

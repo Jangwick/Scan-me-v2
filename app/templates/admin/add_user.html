@@ -1,0 +1,608 @@
+{% extends "dashboard_base.html" %}
+
+{% block page_title %}Add User{% endblock %}
+
+{% block extra_css %}
+<style>
+    .add-user-header {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-container {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-section {
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #10b981;
+    }
+
+    .form-section h5 {
+        color: #1f2937;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-group label .required {
+        color: #ef4444;
+        margin-left: 0.25rem;
+    }
+
+    .form-control {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+        font-size: 1rem;
+    }
+
+    .form-control:focus {
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        outline: none;
+    }
+
+    .form-select {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+        background: white;
+        cursor: pointer;
+    }
+
+    .form-select:focus {
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        outline: none;
+    }
+
+    .form-check-input {
+        border: 2px solid #e5e7eb;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .form-check-input:checked {
+        background-color: #10b981;
+        border-color: #10b981;
+    }
+
+    .form-check-input:focus {
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    .form-check-label {
+        font-weight: 500;
+        color: #374151;
+        cursor: pointer;
+    }
+
+    .password-requirements {
+        background: #fef3c7;
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .password-requirements h6 {
+        color: #92400e;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .password-requirements ul {
+        margin: 0;
+        padding-left: 1.2rem;
+    }
+
+    .password-requirements li {
+        color: #78350f;
+        font-size: 0.8rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .role-info {
+        background: #eff6ff;
+        border: 1px solid #3b82f6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .role-info h6 {
+        color: #1e40af;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .role-info ul {
+        margin: 0;
+        padding-left: 1.2rem;
+    }
+
+    .role-info li {
+        color: #1e3a8a;
+        font-size: 0.8rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .btn {
+        padding: 0.875rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: none;
+        font-size: 1rem;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #4b5563;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-outline-secondary {
+        background: transparent;
+        border: 2px solid #6b7280;
+        color: #6b7280;
+    }
+
+    .btn-outline-secondary:hover {
+        background: #6b7280;
+        color: white;
+        text-decoration: none;
+    }
+
+    .invalid-feedback {
+        display: block;
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .is-invalid {
+        border-color: #ef4444;
+    }
+
+    .is-invalid:focus {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+
+    @media (max-width: 768px) {
+        .add-user-header {
+            padding: 1.5rem;
+        }
+
+        .add-user-header .d-flex {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .form-container {
+            padding: 1.5rem;
+        }
+
+        .form-section {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="add-user-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="mb-1">
+                <i class="fas fa-user-plus me-2"></i>
+                Add New User
+            </h1>
+            <p class="mb-0 opacity-75">Create a new user account for the system</p>
+        </div>
+        <a href="{{ url_for('admin.manage_users') }}" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left"></i>
+            Back to Users
+        </a>
+    </div>
+</div>
+
+<div class="form-container">
+    <form method="POST" id="addUserForm">
+        <!-- Basic Information Section -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-user-circle me-2"></i>
+                Basic Information
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="username">
+                            Username
+                            <span class="required">*</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="username" 
+                               name="username" 
+                               placeholder="Enter unique username"
+                               required
+                               minlength="3"
+                               maxlength="50"
+                               pattern="[a-zA-Z0-9_-]+"
+                               title="Username can only contain letters, numbers, underscores, and hyphens">
+                        <div class="invalid-feedback" id="usernameError"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="email">
+                            Email Address
+                            <span class="required">*</span>
+                        </label>
+                        <input type="email" 
+                               class="form-control" 
+                               id="email" 
+                               name="email" 
+                               placeholder="user@example.com"
+                               required>
+                        <div class="invalid-feedback" id="emailError"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="first_name">First Name</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="first_name" 
+                               name="first_name" 
+                               placeholder="Enter first name"
+                               maxlength="50">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="last_name">Last Name</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="last_name" 
+                               name="last_name" 
+                               placeholder="Enter last name"
+                               maxlength="50">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Section -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-shield-alt me-2"></i>
+                Security & Access
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="password">
+                            Password
+                            <span class="required">*</span>
+                        </label>
+                        <input type="password" 
+                               class="form-control" 
+                               id="password" 
+                               name="password" 
+                               placeholder="Create secure password"
+                               required
+                               minlength="8">
+                        <div class="invalid-feedback" id="passwordError"></div>
+                        <div class="password-requirements">
+                            <h6><i class="fas fa-info-circle me-1"></i>Password Requirements:</h6>
+                            <ul>
+                                <li>At least 8 characters long</li>
+                                <li>Contains at least one uppercase letter</li>
+                                <li>Contains at least one lowercase letter</li>
+                                <li>Contains at least one number</li>
+                                <li>Contains at least one special character</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="confirm_password">
+                            Confirm Password
+                            <span class="required">*</span>
+                        </label>
+                        <input type="password" 
+                               class="form-control" 
+                               id="confirm_password" 
+                               name="confirm_password" 
+                               placeholder="Confirm password"
+                               required>
+                        <div class="invalid-feedback" id="confirmPasswordError"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role & Permissions Section -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-user-tag me-2"></i>
+                Role & Permissions
+            </h5>
+            <div class="form-group">
+                <label for="role">
+                    User Role
+                    <span class="required">*</span>
+                </label>
+                <select class="form-select" id="role" name="role" required>
+                    <option value="">Select a role</option>
+                    <option value="student">Student</option>
+                    <option value="professor">Professor</option>
+                    <option value="admin">Administrator</option>
+                </select>
+                <div class="invalid-feedback" id="roleError"></div>
+                <div class="role-info" id="roleInfo" style="display: none;">
+                    <h6 id="roleInfoTitle"></h6>
+                    <ul id="roleInfoList"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Section -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-toggle-on me-2"></i>
+                Account Status
+            </h5>
+            <div class="form-check">
+                <input class="form-check-input" 
+                       type="checkbox" 
+                       id="is_active" 
+                       name="is_active" 
+                       checked>
+                <label class="form-check-label" for="is_active">
+                    Activate account immediately
+                </label>
+            </div>
+            <small class="text-muted">
+                If unchecked, the user will need to be activated by an administrator before they can log in.
+            </small>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="d-flex gap-3 justify-content-end">
+            <a href="{{ url_for('admin.manage_users') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i>
+                Cancel
+            </a>
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-user-plus"></i>
+                Create User
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Role information
+const roleInfo = {
+    student: {
+        title: "Student Role",
+        permissions: [
+            "View personal attendance records",
+            "Access study materials",
+            "Participate in QR code scanning",
+            "View class schedules"
+        ]
+    },
+    professor: {
+        title: "Professor Role",
+        permissions: [
+            "Manage class attendance",
+            "Create and manage QR codes",
+            "View student attendance reports",
+            "Access teaching materials",
+            "Generate attendance reports"
+        ]
+    },
+    admin: {
+        title: "Administrator Role",
+        permissions: [
+            "Full system access",
+            "Manage all users and roles",
+            "Configure system settings",
+            "Access all reports and analytics",
+            "Manage rooms and schedules"
+        ]
+    }
+};
+
+// Show role information when role is selected
+document.getElementById('role').addEventListener('change', function() {
+    const roleInfoDiv = document.getElementById('roleInfo');
+    const roleInfoTitle = document.getElementById('roleInfoTitle');
+    const roleInfoList = document.getElementById('roleInfoList');
+    
+    if (this.value && roleInfo[this.value]) {
+        roleInfoTitle.textContent = roleInfo[this.value].title;
+        roleInfoList.innerHTML = '';
+        
+        roleInfo[this.value].permissions.forEach(permission => {
+            const li = document.createElement('li');
+            li.textContent = permission;
+            roleInfoList.appendChild(li);
+        });
+        
+        roleInfoDiv.style.display = 'block';
+    } else {
+        roleInfoDiv.style.display = 'none';
+    }
+});
+
+// Password validation
+function validatePassword(password) {
+    const requirements = {
+        length: password.length >= 8,
+        uppercase: /[A-Z]/.test(password),
+        lowercase: /[a-z]/.test(password),
+        number: /\d/.test(password),
+        special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+    };
+    
+    return requirements;
+}
+
+// Real-time password validation
+document.getElementById('password').addEventListener('input', function() {
+    const password = this.value;
+    const requirements = validatePassword(password);
+    const isValid = Object.values(requirements).every(req => req);
+    
+    if (password.length > 0 && !isValid) {
+        this.classList.add('is-invalid');
+        document.getElementById('passwordError').textContent = 'Password does not meet requirements';
+    } else {
+        this.classList.remove('is-invalid');
+        document.getElementById('passwordError').textContent = '';
+    }
+});
+
+// Confirm password validation
+document.getElementById('confirm_password').addEventListener('input', function() {
+    const password = document.getElementById('password').value;
+    const confirmPassword = this.value;
+    
+    if (confirmPassword.length > 0 && password !== confirmPassword) {
+        this.classList.add('is-invalid');
+        document.getElementById('confirmPasswordError').textContent = 'Passwords do not match';
+    } else {
+        this.classList.remove('is-invalid');
+        document.getElementById('confirmPasswordError').textContent = '';
+    }
+});
+
+// Form validation
+document.getElementById('addUserForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    let isValid = true;
+    const formData = new FormData(this);
+    
+    // Clear previous errors
+    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+    document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+    
+    // Username validation
+    const username = formData.get('username');
+    if (!username || username.length < 3) {
+        document.getElementById('username').classList.add('is-invalid');
+        document.getElementById('usernameError').textContent = 'Username must be at least 3 characters';
+        isValid = false;
+    }
+    
+    // Email validation
+    const email = formData.get('email');
+    if (!email || !email.includes('@')) {
+        document.getElementById('email').classList.add('is-invalid');
+        document.getElementById('emailError').textContent = 'Please enter a valid email address';
+        isValid = false;
+    }
+    
+    // Password validation
+    const password = formData.get('password');
+    const requirements = validatePassword(password);
+    if (!Object.values(requirements).every(req => req)) {
+        document.getElementById('password').classList.add('is-invalid');
+        document.getElementById('passwordError').textContent = 'Password does not meet requirements';
+        isValid = false;
+    }
+    
+    // Confirm password validation
+    const confirmPassword = formData.get('confirm_password');
+    if (password !== confirmPassword) {
+        document.getElementById('confirm_password').classList.add('is-invalid');
+        document.getElementById('confirmPasswordError').textContent = 'Passwords do not match';
+        isValid = false;
+    }
+    
+    // Role validation
+    const role = formData.get('role');
+    if (!role) {
+        document.getElementById('role').classList.add('is-invalid');
+        document.getElementById('roleError').textContent = 'Please select a role';
+        isValid = false;
+    }
+    
+    if (isValid) {
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating User...';
+        submitBtn.disabled = true;
+        
+        // Submit form
+        this.submit();
+    } else {
+        // Scroll to first error
+        const firstError = document.querySelector('.is-invalid');
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstError.focus();
+        }
+    }
+});
+</script>
+{% endblock %}
