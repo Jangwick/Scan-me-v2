@@ -1,0 +1,691 @@
+{% extends "dashboard_base.html" %}
+
+{% block page_title %}Add Attendance Session{% endblock %}
+
+{% block extra_css %}
+<style>
+    .add-session-header {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .form-section {
+        padding: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .required {
+        color: #ef4444;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        background-color: #ffffff;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    .form-control.is-invalid {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+
+    .invalid-feedback {
+        display: block;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: #ef4444;
+    }
+
+    .form-actions {
+        padding: 1.5rem 2rem;
+        background: #f9fafb;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border: none;
+        padding: 0.875rem 2rem;
+        border-radius: 10px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        text-decoration: none;
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #6b7280;
+        border: none;
+        padding: 0.875rem 2rem;
+        border-radius: 10px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-secondary:hover {
+        background: #4b5563;
+        text-decoration: none;
+        color: white;
+    }
+
+    .help-text {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+
+    .input-group {
+        position: relative;
+    }
+
+    .input-group .form-control {
+        padding-left: 3rem;
+    }
+
+    .input-group-text {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6b7280;
+        z-index: 10;
+        pointer-events: none;
+    }
+
+    .time-inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .datetime-local-wrapper {
+        position: relative;
+    }
+
+    .datetime-local-wrapper input[type="datetime-local"] {
+        padding-right: 3rem;
+    }
+
+    .datetime-local-wrapper::after {
+        content: '\f073';
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6b7280;
+        pointer-events: none;
+    }
+
+    .session-preview {
+        background: #f8fafc;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        border: 2px dashed #cbd5e1;
+        display: none;
+    }
+
+    .session-preview.show {
+        display: block;
+    }
+
+    .preview-title {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 1rem;
+    }
+
+    .preview-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .preview-item {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .preview-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.25rem;
+    }
+
+    .preview-value {
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .duration-display {
+        background: #dbeafe;
+        color: #1e40af;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+        display: inline-block;
+    }
+
+    @media (max-width: 768px) {
+        .add-session-header {
+            padding: 1.5rem;
+        }
+
+        .form-section {
+            padding: 1.5rem;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .time-inputs {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .form-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="add-session-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="mb-1">
+                <i class="fas fa-plus me-2"></i>
+                Create Attendance Session
+            </h1>
+            <p class="mb-0 opacity-75">Set up a new session for attendance tracking</p>
+        </div>
+        <a href="{{ url_for('attendance.manage_sessions') }}" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left me-2"></i>
+            Back to Sessions
+        </a>
+    </div>
+</div>
+
+<form method="POST" class="form-container" id="session-form">
+    <!-- Basic Information -->
+    <div class="form-section">
+        <h3 class="section-title">
+            <i class="fas fa-info me-2"></i>
+            Session Details
+        </h3>
+
+        <div class="form-group">
+            <label for="session_name">
+                Session Name <span class="required">*</span>
+            </label>
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-tag"></i>
+                </span>
+                <input type="text" 
+                       id="session_name" 
+                       name="session_name" 
+                       class="form-control"
+                       placeholder="e.g., Morning Lecture, Lab Session"
+                       required>
+            </div>
+            <div class="help-text">Give your session a descriptive name</div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="subject">
+                    Subject <span class="required">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-book"></i>
+                    </span>
+                    <input type="text" 
+                           id="subject" 
+                           name="subject" 
+                           class="form-control"
+                           placeholder="e.g., Computer Science, Mathematics"
+                           required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="instructor">
+                    Instructor <span class="required">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-user-tie"></i>
+                    </span>
+                    <input type="text" 
+                           id="instructor" 
+                           name="instructor" 
+                           class="form-control"
+                           placeholder="Instructor name"
+                           required>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location & Time -->
+    <div class="form-section">
+        <h3 class="section-title">
+            <i class="fas fa-map-marker-alt me-2"></i>
+            Location & Schedule
+        </h3>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="room_id">
+                    Room <span class="required">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-door-open"></i>
+                    </span>
+                    <select id="room_id" name="room_id" class="form-control" required>
+                        <option value="">Select Room</option>
+                        {% for room in rooms %}
+                        <option value="{{ room.id }}">{{ room.get_full_name() }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="help-text">Choose where the session will take place</div>
+            </div>
+
+            <div class="form-group">
+                <label for="expected_students">
+                    Expected Students
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-users"></i>
+                    </span>
+                    <input type="number" 
+                           id="expected_students" 
+                           name="expected_students" 
+                           class="form-control"
+                           placeholder="0"
+                           min="0"
+                           max="500">
+                </div>
+                <div class="help-text">Approximate number of students expected (optional)</div>
+            </div>
+        </div>
+
+        <div class="form-row time-inputs">
+            <div class="form-group">
+                <label for="start_time">
+                    Start Time <span class="required">*</span>
+                </label>
+                <div class="datetime-local-wrapper">
+                    <input type="datetime-local" 
+                           id="start_time" 
+                           name="start_time" 
+                           class="form-control"
+                           required>
+                </div>
+                <div class="help-text">When the session begins</div>
+            </div>
+
+            <div class="form-group">
+                <label for="end_time">
+                    End Time <span class="required">*</span>
+                </label>
+                <div class="datetime-local-wrapper">
+                    <input type="datetime-local" 
+                           id="end_time" 
+                           name="end_time" 
+                           class="form-control"
+                           required>
+                </div>
+                <div class="help-text">When the session ends</div>
+                <div id="duration-display" class="duration-display" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Preview -->
+    <div class="form-section">
+        <h3 class="section-title">
+            <i class="fas fa-eye me-2"></i>
+            Session Preview
+        </h3>
+        
+        <div id="session-preview" class="session-preview">
+            <div class="preview-title">Session Summary</div>
+            <div class="preview-details">
+                <div class="preview-item">
+                    <div class="preview-label">Session</div>
+                    <div class="preview-value" id="preview-name">-</div>
+                </div>
+                <div class="preview-item">
+                    <div class="preview-label">Subject</div>
+                    <div class="preview-value" id="preview-subject">-</div>
+                </div>
+                <div class="preview-item">
+                    <div class="preview-label">Instructor</div>
+                    <div class="preview-value" id="preview-instructor">-</div>
+                </div>
+                <div class="preview-item">
+                    <div class="preview-label">Room</div>
+                    <div class="preview-value" id="preview-room">-</div>
+                </div>
+                <div class="preview-item">
+                    <div class="preview-label">Date</div>
+                    <div class="preview-value" id="preview-date">-</div>
+                </div>
+                <div class="preview-item">
+                    <div class="preview-label">Time</div>
+                    <div class="preview-value" id="preview-time">-</div>
+                </div>
+            </div>
+        </div>
+        
+        <p class="text-muted text-center" id="preview-placeholder">
+            Fill in the form to see session preview
+        </p>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+        <div>
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                All fields marked with <span class="required">*</span> are required
+            </small>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('attendance.manage_sessions') }}" class="btn-secondary">
+                <i class="fas fa-times"></i>
+                Cancel
+            </a>
+            <button type="submit" class="btn-success">
+                <i class="fas fa-save"></i>
+                Create Session
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('session-form');
+    const preview = document.getElementById('session-preview');
+    const placeholder = document.getElementById('preview-placeholder');
+    const durationDisplay = document.getElementById('duration-display');
+    
+    // Form elements
+    const sessionName = document.getElementById('session_name');
+    const subject = document.getElementById('subject');
+    const instructor = document.getElementById('instructor');
+    const roomSelect = document.getElementById('room_id');
+    const startTime = document.getElementById('start_time');
+    const endTime = document.getElementById('end_time');
+    
+    // Preview elements
+    const previewName = document.getElementById('preview-name');
+    const previewSubject = document.getElementById('preview-subject');
+    const previewInstructor = document.getElementById('preview-instructor');
+    const previewRoom = document.getElementById('preview-room');
+    const previewDate = document.getElementById('preview-date');
+    const previewTime = document.getElementById('preview-time');
+    
+    // Set default start time to current time rounded to next hour
+    const now = new Date();
+    const nextHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0);
+    const twoHoursLater = new Date(nextHour.getTime() + 2 * 60 * 60 * 1000);
+    
+    startTime.value = formatDateTimeLocal(nextHour);
+    endTime.value = formatDateTimeLocal(twoHoursLater);
+    
+    function formatDateTimeLocal(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+    
+    function updatePreview() {
+        const hasBasicInfo = sessionName.value.trim() || subject.value.trim() || instructor.value.trim();
+        const hasTimeInfo = startTime.value || endTime.value;
+        
+        if (hasBasicInfo || hasTimeInfo) {
+            preview.classList.add('show');
+            placeholder.style.display = 'none';
+            
+            // Update preview values
+            previewName.textContent = sessionName.value.trim() || '-';
+            previewSubject.textContent = subject.value.trim() || '-';
+            previewInstructor.textContent = instructor.value.trim() || '-';
+            
+            // Update room
+            const selectedRoom = roomSelect.options[roomSelect.selectedIndex];
+            previewRoom.textContent = selectedRoom && selectedRoom.value ? selectedRoom.text : '-';
+            
+            // Update date and time
+            if (startTime.value) {
+                const startDate = new Date(startTime.value);
+                previewDate.textContent = startDate.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                if (endTime.value) {
+                    const endDate = new Date(endTime.value);
+                    previewTime.textContent = `${startDate.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    })} - ${endDate.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    })}`;
+                } else {
+                    previewTime.textContent = startDate.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    }) + ' - ?';
+                }
+            } else {
+                previewDate.textContent = '-';
+                previewTime.textContent = '-';
+            }
+        } else {
+            preview.classList.remove('show');
+            placeholder.style.display = 'block';
+        }
+    }
+    
+    function updateDuration() {
+        if (startTime.value && endTime.value) {
+            const start = new Date(startTime.value);
+            const end = new Date(endTime.value);
+            const diffMs = end - start;
+            
+            if (diffMs > 0) {
+                const diffHours = diffMs / (1000 * 60 * 60);
+                const hours = Math.floor(diffHours);
+                const minutes = Math.round((diffHours - hours) * 60);
+                
+                let durationText = '';
+                if (hours > 0) durationText += `${hours} hour${hours !== 1 ? 's' : ''}`;
+                if (minutes > 0) {
+                    if (durationText) durationText += ' ';
+                    durationText += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+                }
+                
+                durationDisplay.textContent = `Duration: ${durationText}`;
+                durationDisplay.style.display = 'inline-block';
+            } else {
+                durationDisplay.style.display = 'none';
+            }
+        } else {
+            durationDisplay.style.display = 'none';
+        }
+    }
+    
+    // Add event listeners
+    [sessionName, subject, instructor, roomSelect, startTime, endTime].forEach(element => {
+        element.addEventListener('input', updatePreview);
+        element.addEventListener('change', updatePreview);
+    });
+    
+    [startTime, endTime].forEach(element => {
+        element.addEventListener('input', updateDuration);
+        element.addEventListener('change', updateDuration);
+    });
+    
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const requiredFields = form.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        // Validate time range
+        if (startTime.value && endTime.value) {
+            const start = new Date(startTime.value);
+            const end = new Date(endTime.value);
+            
+            if (end <= start) {
+                endTime.classList.add('is-invalid');
+                alert('End time must be after start time.');
+                isValid = false;
+                e.preventDefault();
+                return;
+            }
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+            return false;
+        }
+    });
+    
+    // Real-time validation
+    const inputs = form.querySelectorAll('input, select');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.hasAttribute('required') && !this.value.trim()) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
+        
+        input.addEventListener('input', function() {
+            if (this.classList.contains('is-invalid') && this.value.trim()) {
+                this.classList.remove('is-invalid');
+            }
+        });
+    });
+    
+    // Initialize
+    updatePreview();
+    updateDuration();
+});
+</script>
+{% endblock %}

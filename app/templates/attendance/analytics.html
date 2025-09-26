@@ -1,0 +1,617 @@
+{% extends "dashboard_base.html" %}
+
+{% block page_title %}Attendance Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analytics-header {
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #06b6d4 0%, #0891b2 100%);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .stat-icon.total {
+        background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+    }
+
+    .stat-icon.students {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .stat-icon.weekly {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    .stat-icon.rate {
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+        line-height: 1;
+    }
+
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin: 0.5rem 0 0 0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+    }
+
+    .stat-change {
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+
+    .change-positive {
+        color: #10b981;
+    }
+
+    .change-negative {
+        color: #ef4444;
+    }
+
+    .charts-section {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .chart-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .chart-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0;
+    }
+
+    .chart-subtitle {
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin: 0.25rem 0 0 0;
+    }
+
+    .chart-container {
+        height: 300px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f9fafb;
+        border-radius: 8px;
+        color: #6b7280;
+    }
+
+    .insights-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .insight-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        border-left: 4px solid #06b6d4;
+    }
+
+    .insight-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .insight-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.125rem;
+    }
+
+    .insight-title {
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0;
+    }
+
+    .insight-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .insight-item {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f3f4f6;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+
+    .insight-item:last-child {
+        border-bottom: none;
+    }
+
+    .insight-metric {
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .insight-value {
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    .recent-activity {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+    }
+
+    .activity-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .activity-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.875rem;
+        margin-right: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-text {
+        color: #1f2937;
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    .activity-time {
+        color: #6b7280;
+        font-size: 0.75rem;
+        margin: 0.25rem 0 0 0;
+    }
+
+    .empty-analytics {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .empty-analytics i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    @media (max-width: 1024px) {
+        .charts-section {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .analytics-header {
+            padding: 1.5rem;
+        }
+
+        .stats-overview {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+
+        .stat-value {
+            font-size: 2rem;
+        }
+
+        .insight-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="analytics-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="mb-1">
+                <i class="fas fa-chart-bar me-2"></i>
+                Attendance Analytics
+            </h1>
+            <p class="mb-0 opacity-75">Insights and trends from attendance data</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('attendance.reports') }}" class="btn btn-outline-light">
+                <i class="fas fa-chart-line"></i>
+                Reports
+            </a>
+            <a href="{{ url_for('attendance.manage_sessions') }}" class="btn btn-outline-light">
+                <i class="fas fa-clock"></i>
+                Sessions
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Overview -->
+<div class="stats-overview">
+    <div class="stat-card">
+        <div class="stat-icon total">
+            <i class="fas fa-clipboard-list"></i>
+        </div>
+        <p class="stat-value">{{ stats.total_records or 0 }}</p>
+        <p class="stat-label">Total Records</p>
+        <p class="stat-change change-positive">
+            <i class="fas fa-arrow-up"></i> +12% from last month
+        </p>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon students">
+            <i class="fas fa-users"></i>
+        </div>
+        <p class="stat-value">{{ stats.unique_students or 0 }}</p>
+        <p class="stat-label">Active Students</p>
+        <p class="stat-change change-positive">
+            <i class="fas fa-arrow-up"></i> +5% from last month
+        </p>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon weekly">
+            <i class="fas fa-calendar-week"></i>
+        </div>
+        <p class="stat-value">{{ stats.weekly_records or 0 }}</p>
+        <p class="stat-label">This Week</p>
+        <p class="stat-change change-negative">
+            <i class="fas fa-arrow-down"></i> -3% from last week
+        </p>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon rate">
+            <i class="fas fa-percentage"></i>
+        </div>
+        <p class="stat-value">92%</p>
+        <p class="stat-label">Attendance Rate</p>
+        <p class="stat-change change-positive">
+            <i class="fas fa-arrow-up"></i> +2% from last month
+        </p>
+    </div>
+</div>
+
+{% if stats.total_records and stats.total_records > 0 %}
+<!-- Charts Section -->
+<div class="charts-section">
+    <div class="chart-card">
+        <div class="chart-header">
+            <div>
+                <h3 class="chart-title">Attendance Trends</h3>
+                <p class="chart-subtitle">Daily attendance over the last 30 days</p>
+            </div>
+        </div>
+        <div class="chart-container">
+            <i class="fas fa-chart-line fa-3x"></i>
+            <div class="ms-3">
+                <p class="mb-0"><strong>Chart Coming Soon</strong></p>
+                <p class="text-muted mb-0">Interactive attendance trends will be displayed here</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="chart-card">
+        <div class="chart-header">
+            <div>
+                <h3 class="chart-title">Department Breakdown</h3>
+                <p class="chart-subtitle">Attendance by department</p>
+            </div>
+        </div>
+        <div class="chart-container">
+            <i class="fas fa-chart-pie fa-3x"></i>
+            <div class="ms-3">
+                <p class="mb-0"><strong>Chart Coming Soon</strong></p>
+                <p class="text-muted mb-0">Department attendance distribution</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Insights Section -->
+<div class="insights-section">
+    <div class="insight-card">
+        <div class="insight-header">
+            <div class="insight-icon">
+                <i class="fas fa-trophy"></i>
+            </div>
+            <h4 class="insight-title">Top Performing Classes</h4>
+        </div>
+        <ul class="insight-list">
+            <li class="insight-item">
+                <span class="insight-metric">Computer Science 101</span>
+                <span class="insight-value">95% attendance</span>
+            </li>
+            <li class="insight-item">
+                <span class="insight-metric">Mathematics 201</span>
+                <span class="insight-value">92% attendance</span>
+            </li>
+            <li class="insight-item">
+                <span class="insight-metric">Physics Lab</span>
+                <span class="insight-value">89% attendance</span>
+            </li>
+            <li class="insight-item">
+                <span class="insight-metric">English Literature</span>
+                <span class="insight-value">87% attendance</span>
+            </li>
+        </ul>
+    </div>
+    
+    <div class="insight-card">
+        <div class="insight-header">
+            <div class="insight-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <h4 class="insight-title">Peak Hours</h4>
+        </div>
+        <ul class="insight-list">
+            <li class="insight-item">
+                <span class="insight-metric">9:00 AM - 10:00 AM</span>
+                <span class="insight-value">High activity</span>
+            </li>
+            <li class="insight-item">
+                <span class="insight-metric">1:00 PM - 2:00 PM</span>
+                <span class="insight-value">Medium activity</span>
+            </li>
+            <li class="insight-item">
+                <span class="insight-metric">3:00 PM - 4:00 PM</span>
+                <span class="insight-value">High activity</span>
+            </li>
+            <li class="insight-item">
+                <span class="insight-metric">7:00 PM - 8:00 PM</span>
+                <span class="insight-value">Low activity</span>
+            </li>
+        </ul>
+    </div>
+    
+    <div class="insight-card">
+        <div class="insight-header">
+            <div class="insight-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h4 class="insight-title">Areas for Improvement</h4>
+        </div>
+        <ul class="insight-list">
+            <li class="insight-item">
+                <span class="insight-metric">Late arrivals</span>
+                <span class="insight-value">8% of records</span>
+            </li>
+            <li class="insight-item">
+                <span class="insight-metric">Friday classes</span>
+                <span class="insight-value">Lower attendance</span>
+            </li>
+            <li class="insight-item">
+                <span class="insight-metric">Room B-205</span>
+                <span class="insight-value">Technical issues</span>
+            </li>
+            <li class="insight-item">
+                <span class="insight-metric">Duplicate scans</span>
+                <span class="insight-value">2% of records</span>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="recent-activity">
+    <div class="activity-header">
+        <h3 class="chart-title">Recent Activity</h3>
+        <small class="text-muted">Latest attendance events</small>
+    </div>
+    
+    <ul class="activity-list">
+        <li class="activity-item">
+            <div class="activity-icon">
+                <i class="fas fa-qrcode"></i>
+            </div>
+            <div class="activity-content">
+                <p class="activity-text">High attendance recorded for CS 101 morning session</p>
+                <p class="activity-time">2 hours ago</p>
+            </div>
+        </li>
+        <li class="activity-item">
+            <div class="activity-icon">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="activity-content">
+                <p class="activity-text">New session created for Mathematics Lab</p>
+                <p class="activity-time">4 hours ago</p>
+            </div>
+        </li>
+        <li class="activity-item">
+            <div class="activity-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="activity-content">
+                <p class="activity-text">Weekly attendance report generated</p>
+                <p class="activity-time">1 day ago</p>
+            </div>
+        </li>
+        <li class="activity-item">
+            <div class="activity-icon">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <div class="activity-content">
+                <p class="activity-text">Low attendance alert for History 201</p>
+                <p class="activity-time">2 days ago</p>
+            </div>
+        </li>
+    </ul>
+</div>
+
+{% else %}
+<!-- Empty State -->
+<div class="empty-analytics">
+    <i class="fas fa-chart-bar"></i>
+    <h4>No Analytics Data Available</h4>
+    <p>Start recording attendance to see analytics and insights here.</p>
+    <div class="mt-3">
+        <a href="{{ url_for('attendance.manage_sessions') }}" class="btn btn-primary me-2">
+            <i class="fas fa-plus"></i>
+            Create Session
+        </a>
+        <a href="{{ url_for('scanner.index') }}" class="btn btn-outline-primary">
+            <i class="fas fa-qrcode"></i>
+            Start Scanning
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate stat counters
+    const statValues = document.querySelectorAll('.stat-value');
+    
+    statValues.forEach(stat => {
+        const target = parseInt(stat.textContent.replace(/\D/g, ''));
+        if (target > 0) {
+            animateCounter(stat, target);
+        }
+    });
+    
+    function animateCounter(element, target) {
+        let current = 0;
+        const increment = target / 100;
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            
+            // Preserve percentage symbol if present
+            const originalText = element.textContent;
+            const hasPercent = originalText.includes('%');
+            element.textContent = Math.round(current) + (hasPercent ? '%' : '');
+        }, 20);
+    }
+    
+    // Auto-refresh data every 5 minutes
+    setInterval(function() {
+        // In a real implementation, this would fetch updated stats
+        console.log('Auto-refreshing analytics data...');
+    }, 5 * 60 * 1000);
+});
+</script>
+{% endblock %}
