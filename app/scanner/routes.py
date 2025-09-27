@@ -70,33 +70,215 @@ def api_get_sessions():
 @scanner.route('/api/scan-qr', methods=['POST'])
 @login_required
 def api_scan_qr_code():
-    """Process a scanned QR code"""
+    """Process a scanned QR code for time-in or time-out with comprehensive validation"""
     try:
+        # Edge Case: Request validation
+        if not request.is_json:
+            return jsonify({
+                'success': False, 
+                'message': 'Request must be JSON',
+                'error_code': 'INVALID_REQUEST_TYPE'
+            }), 400
+        
         data = request.get_json()
-        qr_data = data.get('qr_data', '').strip()
+        if not data:
+            return jsonify({
+                'success': False, 
+                'message': 'No data provided',
+                'error_code': 'NO_DATA'
+            }), 400
+        
+        # Extract and validate QR data
+        qr_data = data.get('qr_data', '')
         session_id = data.get('session_id')
+        scan_type = data.get('scan_type', 'auto')  # auto, time_in, time_out
         
-        if not qr_data:
-            return jsonify({'success': False, 'message': 'No QR code data provided'})
-            
+        # Edge Case: Empty QR data
+        if not qr_data or not qr_data.strip():
+            return jsonify({
+                'success': False, 
+                'message': 'No QR code data provided',
+                'error_code': 'EMPTY_QR_DATA'
+            })
+        
+        # Edge Case: Missing session
         if not session_id:
-            return jsonify({'success': False, 'message': 'No session selected'})
+            return jsonify({
+                'success': False, 
+                'message': 'No session selected',
+                'error_code': 'NO_SESSION'
+            })
         
-        # Get the session
+        # Comprehensive QR validation using enhanced utility
+        from app.utils.qr_utils import validate_qr_data
+        qr_validation = validate_qr_data(qr_data)
+        
+        if not qr_validation['valid']:
+            return jsonify({
+                'success': False,
+                'message': f'Invalid QR code: {qr_validation["error"]}',
+                'error_code': qr_validation.get('error_code', 'QR_VALIDATION_FAILED'),
+                'hint': 'Please scan a valid student QR code or enter student information manually'
+            })
+        
+        # Get validated data
+        validated_data = qr_validation['data']
+        
+        # Get the session with validation
         session = AttendanceSession.query.get(session_id)
         if not session:
-            return jsonify({'success': False, 'message': 'Invalid session'})
+            return jsonify({
+                'success': False, 
+                'message': 'Invalid session ID',
+                'error_code': 'INVALID_SESSION'
+            })
         
-        # Parse QR code data - could be student ID, JSON, or other format
-        student = None
+        # Edge Case: Inactive session
+        if not session.is_active:
+            return jsonify({
+                'success': False,
+                'message': 'Session is not active',
+                'error_code': 'INACTIVE_SESSION'
+            })
         
-        # Try to parse as JSON first (if QR code contains structured data)
-        try:
-            qr_json = json.loads(qr_data)
-            student_id = qr_json.get('student_id') or qr_json.get('id')
-        except (json.JSONDecodeError, ValueError):
-            # Treat as plain student ID
-            student_id = qr_data
+        # Student identification with comprehensive edge case handling
+        from app.services.student_identification_service import StudentIdentificationService
+        
+        student, student_error = StudentIdentificationService.find_student_by_qr_data(validated_data)
+        
+        if student_error:
+            return jsonify({
+                'success': False,
+                'message': student_error['error'],
+                'error_code': student_error['error_code']
+            })
+        
+        # Edge Case: Student not found - Auto-creation with comprehensive validation
+        if not student:
+            current_app.logger.info(f"Student not found, attempting auto-creation from QR data")
+            student, creation_error = StudentIdentificationService.create_student_from_qr_data(validated_data)
+            
+            if creation_error:
+                return jsonify({
+                    'success': False,
+                    'message': creation_error['error'],
+                    'error_code': creation_error['error_code'],
+                    'hint': 'Please ensure the student is registered in the system or contact an administrator'
+                })
+        
+        # Validate student for attendance
+        is_valid, validation_error = StudentIdentificationService.validate_student_for_attendance(student)
+        if not is_valid:
+            return jsonify({
+                'success': False,
+                'message': validation_error['error'],
+                'error_code': validation_error['error_code']
+            })
+        
+        # Log successful identification
+        StudentIdentificationService.log_identification_attempt(qr_data, student, True)
+        
+        # Check if student has an active record in this room
+        active_record = AttendanceRecord.get_student_active_record(student.id, session.room_id)
+        
+        from flask_login import current_user
+        
+        # Determine action based on current state and scan_type
+        if scan_type == 'time_out' or (scan_type == 'auto' and active_record):
+            # Time-out logic
+            if not active_record:
+                return jsonify({
+                    'success': False, 
+                    'message': f'{student.get_full_name()} is not currently timed in to this room',
+                    'student_name': student.get_full_name(),
+                    'action': 'none'
+                })
+            
+            # Process time-out
+            success, message = active_record.time_out_student(current_user.id)
+            
+            if success:
+                duration = active_record.get_duration()
+                return jsonify({
+                    'success': True,
+                    'message': f'Successfully timed out {student.get_full_name()}. Duration: {duration} minutes',
+                    'student_name': student.get_full_name(),
+                    'action': 'time_out',
+                    'time_in': active_record.time_in.isoformat(),
+                    'time_out': active_record.time_out.isoformat(),
+                    'duration_minutes': duration,
+                    'timestamp': active_record.time_out.isoformat()
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': message,
+                    'student_name': student.get_full_name(),
+                    'action': 'error'
+                })
+                
+        else:
+            # Time-in logic
+            if active_record:
+                return jsonify({
+                    'success': False, 
+                    'message': f'{student.get_full_name()} is already timed in to this room',
+                    'student_name': student.get_full_name(),
+                    'action': 'duplicate',
+                    'time_in': active_record.time_in.isoformat(),
+                    'current_duration': active_record.get_duration()
+                })
+            
+            # Check for recent time-in (prevent duplicates within 5 minutes)
+            from datetime import timedelta
+            recent_time = datetime.now() - timedelta(minutes=5)
+            recent_record = AttendanceRecord.query.filter(
+                AttendanceRecord.student_id == student.id,
+                AttendanceRecord.room_id == session.room_id,
+                AttendanceRecord.time_in >= recent_time
+            ).first()
+            
+            if recent_record and not recent_record.time_out:
+                return jsonify({
+                    'success': False, 
+                    'message': f'{student.get_full_name()} was already timed in recently',
+                    'student_name': student.get_full_name(),
+                    'action': 'recent_duplicate'
+                })
+            
+            # Determine if late
+            now = datetime.now()
+            is_late = now > (session.start_time + timedelta(minutes=10))  # 10-minute grace period
+            
+            # Create new time-in record
+            attendance = AttendanceRecord(
+                student_id=student.id,
+                room_id=session.room_id,
+                session_id=session.id,
+                scanned_by=current_user.id,
+                is_late=is_late
+            )
+            
+            # Check for duplicate status after creation
+            attendance.check_and_set_duplicate_status()
+            
+            db.session.add(attendance)
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Successfully timed in {student.get_full_name()}' + (' (Late)' if is_late else ''),
+                'student_name': student.get_full_name(),
+                'action': 'time_in',
+                'is_late': is_late,
+                'time_in': attendance.time_in.isoformat(),
+                'timestamp': attendance.time_in.isoformat()
+            })
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error processing QR scan: {str(e)}")
+        return jsonify({'success': False, 'message': f'Failed to process scan: {str(e)}'})
         
         # Find student by ID, email, or student number
         student = Student.query.filter(
@@ -209,17 +391,16 @@ def api_scan_image():
 @scanner.route('/api/recent-scans')
 @login_required
 def api_get_recent_scans():
-    """Get recent attendance scans"""
+    """Get recent attendance scans with time-in/time-out information"""
     try:
         limit = request.args.get('limit', 10, type=int)
         
+        # Get recent records ordered by latest activity (time_in or time_out)
         recent_scans = db.session.query(
-            AttendanceRecord.scan_time,
-            AttendanceRecord.is_late,
-            Student.first_name,
-            Student.last_name,
-            Room.room_name,
-            AttendanceSession.session_name
+            AttendanceRecord,
+            Student,
+            Room,
+            AttendanceSession
         ).join(
             Student, AttendanceRecord.student_id == Student.id
         ).join(
@@ -227,20 +408,39 @@ def api_get_recent_scans():
         ).join(
             Room, AttendanceSession.room_id == Room.id
         ).order_by(
-            AttendanceRecord.scan_time.desc()
+            # Order by most recent activity (time_out if exists, otherwise time_in)
+            func.coalesce(AttendanceRecord.time_out, AttendanceRecord.time_in).desc()
         ).limit(limit).all()
         
         scans_data = []
-        for scan in recent_scans:
-            student_name = f"{scan.first_name} {scan.last_name}".strip()
-            time_ago = get_time_ago(scan.scan_time)
+        for record, student, room, session in recent_scans:
+            student_name = f"{student.first_name} {student.last_name}".strip()
+            
+            # Determine the most recent action
+            if record.time_out:
+                last_action_time = record.time_out
+                action_type = 'time_out'
+                action_text = 'Timed Out'
+            else:
+                last_action_time = record.time_in
+                action_type = 'time_in'
+                action_text = 'Timed In'
+            
+            time_ago = get_time_ago(last_action_time)
+            
             scans_data.append({
                 'student_name': student_name,
-                'room_name': scan.room_name,
-                'session_name': scan.session_name,
-                'timestamp': scan.scan_time.isoformat(),
+                'student_no': student.student_no,
+                'room_name': room.room_name,
+                'session_name': session.session_name,
+                'action_type': action_type,
+                'action_text': action_text,
+                'timestamp': last_action_time.isoformat(),
                 'time_ago': time_ago,
-                'is_late': scan.is_late
+                'is_late': record.is_late,
+                'is_active': record.is_active,
+                'duration_minutes': record.get_duration() if record.time_out else None,
+                'status': record.get_status()
             })
         
         return jsonify(scans_data)
@@ -252,64 +452,129 @@ def api_get_recent_scans():
 @scanner.route('/api/session-stats/<int:session_id>')
 @login_required
 def api_get_session_stats(session_id):
-    """Get statistics for a specific session"""
+    """Get statistics for a specific session including time-in/time-out data"""
     try:
         today = datetime.now().date()
         
-        # Count today's scans for this session
-        scans_today = AttendanceRecord.query.filter(
+        # Get all records for this session today
+        session_records = AttendanceRecord.query.filter(
             and_(
                 AttendanceRecord.session_id == session_id,
-                func.date(AttendanceRecord.scan_time) == today
+                func.date(AttendanceRecord.time_in) == today
             )
-        ).count()
+        ).all()
         
-        # Count unique students
-        unique_students = db.session.query(
-            AttendanceRecord.student_id
-        ).filter(
-            and_(
-                AttendanceRecord.session_id == session_id,
-                func.date(AttendanceRecord.scan_time) == today
-            )
-        ).distinct().count()
+        # Calculate statistics
+        total_time_ins = len(session_records)
+        completed_visits = len([r for r in session_records if r.time_out])
+        currently_in_room = len([r for r in session_records if r.is_active])
+        unique_students = len(set(r.student_id for r in session_records))
+        late_arrivals = len([r for r in session_records if r.is_late])
+        
+        # Calculate average duration for completed visits
+        completed_records = [r for r in session_records if r.time_out]
+        avg_duration = 0
+        if completed_records:
+            total_duration = sum(r.get_duration() for r in completed_records)
+            avg_duration = round(total_duration / len(completed_records), 1)
         
         return jsonify({
-            'scans_today': scans_today,
-            'unique_students': unique_students
+            'total_time_ins': total_time_ins,
+            'completed_visits': completed_visits,
+            'currently_in_room': currently_in_room,
+            'unique_students': unique_students,
+            'late_arrivals': late_arrivals,
+            'avg_duration_minutes': avg_duration
         })
         
     except Exception as e:
         current_app.logger.error(f"Error fetching session stats: {str(e)}")
-        return jsonify({'scans_today': 0, 'unique_students': 0})
+        return jsonify({
+            'total_time_ins': 0,
+            'completed_visits': 0,
+            'currently_in_room': 0,
+            'unique_students': 0,
+            'late_arrivals': 0,
+            'avg_duration_minutes': 0
+        })
 
 @scanner.route('/api/today-stats')
 @login_required
 def api_get_today_stats():
-    """Get overall statistics for today"""
+    """Get overall statistics for today including time-in/time-out data"""
     try:
         today = datetime.now().date()
         
-        # Total scans today
-        total_scans = AttendanceRecord.query.filter(
-            func.date(AttendanceRecord.scan_time) == today
-        ).count()
+        # Get all records for today
+        today_records = AttendanceRecord.query.filter(
+            func.date(AttendanceRecord.time_in) == today
+        ).all()
         
-        # Unique students today
-        unique_students = db.session.query(
-            AttendanceRecord.student_id
-        ).filter(
-            func.date(AttendanceRecord.scan_time) == today
-        ).distinct().count()
+        # Calculate statistics
+        total_time_ins = len(today_records)
+        completed_visits = len([r for r in today_records if r.time_out])
+        currently_in_rooms = len([r for r in today_records if r.is_active])
+        unique_students = len(set(r.student_id for r in today_records))
         
         return jsonify({
-            'total_scans': total_scans,
+            'total_time_ins': total_time_ins,
+            'completed_visits': completed_visits,
+            'currently_in_rooms': currently_in_rooms,
             'unique_students': unique_students
         })
         
     except Exception as e:
         current_app.logger.error(f"Error fetching today stats: {str(e)}")
-        return jsonify({'total_scans': 0, 'unique_students': 0})
+        return jsonify({
+            'total_time_ins': 0,
+            'completed_visits': 0,
+            'currently_in_rooms': 0,
+            'unique_students': 0
+        })
+
+@scanner.route('/api/current-occupancy/<int:session_id>')
+@login_required
+def api_get_current_occupancy(session_id):
+    """Get students currently in the room for a session"""
+    try:
+        # Get session details
+        session = AttendanceSession.query.get_or_404(session_id)
+        
+        # Get students currently in the room
+        current_students = db.session.query(
+            AttendanceRecord,
+            Student
+        ).join(
+            Student, AttendanceRecord.student_id == Student.id
+        ).filter(
+            AttendanceRecord.session_id == session_id,
+            AttendanceRecord.is_active == True
+        ).order_by(
+            AttendanceRecord.time_in.asc()
+        ).all()
+        
+        occupancy_data = []
+        for record, student in current_students:
+            occupancy_data.append({
+                'student_id': student.id,
+                'student_name': student.get_full_name(),
+                'student_no': student.student_no,
+                'time_in': record.time_in.isoformat(),
+                'duration_minutes': record.get_duration(),
+                'is_late': record.is_late
+            })
+        
+        return jsonify({
+            'success': True,
+            'session_name': session.session_name,
+            'room_name': session.room.room_name if session.room else 'Unknown',
+            'current_occupancy': len(occupancy_data),
+            'students': occupancy_data
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error fetching current occupancy: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 def process_qr_data(qr_data, session_id):
     """Helper function to process QR data consistently"""

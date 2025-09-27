@@ -1,7 +1,6 @@
 """
-QR Code Utilities for ScanMe System (Simplified Version)
-Handles QR code generation and basic processing
-Note: Camera scanning features require additional setup
+QR Code Utilities for ScanMe System (Enhanced Version)
+Handles QR code generation and comprehensive processing with edge case handling
 """
 
 import qrcode
@@ -10,7 +9,13 @@ import io
 import base64
 import os
 import json
+import re
 from datetime import datetime
+
+try:
+    import numpy as np
+except ImportError:
+    np = None
 
 def generate_user_qr_code(user_data, user_type='student', save_path=None, return_bytes=False):
     """
@@ -115,57 +120,247 @@ def create_qr_data(user_data, user_type='student'):
 
 def validate_qr_data(qr_content):
     """
-    Validate QR code content format
+    Comprehensive QR code content validation with edge case handling
     Args:
         qr_content (str): Raw QR code content
     Returns:
         dict: Validation result with parsed data
     """
+    # Edge Case 1: Empty QR Code
+    if not qr_content:
+        return {
+            'valid': False,
+            'error': 'QR code is empty',
+            'error_code': 'EMPTY_QR',
+            'data': None
+        }
+    
+    # Edge Case 2: Whitespace-only data
+    if not qr_content.strip():
+        return {
+            'valid': False,
+            'error': 'QR code contains only whitespace',
+            'error_code': 'WHITESPACE_ONLY',
+            'data': None
+        }
+    
+    # Edge Case 3: Extremely long data (potential DoS)
+    if len(qr_content) > 5000:  # Reasonable limit for QR codes
+        return {
+            'valid': False,
+            'error': 'QR code data exceeds maximum length (5000 characters)',
+            'error_code': 'DATA_TOO_LONG',
+            'data': None
+        }
+    
+    # Edge Case 4: Binary data detection
     try:
-        # Try to parse as JSON
-        data = json.loads(qr_content)
-        
-        # Validate required fields
-        required_fields = ['type', 'student_id', 'student_no', 'name']
-        missing_fields = [field for field in required_fields if field not in data]
-        
-        if missing_fields:
+        qr_content.encode('utf-8')
+    except UnicodeEncodeError:
+        return {
+            'valid': False,
+            'error': 'QR code contains invalid binary data',
+            'error_code': 'BINARY_DATA',
+            'data': None
+        }
+    
+    # Clean the content
+    cleaned_content = qr_content.strip()
+    
+    # Edge Case 5: HTML/Script injection detection
+    dangerous_patterns = [
+        '<script', '</script>', '<iframe', '<object', '<embed',
+        'javascript:', 'vbscript:', 'onload=', 'onerror=', 'onclick='
+    ]
+    
+    content_lower = cleaned_content.lower()
+    for pattern in dangerous_patterns:
+        if pattern in content_lower:
             return {
                 'valid': False,
-                'error': f'Missing required fields: {", ".join(missing_fields)}',
+                'error': f'QR code contains potentially malicious content: {pattern}',
+                'error_code': 'MALICIOUS_CONTENT',
+                'data': None
+            }
+    
+    # Edge Case 6: SQL injection pattern detection
+    sql_patterns = [
+        "'; drop table", "'; delete from", "union select", 
+        "' or '1'='1", "' or 1=1", "--", "/*", "*/"
+    ]
+    
+    for pattern in sql_patterns:
+        if pattern in content_lower:
+            return {
+                'valid': False,
+                'error': f'QR code contains potential SQL injection pattern: {pattern}',
+                'error_code': 'SQL_INJECTION',
+                'data': None
+            }
+    
+    try:
+        # Try to parse as JSON
+        data = json.loads(cleaned_content)
+        
+        # Edge Case 7: Invalid data types in JSON
+        if not isinstance(data, dict):
+            return {
+                'valid': False,
+                'error': 'QR code JSON must be an object/dictionary',
+                'error_code': 'INVALID_JSON_TYPE',
                 'data': None
             }
         
+        # Edge Case 8: Null/undefined values in required fields
+        for key, value in data.items():
+            if value is None:
+                return {
+                    'valid': False,
+                    'error': f'Field "{key}" cannot be null',
+                    'error_code': 'NULL_VALUE',
+                    'data': None
+                }
+        
+        # Validate required fields for student attendance
+        if data.get('type') == 'student_attendance':
+            required_fields = ['type', 'student_id', 'student_no', 'name']
+            missing_fields = [field for field in required_fields if field not in data or data[field] == '']
+            
+            if missing_fields:
+                return {
+                    'valid': False,
+                    'error': f'Missing required fields: {", ".join(missing_fields)}',
+                    'error_code': 'MISSING_FIELDS',
+                    'data': None
+                }
+            
+            # Edge Case 9: Invalid data types for specific fields
+            if not isinstance(data.get('student_id'), (int, str)):
+                return {
+                    'valid': False,
+                    'error': 'student_id must be a number or string',
+                    'error_code': 'INVALID_STUDENT_ID_TYPE',
+                    'data': None
+                }
+            
+            # Try to convert student_id to integer if it's a string number
+            try:
+                student_id = data['student_id']
+                if isinstance(student_id, str):
+                    # Check if string contains only digits or is a valid number
+                    if student_id.isdigit():
+                        data['student_id'] = int(student_id)
+                    else:
+                        # Check if it's a valid student ID format (could contain letters)
+                        if not student_id.replace('-', '').replace('_', '').isalnum():
+                            return {
+                                'valid': False,
+                                'error': 'student_id contains invalid characters',
+                                'error_code': 'INVALID_STUDENT_ID_FORMAT',
+                                'data': None
+                            }
+            except (ValueError, TypeError):
+                return {
+                    'valid': False,
+                    'error': 'student_id format is invalid',
+                    'error_code': 'INVALID_STUDENT_ID_FORMAT',
+                    'data': None
+                }
+            
+            # Validate student_no format
+            student_no = str(data.get('student_no', '')).strip()
+            if not student_no or len(student_no) > 20:
+                return {
+                    'valid': False,
+                    'error': 'student_no must be 1-20 characters',
+                    'error_code': 'INVALID_STUDENT_NO',
+                    'data': None
+                }
+            
+            # Validate name
+            name = str(data.get('name', '')).strip()
+            if not name or len(name) > 100:
+                return {
+                    'valid': False,
+                    'error': 'name must be 1-100 characters',
+                    'error_code': 'INVALID_NAME',
+                    'data': None
+                }
+            
+            # Sanitize Unicode characters
+            try:
+                data['name'] = name.encode('utf-8').decode('utf-8')
+                data['student_no'] = student_no.encode('utf-8').decode('utf-8')
+            except UnicodeError:
+                return {
+                    'valid': False,
+                    'error': 'Invalid Unicode characters in student data',
+                    'error_code': 'UNICODE_ERROR',
+                    'data': None
+                }
+        
         # Validate type
-        if data.get('type') != 'student_attendance':
+        valid_types = ['student_attendance', 'professor_identification', 'admin_identification']
+        if data.get('type') not in valid_types:
             return {
                 'valid': False,
-                'error': 'Invalid QR code type',
+                'error': f'Invalid QR code type. Must be one of: {", ".join(valid_types)}',
+                'error_code': 'INVALID_TYPE',
                 'data': None
             }
         
         return {
             'valid': True,
             'data': data,
-            'error': None
+            'error': None,
+            'error_code': None
         }
         
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        # Edge Case 10: Malformed JSON
+        if '{' in cleaned_content or '[' in cleaned_content:
+            return {
+                'valid': False,
+                'error': f'Malformed JSON in QR code: {str(e)}',
+                'error_code': 'MALFORMED_JSON',
+                'data': None
+            }
+        
         # Try legacy format (just student number)
-        if qr_content and len(qr_content.strip()) > 0:
+        if cleaned_content and len(cleaned_content.strip()) > 0:
+            # Validate legacy format
+            if len(cleaned_content) > 20:
+                return {
+                    'valid': False,
+                    'error': 'Legacy student number too long (max 20 characters)',
+                    'error_code': 'LEGACY_TOO_LONG',
+                    'data': None
+                }
+            
+            # Check for invalid characters in student number
+            if not cleaned_content.replace('-', '').replace('_', '').isalnum():
+                return {
+                    'valid': False,
+                    'error': 'Legacy student number contains invalid characters',
+                    'error_code': 'LEGACY_INVALID_CHARS',
+                    'data': None
+                }
+            
             return {
                 'valid': True,
                 'data': {
                     'type': 'legacy_student_no',
-                    'student_no': qr_content.strip(),
+                    'student_no': cleaned_content,
                     'legacy': True
                 },
-                'error': None
+                'error': None,
+                'error_code': None
             }
         
         return {
             'valid': False,
-            'error': 'Invalid QR code format',
+            'error': 'Invalid QR code format - not JSON and not valid legacy format',
+            'error_code': 'INVALID_FORMAT',
             'data': None
         }
 
@@ -299,24 +494,217 @@ def scan_qr_from_image(image_path):
 
 def process_uploaded_qr_image(uploaded_file):
     """
-    Process uploaded QR code image
+    Process uploaded QR code image with comprehensive edge case handling
     Args:
         uploaded_file: Flask uploaded file object
     Returns:
         dict: Processing result
     """
     try:
-        # For now, return a placeholder response
-        # This would normally scan the uploaded image for QR codes
-        return {
-            'success': False,
-            'error': 'QR image processing requires opencv-python and pyzbar packages. Please enter QR data manually.',
-            'data': None
-        }
+        # Edge Case 1: No file uploaded
+        if not uploaded_file:
+            return {
+                'success': False,
+                'error': 'No file uploaded',
+                'error_code': 'NO_FILE',
+                'data': None
+            }
+        
+        # Edge Case 2: Empty filename
+        if not uploaded_file.filename or uploaded_file.filename == '':
+            return {
+                'success': False,
+                'error': 'No file selected',
+                'error_code': 'EMPTY_FILENAME',
+                'data': None
+            }
+        
+        # Edge Case 3: File size validation
+        uploaded_file.seek(0, 2)  # Seek to end to get file size
+        file_size = uploaded_file.tell()
+        uploaded_file.seek(0)  # Reset to beginning
+        
+        # Max file size: 10MB
+        max_size = 10 * 1024 * 1024
+        if file_size > max_size:
+            return {
+                'success': False,
+                'error': f'File too large. Maximum size is {max_size / (1024*1024):.1f}MB',
+                'error_code': 'FILE_TOO_LARGE',
+                'data': None
+            }
+        
+        if file_size == 0:
+            return {
+                'success': False,
+                'error': 'Uploaded file is empty',
+                'error_code': 'EMPTY_FILE',
+                'data': None
+            }
+        
+        # Edge Case 4: File format validation
+        allowed_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.webp'}
+        file_extension = os.path.splitext(uploaded_file.filename.lower())[1]
+        
+        if file_extension not in allowed_extensions:
+            return {
+                'success': False,
+                'error': f'Invalid file format. Allowed formats: {", ".join(allowed_extensions)}',
+                'error_code': 'INVALID_FORMAT',
+                'data': None
+            }
+        
+        # Edge Case 5: Read and validate file content
+        try:
+            file_content = uploaded_file.read()
+            uploaded_file.seek(0)  # Reset for potential re-reading
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'Failed to read uploaded file: {str(e)}',
+                'error_code': 'READ_ERROR',
+                'data': None
+            }
+        
+        # Edge Case 6: Validate image content
+        try:
+            from PIL import Image
+            image = Image.open(io.BytesIO(file_content))
+            
+            # Validate image dimensions
+            width, height = image.size
+            if width < 50 or height < 50:
+                return {
+                    'success': False,
+                    'error': 'Image too small. Minimum size is 50x50 pixels',
+                    'error_code': 'IMAGE_TOO_SMALL',
+                    'data': None
+                }
+            
+            if width > 5000 or height > 5000:
+                return {
+                    'success': False,
+                    'error': 'Image too large. Maximum size is 5000x5000 pixels',
+                    'error_code': 'IMAGE_TOO_LARGE',
+                    'data': None
+                }
+            
+            # Convert to RGB if necessary
+            if image.mode not in ('RGB', 'L'):
+                image = image.convert('RGB')
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'Invalid or corrupted image file: {str(e)}',
+                'error_code': 'CORRUPTED_IMAGE',
+                'data': None
+            }
+        
+        # Edge Case 7: Check if image scanning libraries are available
+        try:
+            import cv2
+            import pyzbar.pyzbar as pyzbar
+        except ImportError as e:
+            return {
+                'success': False,
+                'error': 'QR image processing requires opencv-python and pyzbar packages. Please install them or enter QR data manually.',
+                'error_code': 'MISSING_LIBRARIES',
+                'data': None,
+                'install_hint': 'Run: pip install opencv-python pyzbar'
+            }
+        
+        # Edge Case 8: Process image for QR codes
+        try:
+            # Convert PIL image to OpenCV format
+            if np is None:
+                return {
+                    'success': False,
+                    'error': 'NumPy is required for image processing. Please install: pip install numpy',
+                    'error_code': 'MISSING_NUMPY',
+                    'data': None
+                }
+                
+            image_array = np.array(image)
+            if len(image_array.shape) == 3:
+                image_cv = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
+            else:
+                image_cv = image_array
+            
+            # Decode QR codes
+            qr_codes = pyzbar.decode(image_cv)
+            
+            # Edge Case 9: No QR code found
+            if not qr_codes:
+                return {
+                    'success': False,
+                    'error': 'No QR code found in the uploaded image',
+                    'error_code': 'NO_QR_FOUND',
+                    'data': None,
+                    'hint': 'Make sure the QR code is clearly visible and not distorted'
+                }
+            
+            # Edge Case 10: Multiple QR codes found
+            if len(qr_codes) > 1:
+                return {
+                    'success': False,
+                    'error': f'Multiple QR codes found in image ({len(qr_codes)}). Please upload an image with only one QR code.',
+                    'error_code': 'MULTIPLE_QR_CODES',
+                    'data': None
+                }
+            
+            # Extract QR code data
+            qr_code = qr_codes[0]
+            qr_data = qr_code.data.decode('utf-8')
+            
+            # Edge Case 11: Empty QR code data
+            if not qr_data:
+                return {
+                    'success': False,
+                    'error': 'QR code found but contains no data',
+                    'error_code': 'EMPTY_QR_DATA',
+                    'data': None
+                }
+            
+            # Validate the extracted QR data using existing validation
+            validation_result = validate_qr_data(qr_data)
+            
+            if not validation_result['valid']:
+                return {
+                    'success': False,
+                    'error': f'Invalid QR code content: {validation_result["error"]}',
+                    'error_code': validation_result.get('error_code', 'VALIDATION_FAILED'),
+                    'data': None
+                }
+            
+            return {
+                'success': True,
+                'error': None,
+                'error_code': None,
+                'data': validation_result['data'],
+                'raw_data': qr_data,
+                'qr_type': qr_code.type,
+                'qr_rect': {
+                    'x': qr_code.rect.left,
+                    'y': qr_code.rect.top,
+                    'width': qr_code.rect.width,
+                    'height': qr_code.rect.height
+                }
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'Error processing QR code from image: {str(e)}',
+                'error_code': 'PROCESSING_ERROR',
+                'data': None
+            }
+        
     except Exception as e:
         return {
             'success': False,
-            'error': f'Error processing image: {str(e)}',
+            'error': f'Unexpected error processing uploaded image: {str(e)}',
+            'error_code': 'UNEXPECTED_ERROR',
             'data': None
         }
 

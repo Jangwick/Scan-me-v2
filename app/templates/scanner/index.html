@@ -99,6 +99,30 @@
         gap: 1rem;
         justify-content: center;
         flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .scan-mode-selector {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .scan-mode-selector label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #4a5568;
+        margin: 0;
+    }
+
+    .scan-mode-selector select {
+        padding: 0.5rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        background: white;
+        font-size: 0.8rem;
+        min-width: 150px;
     }
 
     .control-btn {
@@ -317,6 +341,11 @@
         color: #991b1b;
     }
 
+    .status-info {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
     .alert-custom {
         padding: 1rem 1.5rem;
         border-radius: 12px;
@@ -436,6 +465,14 @@
                     <i class="fas fa-stop"></i>
                     Stop Camera
                 </button>
+                <div class="scan-mode-selector">
+                    <label for="scanMode" class="form-label">Scan Mode:</label>
+                    <select class="form-select" id="scanMode">
+                        <option value="auto">Auto (Smart Detection)</option>
+                        <option value="time_in">Time In Only</option>
+                        <option value="time_out">Time Out Only</option>
+                    </select>
+                </div>
                 <button class="control-btn success" id="scanBtn" disabled>
                     <i class="fas fa-qrcode"></i>
                     Scan QR Code
@@ -457,6 +494,11 @@
                        id="manualQrInput" 
                        placeholder="Enter QR code data (e.g., student ID, QR code content)"
                        maxlength="100">
+                <select class="form-select" id="manualScanMode" style="max-width: 150px;">
+                    <option value="auto">Auto</option>
+                    <option value="time_in">Time In</option>
+                    <option value="time_out">Time Out</option>
+                </select>
                 <button class="control-btn success" id="processManualBtn">
                     <i class="fas fa-check"></i>
                     Process
@@ -501,12 +543,12 @@
 
                 <div class="stats-mini">
                     <div class="stat-mini">
-                        <div class="stat-mini-value" id="sessionScans">0</div>
-                        <div class="stat-mini-label">Scans Today</div>
+                        <div class="stat-mini-value" id="sessionTimeIns">0</div>
+                        <div class="stat-mini-label">Time Ins</div>
                     </div>
                     <div class="stat-mini">
-                        <div class="stat-mini-value" id="sessionStudents">0</div>
-                        <div class="stat-mini-label">Students</div>
+                        <div class="stat-mini-value" id="sessionCurrentlyIn">0</div>
+                        <div class="stat-mini-label">Currently In</div>
                     </div>
                 </div>
             </div>
@@ -537,12 +579,12 @@
             <div class="info-card-body">
                 <div class="stats-mini">
                     <div class="stat-mini">
-                        <div class="stat-mini-value" id="totalScansToday">0</div>
-                        <div class="stat-mini-label">Total Scans</div>
+                        <div class="stat-mini-value" id="totalTimeInsToday">0</div>
+                        <div class="stat-mini-label">Total Time Ins</div>
                     </div>
                     <div class="stat-mini">
-                        <div class="stat-mini-value" id="uniqueStudentsToday">0</div>
-                        <div class="stat-mini-label">Unique Students</div>
+                        <div class="stat-mini-value" id="currentlyInRoomsToday">0</div>
+                        <div class="stat-mini-label">Currently In Rooms</div>
                     </div>
                 </div>
             </div>
@@ -835,6 +877,7 @@ class ScannerApp {
 
     async processManualInput() {
         const input = document.getElementById('manualQrInput');
+        const scanMode = document.getElementById('manualScanMode');
         const qrData = input.value.trim();
 
         if (!qrData) {
@@ -847,7 +890,7 @@ class ScannerApp {
             return;
         }
 
-        await this.processQRCode(qrData);
+        await this.processQRCode(qrData, scanMode.value);
         input.value = '';
     }
 
@@ -895,9 +938,14 @@ class ScannerApp {
         }
     }
 
-    async processQRCode(qrData) {
+    async processQRCode(qrData, scanType = null) {
         try {
             this.showAlert('info', 'Processing QR code...', false);
+
+            // Get scan type from selector if not provided
+            if (!scanType) {
+                scanType = document.getElementById('scanMode').value;
+            }
 
             const response = await fetch('/scanner/api/scan-qr', {
                 method: 'POST',
@@ -906,19 +954,39 @@ class ScannerApp {
                 },
                 body: JSON.stringify({
                     qr_data: qrData,
-                    session_id: this.currentSession
+                    session_id: this.currentSession,
+                    scan_type: scanType
                 })
             });
 
             const result = await response.json();
 
             if (result.success) {
-                this.showAlert('success', `✅ Successfully scanned: ${result.student_name || 'Student'}`);
+                let alertType = 'success';
+                let alertMessage = result.message;
+                
+                // Customize alert based on action
+                if (result.action === 'time_in') {
+                    alertType = 'success';
+                    alertMessage = `✅ TIME IN: ${result.student_name}${result.is_late ? ' (Late)' : ''}`;
+                } else if (result.action === 'time_out') {
+                    alertType = 'info';
+                    alertMessage = `⏰ TIME OUT: ${result.student_name} (Duration: ${result.duration_minutes} min)`;
+                } else if (result.action === 'duplicate') {
+                    alertType = 'warning';
+                    alertMessage = `⚠️ ${result.student_name} is already timed in`;
+                }
+                
+                this.showAlert(alertType, alertMessage);
                 this.loadRecentScans();
                 this.loadTodayStats();
                 this.loadSessionStats();
             } else {
-                this.showAlert('error', result.message || 'Failed to process QR code');
+                let alertType = 'error';
+                if (result.action === 'duplicate' || result.action === 'recent_duplicate') {
+                    alertType = 'warning';
+                }
+                this.showAlert(alertType, result.message || 'Failed to process QR code');
             }
 
         } catch (error) {
@@ -963,8 +1031,8 @@ class ScannerApp {
             const response = await fetch(`/scanner/api/session-stats/${this.currentSession}`);
             const stats = await response.json();
 
-            document.getElementById('sessionScans').textContent = stats.scans_today || 0;
-            document.getElementById('sessionStudents').textContent = stats.unique_students || 0;
+            document.getElementById('sessionTimeIns').textContent = stats.total_time_ins || 0;
+            document.getElementById('sessionCurrentlyIn').textContent = stats.currently_in_room || 0;
 
         } catch (error) {
             console.error('Failed to load session stats:', error);
@@ -990,8 +1058,17 @@ class ScannerApp {
 
             container.innerHTML = scans.map(scan => {
                 const avatarColor = this.getAvatarColor(scan.student_name);
-                const statusClass = scan.is_late ? 'status-warning' : 'status-success';
-                const statusText = scan.is_late ? 'Late' : 'On Time';
+                let statusClass, statusText, statusIcon;
+                
+                if (scan.action_type === 'time_in') {
+                    statusClass = scan.is_late ? 'status-warning' : 'status-success';
+                    statusText = scan.is_late ? 'Late In' : 'Time In';
+                    statusIcon = 'fa-sign-in-alt';
+                } else {
+                    statusClass = 'status-info';
+                    statusText = 'Time Out';
+                    statusIcon = 'fa-sign-out-alt';
+                }
 
                 return `
                     <div class="scan-item">
@@ -1000,9 +1077,14 @@ class ScannerApp {
                         </div>
                         <div class="scan-info">
                             <div class="scan-name">${scan.student_name}</div>
-                            <div class="scan-meta">${scan.room_name} • ${scan.time_ago}</div>
+                            <div class="scan-meta">
+                                ${scan.room_name} • ${scan.time_ago}
+                                ${scan.duration_minutes ? `• ${scan.duration_minutes}min` : ''}
+                            </div>
                         </div>
-                        <div class="scan-status ${statusClass}">${statusText}</div>
+                        <div class="scan-status ${statusClass}">
+                            <i class="fas ${statusIcon}"></i> ${statusText}
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -1017,8 +1099,8 @@ class ScannerApp {
             const response = await fetch('/scanner/api/today-stats');
             const stats = await response.json();
 
-            document.getElementById('totalScansToday').textContent = stats.total_scans || 0;
-            document.getElementById('uniqueStudentsToday').textContent = stats.unique_students || 0;
+            document.getElementById('totalTimeInsToday').textContent = stats.total_time_ins || 0;
+            document.getElementById('currentlyInRoomsToday').textContent = stats.currently_in_rooms || 0;
 
         } catch (error) {
             console.error('Failed to load today stats:', error);

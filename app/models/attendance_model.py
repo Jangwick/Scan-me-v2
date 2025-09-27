@@ -9,7 +9,7 @@ from datetime import datetime, time
 class AttendanceRecord(db.Model):
     """
     Attendance record model for individual scan events
-    Records each QR code scan with student, room, and timing information
+    Supports time-in and time-out functionality for complete attendance tracking
     """
     __tablename__ = 'attendance_records'
     
@@ -17,60 +17,125 @@ class AttendanceRecord(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False, index=True)
     room_id = db.Column(db.Integer, db.ForeignKey('rooms.id'), nullable=False, index=True)
     session_id = db.Column(db.Integer, db.ForeignKey('attendance_sessions.id'), nullable=True, index=True)
+    
+    # Time tracking fields
+    time_in = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    time_out = db.Column(db.DateTime, nullable=True, index=True)
+    
+    # Legacy field for backward compatibility
     scan_time = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
-    scanned_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # Status tracking
     is_late = db.Column(db.Boolean, default=False, nullable=False)
     is_duplicate = db.Column(db.Boolean, default=False, nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)  # True = student is currently in room
+    
+    # Scan tracking
+    time_in_scanned_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    time_out_scanned_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    scanned_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # Legacy field
+    
+    # Additional info
     notes = db.Column(db.Text)
     ip_address = db.Column(db.String(45))  # Support IPv6
     user_agent = db.Column(db.String(255))
     
     def __init__(self, student_id, room_id, scanned_by, session_id=None, is_late=False, notes=None):
-        """Initialize attendance record"""
+        """Initialize attendance record with time-in"""
         self.student_id = student_id
         self.room_id = room_id
-        self.scanned_by = scanned_by
+        self.time_in_scanned_by = scanned_by
+        self.scanned_by = scanned_by  # Legacy compatibility
         self.session_id = session_id
         self.is_late = is_late
         self.notes = notes
+        
+        # Set time_in to current time
+        current_time = datetime.utcnow()
+        self.time_in = current_time
+        self.scan_time = current_time  # Legacy compatibility
+        
+        # Mark as active (student is in room)
+        self.is_active = True
+        
+        # Check for duplicates after setting all required fields
+        # self.is_duplicate = self._check_duplicate()  # Commented out to avoid issues during init
+    
+    def check_and_set_duplicate_status(self):
+        """Check and set duplicate status after record is properly initialized"""
         self.is_duplicate = self._check_duplicate()
+        return self.is_duplicate
+    
+    def time_out_student(self, scanned_by_user_id):
+        """Record time-out for the student"""
+        if not self.is_active:
+            return False, "Student is already timed out"
+        
+        self.time_out = datetime.utcnow()
+        self.time_out_scanned_by = scanned_by_user_id
+        self.is_active = False
+        db.session.commit()
+        return True, "Successfully timed out"
+    
+    def get_duration(self):
+        """Get duration spent in room (in minutes)"""
+        if not self.time_out:
+            # Still in room - calculate current duration
+            current_time = datetime.utcnow()
+            duration = current_time - self.time_in
+        else:
+            duration = self.time_out - self.time_in
+        
+        return int(duration.total_seconds() / 60)
+    
+    def get_status(self):
+        """Get current status of the attendance record"""
+        if self.is_active and not self.time_out:
+            return "in_room"
+        elif not self.is_active and self.time_out:
+            return "timed_out"
+        else:
+            return "unknown"
     
     def _check_duplicate(self):
-        """Check if this is a duplicate scan within a short time period"""
+        """Check if this is a duplicate time-in within a short time period"""
         from datetime import timedelta
         
-        # Check for scans within the last 30 minutes for same student and room
-        time_threshold = datetime.utcnow() - timedelta(minutes=30)
-        
-        existing_record = AttendanceRecord.query.filter(
+        # Check for active records for same student in same room
+        existing_active = AttendanceRecord.query.filter(
             AttendanceRecord.student_id == self.student_id,
             AttendanceRecord.room_id == self.room_id,
-            AttendanceRecord.scan_time >= time_threshold,
-            AttendanceRecord.id != getattr(self, 'id', None)  # Exclude self if updating
+            AttendanceRecord.is_active == True,
+            AttendanceRecord.id != getattr(self, 'id', None)
         ).first()
         
-        return existing_record is not None
+        return existing_active is not None
     
     def get_scan_info(self):
         """Get formatted scan information"""
         return {
             'student': self.student.get_full_name() if self.student else 'Unknown',
             'room': self.room.get_full_name() if self.room else 'Unknown',
-            'scan_time': self.scan_time,
+            'time_in': self.time_in,
+            'time_out': self.time_out,
+            'duration': self.get_duration(),
+            'status': self.get_status(),
             'is_late': self.is_late,
             'is_duplicate': self.is_duplicate,
-            'scanner': self.scanned_by_user.username if self.scanned_by_user else 'System'
+            'is_active': self.is_active,
+            'time_in_scanner': self.time_in_scanned_by_user.username if hasattr(self, 'time_in_scanned_by_user') and self.time_in_scanned_by_user else 'System',
+            'time_out_scanner': self.time_out_scanned_by_user.username if hasattr(self, 'time_out_scanned_by_user') and self.time_out_scanned_by_user else None
         }
     
     def mark_as_late(self, session_start_time=None):
         """Mark attendance as late based on session or default time"""
         if session_start_time:
-            self.is_late = self.scan_time > session_start_time
+            self.is_late = self.time_in > session_start_time
         else:
             # Default: mark as late if after 9:00 AM
             default_start = time(9, 0)
-            scan_time_only = self.scan_time.time()
-            self.is_late = scan_time_only > default_start
+            time_in_only = self.time_in.time()
+            self.is_late = time_in_only > default_start
         
         db.session.commit()
     
@@ -84,11 +149,18 @@ class AttendanceRecord(db.Model):
             'room_id': self.room_id,
             'room_name': self.room.get_full_name() if self.room else None,
             'session_id': self.session_id,
-            'scan_time': self.scan_time.isoformat(),
-            'scanned_by': self.scanned_by,
-            'scanner_name': self.scanned_by_user.username if self.scanned_by_user else None,
+            'time_in': self.time_in.isoformat(),
+            'time_out': self.time_out.isoformat() if self.time_out else None,
+            'scan_time': self.scan_time.isoformat(),  # Legacy compatibility
+            'duration_minutes': self.get_duration(),
+            'status': self.get_status(),
+            'time_in_scanned_by': self.time_in_scanned_by,
+            'time_out_scanned_by': self.time_out_scanned_by,
+            'time_in_scanner_name': self.time_in_scanned_by_user.username if hasattr(self, 'time_in_scanned_by_user') and self.time_in_scanned_by_user else None,
+            'time_out_scanner_name': self.time_out_scanned_by_user.username if hasattr(self, 'time_out_scanned_by_user') and self.time_out_scanned_by_user else None,
             'is_late': self.is_late,
             'is_duplicate': self.is_duplicate,
+            'is_active': self.is_active,
             'notes': self.notes,
             'ip_address': self.ip_address,
             'user_agent': self.user_agent
@@ -98,7 +170,8 @@ class AttendanceRecord(db.Model):
         """String representation of attendance record"""
         student_name = self.student.get_full_name() if self.student else 'Unknown'
         room_name = self.room.room_number if self.room else 'Unknown'
-        return f'<AttendanceRecord {student_name} in {room_name} at {self.scan_time}>'
+        status = self.get_status()
+        return f'<AttendanceRecord {student_name} in {room_name} - {status}>'
     
     @staticmethod
     def get_by_student_today(student_id):
@@ -107,8 +180,8 @@ class AttendanceRecord(db.Model):
         today = date.today()
         return AttendanceRecord.query.filter(
             AttendanceRecord.student_id == student_id,
-            db.func.date(AttendanceRecord.scan_time) == today
-        ).order_by(AttendanceRecord.scan_time.desc()).all()
+            db.func.date(AttendanceRecord.time_in) == today
+        ).order_by(AttendanceRecord.time_in.desc()).all()
     
     @staticmethod
     def get_by_room_today(room_id):
@@ -117,13 +190,30 @@ class AttendanceRecord(db.Model):
         today = date.today()
         return AttendanceRecord.query.filter(
             AttendanceRecord.room_id == room_id,
-            db.func.date(AttendanceRecord.scan_time) == today
-        ).order_by(AttendanceRecord.scan_time.desc()).all()
+            db.func.date(AttendanceRecord.time_in) == today
+        ).order_by(AttendanceRecord.time_in.desc()).all()
+    
+    @staticmethod
+    def get_active_in_room(room_id):
+        """Get students currently active (timed-in) in a room"""
+        return AttendanceRecord.query.filter(
+            AttendanceRecord.room_id == room_id,
+            AttendanceRecord.is_active == True
+        ).order_by(AttendanceRecord.time_in.desc()).all()
+    
+    @staticmethod
+    def get_student_active_record(student_id, room_id):
+        """Get active attendance record for student in specific room"""
+        return AttendanceRecord.query.filter(
+            AttendanceRecord.student_id == student_id,
+            AttendanceRecord.room_id == room_id,
+            AttendanceRecord.is_active == True
+        ).first()
     
     @staticmethod
     def get_recent_scans(limit=50):
         """Get recent attendance scans across all rooms"""
-        return AttendanceRecord.query.order_by(AttendanceRecord.scan_time.desc()).limit(limit).all()
+        return AttendanceRecord.query.order_by(AttendanceRecord.time_in.desc()).limit(limit).all()
     
     @staticmethod
     def create_attendance_record(student_id, room_id, scanned_by, session_id=None, **kwargs):

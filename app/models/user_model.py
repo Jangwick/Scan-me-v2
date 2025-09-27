@@ -28,6 +28,10 @@ class User(UserMixin, db.Model):
     # Relationships
     attendance_records = db.relationship('AttendanceRecord', backref='scanned_by_user', lazy=True,
                                        foreign_keys='AttendanceRecord.scanned_by')
+    time_in_records = db.relationship('AttendanceRecord', backref='time_in_scanned_by_user', lazy=True,
+                                    foreign_keys='AttendanceRecord.time_in_scanned_by')
+    time_out_records = db.relationship('AttendanceRecord', backref='time_out_scanned_by_user', lazy=True,
+                                     foreign_keys='AttendanceRecord.time_out_scanned_by')
     
     def __init__(self, username, email, password, role='student', is_active=True):
         """Initialize user with required fields"""
