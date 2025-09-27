@@ -41,7 +41,7 @@
                         
                         {% if current_user.can_scan_attendance() %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('scanner.scan_page') }}">
+                            <a class="nav-link" href="{{ url_for('scanner_new.index') }}">
                                 <i class="fas fa-camera me-1"></i>Scanner
                             </a>
                         </li>

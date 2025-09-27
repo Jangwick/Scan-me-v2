@@ -12,11 +12,12 @@ import os
 import json
 from datetime import datetime
 
-def generate_student_qr_code(student_data, save_path=None, return_bytes=False):
+def generate_user_qr_code(user_data, user_type='student', save_path=None, return_bytes=False):
     """
-    Generate QR code for student
+    Generate QR code for any user type (student, professor, admin)
     Args:
-        student_data (dict): Student information
+        user_data (dict): User information
+        user_type (str): Type of user (student, professor, admin)
         save_path (str): Path to save QR code image
         return_bytes (bool): Return as bytes instead of saving
     Returns:
@@ -24,7 +25,7 @@ def generate_student_qr_code(student_data, save_path=None, return_bytes=False):
     """
     try:
         # Create QR code data
-        qr_data = create_qr_data(student_data)
+        qr_data = create_qr_data(user_data, user_type)
         
         # Configure QR code
         qr = qrcode.QRCode(
@@ -64,25 +65,51 @@ def generate_student_qr_code(student_data, save_path=None, return_bytes=False):
         print(f"Error generating QR code: {str(e)}")
         return None
 
-def create_qr_data(student_data):
+def generate_student_qr_code(student_data, save_path=None, return_bytes=False):
     """
-    Create standardized QR code data format
+    Generate QR code for student (backward compatibility)
     Args:
         student_data (dict): Student information
+        save_path (str): Path to save QR code image
+        return_bytes (bool): Return as bytes instead of saving
+    Returns:
+        str or bytes: File path or image bytes
+    """
+    return generate_user_qr_code(student_data, 'student', save_path, return_bytes)
+
+def create_qr_data(user_data, user_type='student'):
+    """
+    Create standardized QR code data format for any user type
+    Args:
+        user_data (dict): User information
+        user_type (str): Type of user (student, professor, admin)
     Returns:
         str: JSON formatted QR code data
     """
-    qr_payload = {
-        'type': 'student_attendance',
-        'student_id': student_data.get('id'),
-        'student_no': student_data.get('student_no'),
-        'name': student_data.get('name'),
-        'department': student_data.get('department'),
-        'section': student_data.get('section'),
-        'year_level': student_data.get('year_level'),
-        'generated_at': datetime.utcnow().isoformat(),
-        'version': '1.0'
-    }
+    if user_type == 'student':
+        qr_payload = {
+            'type': 'student_attendance',
+            'student_id': user_data.get('id'),
+            'student_no': user_data.get('student_no'),
+            'name': user_data.get('name'),
+            'department': user_data.get('department'),
+            'section': user_data.get('section'),
+            'year_level': user_data.get('year_level'),
+            'generated_at': datetime.utcnow().isoformat(),
+            'version': '1.0'
+        }
+    else:
+        # For professors and admins
+        qr_payload = {
+            'type': f'{user_type}_identification',
+            'user_id': user_data.get('id'),
+            'username': user_data.get('username'),
+            'email': user_data.get('email'),
+            'role': user_data.get('role'),
+            'name': user_data.get('display_name', user_data.get('username')),
+            'generated_at': datetime.utcnow().isoformat(),
+            'version': '1.0'
+        }
     
     return json.dumps(qr_payload, separators=(',', ':'))
 

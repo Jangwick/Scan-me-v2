@@ -3,7 +3,7 @@ Main Routes for ScanMe Attendance System
 Handles dashboard, home page, and general navigation
 """
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file, make_response
 from flask_login import login_required, current_user
 from app import db
 from app.models.student_model import Student
@@ -11,8 +11,11 @@ from app.models.room_model import Room
 from app.models.attendance_model import AttendanceRecord, AttendanceSession
 from app.models.user_model import User
 from app.utils.auth_utils import get_user_permissions
+from app.utils.qr_utils import generate_user_qr_code
 from datetime import datetime, date, timedelta
 from sqlalchemy import func
+import io
+import base64
 
 main_bp = Blueprint('main', __name__)
 
@@ -148,6 +151,198 @@ def profile():
 def settings():
     """User settings page"""
     return render_template('settings.html', user=current_user)
+
+@main_bp.route('/generate-my-qr')
+@login_required
+def generate_my_qr():
+    """Generate QR code for current user"""
+    try:
+        # Prepare user data based on role
+        if current_user.is_student():
+            # For students, try to find student record by email or username
+            student = Student.query.filter(
+                db.or_(
+                    Student.email == current_user.email,
+                    Student.student_no == current_user.username
+                )
+            ).first()
+            
+            if student:
+                user_data = {
+                    'id': student.id,
+                    'student_no': student.student_no,
+                    'name': student.get_full_name(),
+                    'department': student.department,
+                    'section': student.section,
+                    'year_level': student.year_level
+                }
+                user_type = 'student'
+            else:
+                # If no student record found, use basic user info
+                user_data = {
+                    'id': current_user.id,
+                    'username': current_user.username,
+                    'email': current_user.email,
+                    'role': current_user.role,
+                    'display_name': current_user.get_display_name()
+                }
+                user_type = 'student'
+        else:
+            # For professors and admins
+            user_data = {
+                'id': current_user.id,
+                'username': current_user.username,
+                'email': current_user.email,
+                'role': current_user.role,
+                'display_name': current_user.get_display_name()
+            }
+            user_type = current_user.role
+        
+        # Generate QR code as base64
+        qr_base64 = generate_user_qr_code(user_data, user_type)
+        
+        if not qr_base64:
+            flash('Failed to generate QR code. Please try again.', 'error')
+            return redirect(url_for('main.profile'))
+        
+        return render_template('my_qr_code.html', 
+                             qr_data=qr_base64,
+                             user_data=user_data,
+                             user_type=user_type,
+                             user=current_user)
+        
+    except Exception as e:
+        flash(f'Error generating QR code: {str(e)}', 'error')
+        return redirect(url_for('main.profile'))
+
+@main_bp.route('/download-my-qr')
+@login_required
+def download_my_qr():
+    """Download QR code for current user"""
+    try:
+        # Prepare user data based on role
+        if current_user.is_student():
+            # For students, try to find student record by email or username
+            student = Student.query.filter(
+                db.or_(
+                    Student.email == current_user.email,
+                    Student.student_no == current_user.username
+                )
+            ).first()
+            
+            if student:
+                user_data = {
+                    'id': student.id,
+                    'student_no': student.student_no,
+                    'name': student.get_full_name(),
+                    'department': student.department,
+                    'section': student.section,
+                    'year_level': student.year_level
+                }
+                user_type = 'student'
+                filename = f"{student.student_no}_qr.png"
+            else:
+                # If no student record found, use basic user info
+                user_data = {
+                    'id': current_user.id,
+                    'username': current_user.username,
+                    'email': current_user.email,
+                    'role': current_user.role,
+                    'display_name': current_user.get_display_name()
+                }
+                user_type = 'student'
+                filename = f"{current_user.username}_student_qr.png"
+        else:
+            # For professors and admins
+            user_data = {
+                'id': current_user.id,
+                'username': current_user.username,
+                'email': current_user.email,
+                'role': current_user.role,
+                'display_name': current_user.get_display_name()
+            }
+            user_type = current_user.role
+            filename = f"{current_user.username}_{user_type}_qr.png"
+        
+        # Generate QR code as bytes
+        qr_bytes = generate_user_qr_code(user_data, user_type, return_bytes=True)
+        
+        if not qr_bytes:
+            flash('Failed to generate QR code. Please try again.', 'error')
+            return redirect(url_for('main.profile'))
+        
+        # Create response with file download
+        response = make_response(qr_bytes)
+        response.headers['Content-Type'] = 'image/png'
+        response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        return response
+        
+    except Exception as e:
+        flash(f'Error downloading QR code: {str(e)}', 'error')
+        return redirect(url_for('main.profile'))
+
+@main_bp.route('/api/generate-qr')
+@login_required
+def api_generate_qr():
+    """API endpoint to generate QR code for current user"""
+    try:
+        # Prepare user data based on role
+        if current_user.is_student():
+            # For students, try to find student record by email or username
+            student = Student.query.filter(
+                db.or_(
+                    Student.email == current_user.email,
+                    Student.student_no == current_user.username
+                )
+            ).first()
+            
+            if student:
+                user_data = {
+                    'id': student.id,
+                    'student_no': student.student_no,
+                    'name': student.get_full_name(),
+                    'department': student.department,
+                    'section': student.section,
+                    'year_level': student.year_level
+                }
+                user_type = 'student'
+            else:
+                # If no student record found, use basic user info
+                user_data = {
+                    'id': current_user.id,
+                    'username': current_user.username,
+                    'email': current_user.email,
+                    'role': current_user.role,
+                    'display_name': current_user.get_display_name()
+                }
+                user_type = 'student'
+        else:
+            # For professors and admins
+            user_data = {
+                'id': current_user.id,
+                'username': current_user.username,
+                'email': current_user.email,
+                'role': current_user.role,
+                'display_name': current_user.get_display_name()
+            }
+            user_type = current_user.role
+        
+        # Generate QR code as base64
+        qr_base64 = generate_user_qr_code(user_data, user_type)
+        
+        if not qr_base64:
+            return jsonify({'error': 'Failed to generate QR code'}), 500
+        
+        return jsonify({
+            'success': True,
+            'qr_code': f"data:image/png;base64,{qr_base64}",
+            'user_type': user_type,
+            'user_data': user_data
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 def get_dashboard_stats():
     """Get statistics for dashboard"""

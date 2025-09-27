@@ -1,0 +1,274 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}My QR Code - ScanMe{% endblock %}
+
+{% block page_header %}
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h2 class="mb-0">
+            <i class="bi bi-qr-code me-2"></i>My QR Code
+        </h2>
+        <p class="text-muted mb-0">Your personal QR code for attendance scanning</p>
+    </div>
+    <div>
+        <a href="{{ url_for('main.download_my_qr') }}" class="btn btn-primary me-2">
+            <i class="bi bi-download me-1"></i>Download
+        </a>
+        <a href="{{ url_for('main.profile') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back to Profile
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-person-badge me-2"></i>
+                    {{ user_type.title() }} QR Code
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <!-- QR Code Display -->
+                <div class="qr-code-container mb-4">
+                    <div class="bg-white p-4 rounded shadow-sm d-inline-block">
+                        <img src="data:image/png;base64,{{ qr_data }}" 
+                             alt="My QR Code" 
+                             class="img-fluid"
+                             style="max-width: 300px; max-height: 300px;">
+                    </div>
+                </div>
+
+                <!-- User Information -->
+                <div class="row mt-4">
+                    <div class="col-md-8 offset-md-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-info-circle me-1"></i>QR Code Information
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                {% if user_type == 'student' and user_data.get('student_no') %}
+                                <div class="row">
+                                    <div class="col-sm-4"><strong>Name:</strong></div>
+                                    <div class="col-sm-8">{{ user_data.get('name', 'N/A') }}</div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-4"><strong>Student No:</strong></div>
+                                    <div class="col-sm-8">{{ user_data.get('student_no', 'N/A') }}</div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-4"><strong>Department:</strong></div>
+                                    <div class="col-sm-8">{{ user_data.get('department', 'N/A') }}</div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-4"><strong>Section:</strong></div>
+                                    <div class="col-sm-8">{{ user_data.get('section', 'N/A') }}</div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-4"><strong>Year Level:</strong></div>
+                                    <div class="col-sm-8">{{ user_data.get('year_level', 'N/A') }}</div>
+                                </div>
+                                {% elif user_type == 'student' %}
+                                <!-- Student with basic user info -->
+                                <div class="row">
+                                    <div class="col-sm-4"><strong>Name:</strong></div>
+                                    <div class="col-sm-8">{{ user_data.get('display_name', user_data.get('username', 'N/A')) }}</div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-4"><strong>Username:</strong></div>
+                                    <div class="col-sm-8">{{ user_data.get('username', 'N/A') }}</div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-4"><strong>Email:</strong></div>
+                                    <div class="col-sm-8">{{ user_data.get('email', 'N/A') }}</div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-4"><strong>Role:</strong></div>
+                                    <div class="col-sm-8">
+                                        <span class="badge bg-primary">
+                                            Student
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="alert alert-info mt-3 mb-0">
+                                    <small>
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Complete student profile not found. QR code contains basic user information.
+                                    </small>
+                                </div>
+                                {% else %}
+                                <div class="row">
+                                    <div class="col-sm-4"><strong>Name:</strong></div>
+                                    <div class="col-sm-8">{{ user_data.get('display_name', 'N/A') }}</div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-4"><strong>Username:</strong></div>
+                                    <div class="col-sm-8">{{ user_data.get('username', 'N/A') }}</div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-4"><strong>Email:</strong></div>
+                                    <div class="col-sm-8">{{ user_data.get('email', 'N/A') }}</div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-4"><strong>Role:</strong></div>
+                                    <div class="col-sm-8">
+                                        <span class="badge bg-{{ 'danger' if user_data.get('role') == 'admin' else 'info' }}">
+                                            {{ user_data.get('role', 'N/A').title() }}
+                                        </span>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Instructions -->
+                <div class="alert alert-info mt-4">
+                    <h6 class="alert-heading">
+                        <i class="bi bi-lightbulb me-2"></i>How to use your QR Code
+                    </h6>
+                    <ul class="mb-0 text-start">
+                        {% if user_type == 'student' %}
+                        {% if user_data.get('student_no') %}
+                        <li>Show this QR code to your professor or scanner device during attendance taking</li>
+                        <li>You can download and save the QR code to your phone for quick access</li>
+                        <li>The QR code contains your student information for automatic attendance recording</li>
+                        {% else %}
+                        <li>Show this QR code for identification as a student user</li>
+                        <li>Your QR code contains basic user information - contact admin to complete your student profile</li>
+                        <li>You can download and save the QR code for future use</li>
+                        {% endif %}
+                        {% else %}
+                        <li>Use this QR code for identification purposes when needed</li>
+                        <li>You can download and save the QR code for future reference</li>
+                        <li>The QR code contains your {{ user_type }} credentials and role information</li>
+                        {% endif %}
+                        <li>Keep your QR code secure and don't share it with unauthorized persons</li>
+                        <li>Generate a new QR code anytime by visiting this page</li>
+                    </ul>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-4">
+                    <a href="{{ url_for('main.download_my_qr') }}" class="btn btn-primary btn-lg me-3">
+                        <i class="bi bi-download me-2"></i>Download QR Code
+                    </a>
+                    <button class="btn btn-outline-secondary btn-lg" onclick="window.print()">
+                        <i class="bi bi-printer me-2"></i>Print QR Code
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Generate New QR Code Modal -->
+<div class="modal fade" id="generateNewQRModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Generate New QR Code</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to generate a new QR code? This will create a fresh QR code with the current timestamp.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="generateNewQR()">Generate New</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.qr-code-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem;
+    border-radius: 15px;
+    margin: 0 auto;
+    max-width: 400px;
+}
+
+.qr-code-container .bg-white {
+    border: 3px solid #dee2e6;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    .qr-code-container, .qr-code-container * {
+        visibility: visible;
+    }
+    .qr-code-container {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        background: white !important;
+        padding: 2rem;
+        border: 2px solid #000;
+    }
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.alert {
+    border: none;
+    border-radius: 10px;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function generateNewQR() {
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('generateNewQRModal'));
+    modal.hide();
+    
+    // Show loading
+    const qrContainer = document.querySelector('.qr-code-container');
+    qrContainer.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Generating new QR code...</p></div>';
+    
+    // Redirect to generate new QR code
+    window.location.reload();
+}
+
+// Add click handler for generating new QR code
+document.addEventListener('DOMContentLoaded', function() {
+    // Add a button to generate new QR code if needed
+    const actionButtons = document.querySelector('.mt-4');
+    if (actionButtons) {
+        const generateNewBtn = document.createElement('button');
+        generateNewBtn.className = 'btn btn-outline-primary btn-lg ms-2';
+        generateNewBtn.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Generate New';
+        generateNewBtn.setAttribute('data-bs-toggle', 'modal');
+        generateNewBtn.setAttribute('data-bs-target', '#generateNewQRModal');
+        actionButtons.appendChild(generateNewBtn);
+    }
+});
+</script>
+{% endblock %}

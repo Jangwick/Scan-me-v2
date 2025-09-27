@@ -258,7 +258,7 @@
             <div class="card-body" style="padding: 1.5rem;">
                 <div class="d-grid gap-2">
                     {% if current_user.can_scan_attendance() %}
-                    <a href="{{ url_for('scanner.scan_page') }}" class="btn btn-primary">
+                    <a href="{{ url_for('scanner_new.index') }}" class="btn btn-primary">
                         <i class="fas fa-camera me-2"></i>Start Scanning
                     </a>
                     {% endif %}

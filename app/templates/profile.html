@@ -486,12 +486,18 @@
             Account Settings
         </a>
         
+        <!-- QR Code Generation Button - Available for all users -->
+        <a href="{{ url_for('main.generate_my_qr') }}" class="btn btn-success">
+            <i class="fas fa-qrcode"></i>
+            Generate My QR Code
+        </a>
+        
         {% if user.role == 'student' %}
-        <a href="{{ url_for('scanner.index') }}" class="btn btn-outline-secondary">
+        <a href="{{ url_for('scanner_new.index') }}" class="btn btn-outline-secondary">
             <i class="fas fa-qrcode"></i>
             Scan QR Code
         </a>
-        <a href="{{ url_for('students.view', id=user.id) }}" class="btn btn-outline-secondary">
+        <a href="{{ url_for('students.view_student', id=user.id) }}" class="btn btn-outline-secondary">
             <i class="fas fa-chart-bar"></i>
             View Attendance
         </a>

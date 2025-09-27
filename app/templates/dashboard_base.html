@@ -468,6 +468,13 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ url_for('main.generate_my_qr') }}" class="nav-link {% if request.endpoint == 'main.generate_my_qr' %}active{% endif %}">
+                        <i class="fas fa-qrcode"></i>
+                        My QR Code
+                    </a>
+                </li>
+                
+                <li class="nav-item">
                     <button onclick="confirmLogout()" class="nav-link" style="border: none; background: none; width: 100%; text-align: left;">
                         <i class="fas fa-sign-out-alt"></i>
                         Logout

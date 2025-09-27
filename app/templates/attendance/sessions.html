@@ -338,7 +338,7 @@
                 </a>
                 
                 {% if session.is_active() %}
-                <a href="{{ url_for('scanner.scan', session_id=session.id) }}" class="btn-outline-primary">
+                <a href="{{ url_for('scanner_new.index') }}" class="btn-outline-primary">
                     <i class="fas fa-qrcode"></i>
                     Scan
                 </a>
