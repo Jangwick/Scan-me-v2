@@ -1,0 +1,862 @@
+{% extends "dashboard_base.html" %}
+
+{% block page_title %}Schedule New Session{% endblock %}
+
+{% block extra_css %}
+<style>
+    .schedule-header {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-section {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+    }
+
+    .form-section h5 {
+        color: #374151;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-bottom: 2px solid #f3f4f6;
+        padding-bottom: 0.75rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .required {
+        color: #ef4444;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        background-color: #fff;
+    }
+
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    .form-control.is-invalid {
+        border-color: #ef4444;
+    }
+
+    .form-control.is-valid {
+        border-color: #10b981;
+    }
+
+    .invalid-feedback {
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .time-input-group {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .time-separator {
+        font-weight: 600;
+        color: #6b7280;
+        text-align: center;
+    }
+
+    .recurrence-options {
+        display: none;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .recurrence-options.show {
+        display: block;
+    }
+
+    .recurrence-type-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .recurrence-option {
+        position: relative;
+    }
+
+    .recurrence-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+    }
+
+    .recurrence-option label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-align: center;
+    }
+
+    .recurrence-option input[type="radio"]:checked + label {
+        border-color: #10b981;
+        background-color: #ecfdf5;
+        color: #065f46;
+    }
+
+    .session-preview {
+        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+        border: 1px solid #bbf7d0;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .preview-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #d1fae5;
+    }
+
+    .preview-item:last-child {
+        border-bottom: none;
+    }
+
+    .preview-label {
+        font-weight: 600;
+        color: #065f46;
+    }
+
+    .preview-value {
+        color: #047857;
+    }
+
+    .availability-check {
+        background: #fef3c7;
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        display: none;
+    }
+
+    .availability-check.show {
+        display: block;
+    }
+
+    .availability-loading {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #92400e;
+    }
+
+    .availability-conflict {
+        color: #dc2626;
+    }
+
+    .availability-available {
+        color: #059669;
+    }
+
+    .conflict-list {
+        margin-top: 0.5rem;
+        padding-left: 1rem;
+    }
+
+    .conflict-item {
+        margin-bottom: 0.25rem;
+        font-size: 0.875rem;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 1rem;
+    }
+
+    .btn-success {
+        background-color: #10b981;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background-color: #059669;
+        color: white;
+    }
+
+    .btn-success:disabled {
+        background-color: #9ca3af;
+        cursor: not-allowed;
+    }
+
+    .btn-outline {
+        background-color: transparent;
+        color: #6b7280;
+        border: 2px solid #e5e7eb;
+    }
+
+    .btn-outline:hover {
+        background-color: #f9fafb;
+        color: #374151;
+        text-decoration: none;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        padding-top: 1rem;
+        border-top: 1px solid #e5e7eb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="schedule-header">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h2 class="mb-2">
+                <i class="fas fa-calendar-plus me-2"></i>
+                Schedule New Session
+            </h2>
+            <p class="mb-0 opacity-75">Create a new scheduled session for a room</p>
+        </div>
+        <a href="{{ url_for('admin.manage_rooms') }}" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> Back to Rooms
+        </a>
+    </div>
+</div>
+
+<form id="addSessionForm" method="POST" action="{{ url_for('schedule.add_session') }}">
+    <!-- Session Details Section -->
+    <div class="form-section">
+        <h5>
+            <i class="fas fa-info-circle me-2"></i>
+            Session Information
+        </h5>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="form-group">
+                    <label for="title" class="form-label">
+                        Session Title
+                        <span class="required">*</span>
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="title" 
+                           name="title" 
+                           value="{{ session_data.title if session_data else '' }}"
+                           placeholder="e.g., Mathematics 101, Lab Session, Team Meeting"
+                           required
+                           maxlength="200">
+                    <div class="invalid-feedback" id="titleError"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="instructor_id" class="form-label">Instructor</label>
+                    <select class="form-select" id="instructor_id" name="instructor_id">
+                        <option value="{{ current_user.id }}">{{ current_user.get_display_name() }} (You)</option>
+                        {% for instructor in instructors %}
+                            {% if instructor.id != current_user.id %}
+                            <option value="{{ instructor.id }}"
+                                    {{ 'selected' if session_data and session_data.instructor_id == instructor.id else '' }}>
+                                {{ instructor.get_display_name() }}
+                            </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" 
+                      id="description" 
+                      name="description" 
+                      rows="3"
+                      placeholder="Optional description or notes about the session">{{ session_data.description if session_data else '' }}</textarea>
+        </div>
+    </div>
+
+    <!-- Room and Time Section -->
+    <div class="form-section">
+        <h5>
+            <i class="fas fa-clock me-2"></i>
+            Date, Time & Location
+        </h5>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="room_id" class="form-label">
+                        Room
+                        <span class="required">*</span>
+                    </label>
+                    <select class="form-select" 
+                            id="room_id" 
+                            name="room_id" 
+                            required
+                            onchange="checkAvailability()">
+                        <option value="">Select a room</option>
+                        {% for room in rooms %}
+                        <option value="{{ room.id }}"
+                                data-capacity="{{ room.capacity }}"
+                                {{ 'selected' if request.args.get('room_id') == room.id|string or (session_data and session_data.room_id == room.id) else '' }}>
+                            {{ room.get_full_name() }} - {{ room.building }} (Capacity: {{ room.capacity }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="invalid-feedback" id="roomError"></div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="session_date" class="form-label">
+                        Date
+                        <span class="required">*</span>
+                    </label>
+                    <input type="date" 
+                           class="form-control" 
+                           id="session_date" 
+                           name="session_date" 
+                           value="{{ session_data.session_date.strftime('%Y-%m-%d') if session_data and session_data.session_date else '' }}"
+                           min="{{ date.today().strftime('%Y-%m-%d') }}"
+                           required
+                           onchange="checkAvailability()">
+                    <div class="invalid-feedback" id="dateError"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label class="form-label">
+                        Time
+                        <span class="required">*</span>
+                    </label>
+                    <div class="time-input-group">
+                        <input type="time" 
+                               class="form-control" 
+                               id="start_time" 
+                               name="start_time" 
+                               value="{{ session_data.start_time.strftime('%H:%M') if session_data and session_data.start_time else '' }}"
+                               required
+                               onchange="checkAvailability()">
+                        <div class="time-separator">to</div>
+                        <input type="time" 
+                               class="form-control" 
+                               id="end_time" 
+                               name="end_time" 
+                               value="{{ session_data.end_time.strftime('%H:%M') if session_data and session_data.end_time else '' }}"
+                               required
+                               onchange="checkAvailability()">
+                    </div>
+                    <div class="invalid-feedback" id="timeError"></div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="attendance_window_minutes" class="form-label">Attendance Window</label>
+                    <select class="form-select" id="attendance_window_minutes" name="attendance_window_minutes">
+                        <option value="5" {{ 'selected' if session_data and session_data.attendance_window_minutes == 5 else '' }}>5 minutes</option>
+                        <option value="10" {{ 'selected' if session_data and session_data.attendance_window_minutes == 10 else '' }}>10 minutes</option>
+                        <option value="15" {{ 'selected' if not session_data or session_data.attendance_window_minutes == 15 else '' }}>15 minutes (default)</option>
+                        <option value="30" {{ 'selected' if session_data and session_data.attendance_window_minutes == 30 else '' }}>30 minutes</option>
+                        <option value="60" {{ 'selected' if session_data and session_data.attendance_window_minutes == 60 else '' }}>1 hour</option>
+                    </select>
+                    <small class="text-muted">How long the QR code will be active for attendance</small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Room Availability Check -->
+        <div id="availabilityCheck" class="availability-check">
+            <div id="availabilityLoading" class="availability-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                Checking room availability...
+            </div>
+            <div id="availabilityResult"></div>
+        </div>
+    </div>
+
+    <!-- Session Settings Section -->
+    <div class="form-section">
+        <h5>
+            <i class="fas fa-cog me-2"></i>
+            Session Settings
+        </h5>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="max_attendees" class="form-label">Max Attendees</label>
+                    <input type="number" 
+                           class="form-control" 
+                           id="max_attendees" 
+                           name="max_attendees" 
+                           value="{{ session_data.max_attendees if session_data else '' }}"
+                           placeholder="Leave blank for room capacity"
+                           min="1">
+                    <small class="text-muted">Override room capacity if needed</small>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="form-group">
+                    <label class="form-label">Session Options</label>
+                    <div class="form-check-group">
+                        <div class="form-check">
+                            <input class="form-check-input" 
+                                   type="checkbox" 
+                                   id="is_mandatory" 
+                                   name="is_mandatory"
+                                   {{ 'checked' if session_data and session_data.is_mandatory else '' }}>
+                            <label class="form-check-label" for="is_mandatory">
+                                Mandatory attendance
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" 
+                                   type="checkbox" 
+                                   id="requires_registration" 
+                                   name="requires_registration"
+                                   {{ 'checked' if session_data and session_data.requires_registration else '' }}>
+                            <label class="form-check-label" for="requires_registration">
+                                Requires pre-registration
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recurrence Section -->
+    <div class="form-section">
+        <h5>
+            <i class="fas fa-repeat me-2"></i>
+            Recurrence Pattern
+        </h5>
+        <div class="form-group">
+            <div class="form-check">
+                <input class="form-check-input" 
+                       type="checkbox" 
+                       id="enableRecurrence" 
+                       onchange="toggleRecurrence()">
+                <label class="form-check-label" for="enableRecurrence">
+                    Create recurring sessions
+                </label>
+            </div>
+        </div>
+        
+        <div id="recurrenceOptions" class="recurrence-options">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">Repeat Pattern</label>
+                        <div class="recurrence-type-grid">
+                            <div class="recurrence-option">
+                                <input type="radio" 
+                                       id="recurrence_daily" 
+                                       name="recurrence_type" 
+                                       value="daily">
+                                <label for="recurrence_daily">Daily</label>
+                            </div>
+                            <div class="recurrence-option">
+                                <input type="radio" 
+                                       id="recurrence_weekly" 
+                                       name="recurrence_type" 
+                                       value="weekly"
+                                       checked>
+                                <label for="recurrence_weekly">Weekly</label>
+                            </div>
+                            <div class="recurrence-option">
+                                <input type="radio" 
+                                       id="recurrence_biweekly" 
+                                       name="recurrence_type" 
+                                       value="biweekly">
+                                <label for="recurrence_biweekly">Bi-weekly</label>
+                            </div>
+                            <div class="recurrence-option">
+                                <input type="radio" 
+                                       id="recurrence_monthly" 
+                                       name="recurrence_type" 
+                                       value="monthly">
+                                <label for="recurrence_monthly">Monthly</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="recurrence_end_date" class="form-label">End Date</label>
+                        <input type="date" 
+                               class="form-control" 
+                               id="recurrence_end_date" 
+                               name="recurrence_end_date" 
+                               min="{{ date.today().strftime('%Y-%m-%d') }}">
+                        <small class="text-muted">When to stop creating recurring sessions</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Preview -->
+    <div class="session-preview">
+        <h6 class="mb-3">
+            <i class="fas fa-eye me-2"></i>
+            Session Preview
+        </h6>
+        <div id="sessionPreview">
+            <div class="preview-item">
+                <span class="preview-label">Title:</span>
+                <span class="preview-value" id="previewTitle">Not specified</span>
+            </div>
+            <div class="preview-item">
+                <span class="preview-label">Room:</span>
+                <span class="preview-value" id="previewRoom">Not selected</span>
+            </div>
+            <div class="preview-item">
+                <span class="preview-label">Date & Time:</span>
+                <span class="preview-value" id="previewDateTime">Not specified</span>
+            </div>
+            <div class="preview-item">
+                <span class="preview-label">Duration:</span>
+                <span class="preview-value" id="previewDuration">--</span>
+            </div>
+            <div class="preview-item">
+                <span class="preview-label">Instructor:</span>
+                                <span class="preview-value" id="previewInstructor">{{ current_user.get_display_name() }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="form-section">
+        <div class="action-buttons">
+            <button type="submit" class="btn btn-success" id="submitBtn">
+                <i class="fas fa-calendar-check"></i> Create Session
+            </button>
+            <a href="{{ url_for('admin.manage_rooms') }}" class="btn btn-outline">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let availabilityTimeout;
+
+function toggleRecurrence() {
+    const checkbox = document.getElementById('enableRecurrence');
+    const options = document.getElementById('recurrenceOptions');
+    
+    if (checkbox.checked) {
+        options.classList.add('show');
+        // Set default recurrence type
+        document.getElementById('recurrence_weekly').checked = true;
+    } else {
+        options.classList.remove('show');
+        // Set to none
+        const noneInput = document.createElement('input');
+        noneInput.type = 'hidden';
+        noneInput.name = 'recurrence_type';
+        noneInput.value = 'none';
+        document.getElementById('addSessionForm').appendChild(noneInput);
+    }
+}
+
+function checkAvailability() {
+    const roomId = document.getElementById('room_id').value;
+    const sessionDate = document.getElementById('session_date').value;
+    const startTime = document.getElementById('start_time').value;
+    const endTime = document.getElementById('end_time').value;
+    
+    if (!roomId || !sessionDate || !startTime || !endTime) {
+        document.getElementById('availabilityCheck').classList.remove('show');
+        return;
+    }
+    
+    // Clear previous timeout
+    if (availabilityTimeout) {
+        clearTimeout(availabilityTimeout);
+    }
+    
+    // Show availability check
+    document.getElementById('availabilityCheck').classList.add('show');
+    document.getElementById('availabilityLoading').style.display = 'flex';
+    document.getElementById('availabilityResult').innerHTML = '';
+    
+    // Debounce the API call
+    availabilityTimeout = setTimeout(() => {
+        fetch(`{{ url_for('schedule.check_room_availability') }}?room_id=${roomId}&date=${sessionDate}&start_time=${startTime}&end_time=${endTime}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('availabilityLoading').style.display = 'none';
+                
+                if (data.available) {
+                    document.getElementById('availabilityResult').innerHTML = `
+                        <div class="availability-available">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Room is available for the selected time
+                        </div>
+                    `;
+                } else if (data.conflicts) {
+                    let conflictHtml = `
+                        <div class="availability-conflict">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Room conflicts detected:
+                        </div>
+                        <div class="conflict-list">
+                    `;
+                    
+                    data.conflicts.forEach(conflict => {
+                        conflictHtml += `
+                            <div class="conflict-item">
+                                • ${conflict.title} (${conflict.time}) - ${conflict.instructor}
+                            </div>
+                        `;
+                    });
+                    
+                    conflictHtml += '</div>';
+                    document.getElementById('availabilityResult').innerHTML = conflictHtml;
+                } else if (data.error) {
+                    document.getElementById('availabilityResult').innerHTML = `
+                        <div class="availability-conflict">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Error checking availability: ${data.error}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                document.getElementById('availabilityLoading').style.display = 'none';
+                document.getElementById('availabilityResult').innerHTML = `
+                    <div class="availability-conflict">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error checking availability
+                    </div>
+                `;
+                console.error('Availability check error:', error);
+            });
+    }, 500);
+}
+
+function updatePreview() {
+    // Update title
+    const title = document.getElementById('title').value || 'Not specified';
+    document.getElementById('previewTitle').textContent = title;
+    
+    // Update room
+    const roomSelect = document.getElementById('room_id');
+    const roomText = roomSelect.selectedOptions[0]?.text || 'Not selected';
+    document.getElementById('previewRoom').textContent = roomText;
+    
+    // Update date and time
+    const sessionDate = document.getElementById('session_date').value;
+    const startTime = document.getElementById('start_time').value;
+    const endTime = document.getElementById('end_time').value;
+    
+    if (sessionDate && startTime && endTime) {
+        const dateObj = new Date(sessionDate);
+        const dateStr = dateObj.toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        
+        const startTimeStr = new Date(`1970-01-01T${startTime}`).toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+        
+        const endTimeStr = new Date(`1970-01-01T${endTime}`).toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+        
+        document.getElementById('previewDateTime').textContent = `${dateStr} • ${startTimeStr} - ${endTimeStr}`;
+        
+        // Calculate duration
+        const start = new Date(`1970-01-01T${startTime}`);
+        const end = new Date(`1970-01-01T${endTime}`);
+        const duration = (end - start) / (1000 * 60); // minutes
+        
+        if (duration > 0) {
+            const hours = Math.floor(duration / 60);
+            const minutes = duration % 60;
+            let durationStr = '';
+            if (hours > 0) durationStr += `${hours} hour${hours > 1 ? 's' : ''}`;
+            if (minutes > 0) {
+                if (hours > 0) durationStr += ' ';
+                durationStr += `${minutes} minute${minutes > 1 ? 's' : ''}`;
+            }
+            document.getElementById('previewDuration').textContent = durationStr;
+        } else {
+            document.getElementById('previewDuration').textContent = 'Invalid time range';
+        }
+    } else {
+        document.getElementById('previewDateTime').textContent = 'Not specified';
+        document.getElementById('previewDuration').textContent = '--';
+    }
+    
+    // Update instructor
+    const instructorSelect = document.getElementById('instructor_id');
+    const instructorText = instructorSelect.selectedOptions[0]?.text || 'Not selected';
+    document.getElementById('previewInstructor').textContent = instructorText;
+}
+
+// Add event listeners for live preview
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial preview update
+    updatePreview();
+    
+    // Add event listeners for live preview
+    document.getElementById('title').addEventListener('input', updatePreview);
+    document.getElementById('room_id').addEventListener('change', updatePreview);
+    document.getElementById('session_date').addEventListener('change', updatePreview);
+    document.getElementById('start_time').addEventListener('change', updatePreview);
+    document.getElementById('end_time').addEventListener('change', updatePreview);
+    document.getElementById('instructor_id').addEventListener('change', updatePreview);
+    
+    // Set initial instructor preview
+    updatePreview();
+});
+
+// Form validation
+document.getElementById('addSessionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    let isValid = true;
+    const formData = new FormData(this);
+    
+    // Clear previous errors
+    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+    document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+    
+    // Title validation
+    const title = formData.get('title');
+    if (!title || title.trim().length === 0) {
+        document.getElementById('title').classList.add('is-invalid');
+        document.getElementById('titleError').textContent = 'Session title is required';
+        isValid = false;
+    }
+    
+    // Room validation
+    const roomId = formData.get('room_id');
+    if (!roomId) {
+        document.getElementById('room_id').classList.add('is-invalid');
+        document.getElementById('roomError').textContent = 'Please select a room';
+        isValid = false;
+    }
+    
+    // Date validation
+    const sessionDate = formData.get('session_date');
+    if (!sessionDate) {
+        document.getElementById('session_date').classList.add('is-invalid');
+        document.getElementById('dateError').textContent = 'Session date is required';
+        isValid = false;
+    } else {
+        const today = new Date();
+        const selectedDate = new Date(sessionDate);
+        today.setHours(0, 0, 0, 0);
+        selectedDate.setHours(0, 0, 0, 0);
+        
+        if (selectedDate < today) {
+            document.getElementById('session_date').classList.add('is-invalid');
+            document.getElementById('dateError').textContent = 'Session date cannot be in the past';
+            isValid = false;
+        }
+    }
+    
+    // Time validation
+    const startTime = formData.get('start_time');
+    const endTime = formData.get('end_time');
+    if (!startTime || !endTime) {
+        document.getElementById('timeError').textContent = 'Both start and end times are required';
+        isValid = false;
+    } else if (startTime >= endTime) {
+        document.getElementById('timeError').textContent = 'End time must be after start time';
+        isValid = false;
+    }
+    
+    // Check for conflicts if availability was checked
+    const availabilityResult = document.getElementById('availabilityResult');
+    if (availabilityResult.innerHTML.includes('conflicts detected')) {
+        if (!confirm('Room conflicts detected. Do you want to proceed anyway?')) {
+            isValid = false;
+        }
+    }
+    
+    if (isValid) {
+        // Show loading state
+        const submitBtn = document.getElementById('submitBtn');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Session...';
+        submitBtn.disabled = true;
+        
+        // Submit form
+        this.submit();
+    } else {
+        // Scroll to first error
+        const firstError = document.querySelector('.is-invalid');
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstError.focus();
+        }
+    }
+});
+</script>
+{% endblock %}

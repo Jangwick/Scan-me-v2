@@ -240,6 +240,50 @@
         box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
     }
 
+    /* Session Scheduling Styles */
+    .session-required {
+        color: #ef4444;
+        margin-left: 0.25rem;
+    }
+
+    .form-check-input:checked {
+        background-color: #8b5cf6;
+        border-color: #8b5cf6;
+    }
+
+    .form-switch .form-check-input {
+        width: 2.5rem;
+        height: 1.25rem;
+        border-radius: 1rem;
+    }
+
+    .form-switch .form-check-input:checked {
+        background-color: #10b981;
+        border-color: #10b981;
+    }
+
+    #sessionScheduleSection {
+        border-left: 4px solid #10b981;
+        padding-left: 1rem;
+        margin-left: 1rem;
+        background: #f0fdf4;
+        border-radius: 0 8px 8px 0;
+        padding: 1.5rem;
+    }
+
+    .session-preview {
+        background: #e6fffa;
+        border: 2px dashed #14b8a6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        display: none;
+    }
+
+    .session-preview.show {
+        display: block;
+    }
+
     @media (max-width: 768px) {
         .add-room-header {
             padding: 1.5rem;
@@ -472,6 +516,204 @@
             </div>
         </div>
 
+        <!-- Session Scheduling Section -->
+        <div class="form-section">
+            <div class="d-flex align-items-center mb-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-plus me-2"></i>
+                    Schedule Session
+                </h5>
+                <div class="form-check form-switch ms-auto">
+                    <input class="form-check-input" type="checkbox" id="schedule_session" name="schedule_session" 
+                           {% if schedule_session %}checked{% endif %}>
+                    <label class="form-check-label" for="schedule_session">
+                        Create a session for this room
+                    </label>
+                </div>
+            </div>
+            
+            <div id="sessionScheduleSection" style="display: {% if schedule_session %}block{% else %}none{% endif %};">
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Optional:</strong> You can create a session immediately after creating the room. 
+                    This will set up the room with a professor and specific date/time for attendance tracking.
+                </div>
+                
+                <!-- Basic Session Info -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="session_title">
+                                Session Title
+                                <span class="required session-required">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="session_title" 
+                                   name="session_title" 
+                                   placeholder="e.g., Computer Science 101, Biology Lab"
+                                   maxlength="200">
+                            <div class="invalid-feedback" id="sessionTitleError"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="instructor_id">
+                                Instructor
+                                <span class="required session-required">*</span>
+                            </label>
+                            <select class="form-select" id="instructor_id" name="instructor_id">
+                                <option value="">Select an instructor</option>
+                                {% for instructor in instructors %}
+                                <option value="{{ instructor.id }}">
+                                    {{ instructor.get_display_name() }} ({{ instructor.get_role_display() }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback" id="instructorError"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date and Time -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="session_date">
+                                Session Date
+                                <span class="required session-required">*</span>
+                            </label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="session_date" 
+                                   name="session_date"
+                                   min="">
+                            <div class="invalid-feedback" id="sessionDateError"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="start_time">
+                                Start Time
+                                <span class="required session-required">*</span>
+                            </label>
+                            <input type="time" 
+                                   class="form-control" 
+                                   id="start_time" 
+                                   name="start_time">
+                            <div class="invalid-feedback" id="startTimeError"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="end_time">
+                                End Time
+                                <span class="required session-required">*</span>
+                            </label>
+                            <input type="time" 
+                                   class="form-control" 
+                                   id="end_time" 
+                                   name="end_time">
+                            <div class="invalid-feedback" id="endTimeError"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session Settings -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="max_attendees">Max Attendees</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="max_attendees" 
+                                   name="max_attendees" 
+                                   placeholder="Leave blank to use room capacity"
+                                   min="1">
+                            <small class="form-text text-muted">Override room capacity if needed</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="attendance_window_minutes">Attendance Window (minutes)</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="attendance_window_minutes" 
+                                   name="attendance_window_minutes" 
+                                   value="15"
+                                   min="5" 
+                                   max="60">
+                            <small class="form-text text-muted">How long before session QR code is active</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="recurrence_type">Recurrence</label>
+                            <select class="form-select" id="recurrence_type" name="recurrence_type">
+                                <option value="none">No Recurrence</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                            <small class="form-text text-muted">Create repeating sessions</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session Options -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_mandatory" name="is_mandatory">
+                            <label class="form-check-label" for="is_mandatory">
+                                <strong>Mandatory Attendance</strong>
+                                <br><small class="text-muted">Require all students to attend</small>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="requires_registration" name="requires_registration">
+                            <label class="form-check-label" for="requires_registration">
+                                <strong>Requires Registration</strong>
+                                <br><small class="text-muted">Students must register before attending</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                    <label for="session_description">Session Description</label>
+                    <textarea class="form-control" 
+                              id="session_description" 
+                              name="session_description" 
+                              rows="3" 
+                              placeholder="Additional details about the session..."
+                              maxlength="1000"></textarea>
+                    <small class="form-text text-muted">Optional description of the session</small>
+                </div>
+
+                <!-- Session Preview -->
+                <div class="session-preview" id="sessionPreview">
+                    <h6 class="text-success"><i class="fas fa-calendar-check me-2"></i>Session Preview</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Title:</strong> <span id="previewSessionTitle">-</span></p>
+                            <p><strong>Instructor:</strong> <span id="previewInstructor">-</span></p>
+                            <p><strong>Date:</strong> <span id="previewDate">-</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Time:</strong> <span id="previewTime">-</span></p>
+                            <p><strong>Duration:</strong> <span id="previewDuration">-</span></p>
+                            <p><strong>Max Attendees:</strong> <span id="previewMaxAttendees">Room Capacity</span></p>
+                        </div>
+                    </div>
+                    <p><strong>Settings:</strong> <span id="previewSettings">Regular session</span></p>
+                </div>
+            </div>
+        </div>
+
         <!-- Live Preview -->
         <div class="room-preview">
             <h6>
@@ -558,6 +800,206 @@ document.querySelectorAll('input[name="features"]').forEach(cb => {
     cb.addEventListener('change', updatePreview);
 });
 
+// Session scheduling toggle
+document.getElementById('schedule_session').addEventListener('change', function() {
+    const sessionSection = document.getElementById('sessionScheduleSection');
+    const sessionFields = sessionSection.querySelectorAll('input[required], select[required]');
+    
+    if (this.checked) {
+        sessionSection.style.display = 'block';
+        // Make session fields required
+        sessionFields.forEach(field => field.required = true);
+        document.querySelectorAll('.session-required').forEach(span => span.style.display = 'inline');
+    } else {
+        sessionSection.style.display = 'none';
+        // Remove required from session fields
+        sessionFields.forEach(field => field.required = false);
+        document.querySelectorAll('.session-required').forEach(span => span.style.display = 'none');
+        
+        // Clear any validation errors for session fields
+        sessionSection.querySelectorAll('.is-invalid').forEach(field => {
+            field.classList.remove('is-invalid');
+        });
+        sessionSection.querySelectorAll('.invalid-feedback').forEach(error => {
+            error.textContent = '';
+        });
+    }
+});
+
+// Session form validation helpers
+function validateSessionTime() {
+    const startTime = document.getElementById('start_time').value;
+    const endTime = document.getElementById('end_time').value;
+    
+    if (startTime && endTime) {
+        const start = new Date(`2000-01-01T${startTime}`);
+        const end = new Date(`2000-01-01T${endTime}`);
+        
+        if (start >= end) {
+            document.getElementById('end_time').classList.add('is-invalid');
+            document.getElementById('endTimeError').textContent = 'End time must be after start time';
+            return false;
+        } else {
+            document.getElementById('end_time').classList.remove('is-invalid');
+            document.getElementById('endTimeError').textContent = '';
+            return true;
+        }
+    }
+    return true;
+}
+
+function validateSessionDate() {
+    const sessionDate = document.getElementById('session_date').value;
+    if (sessionDate) {
+        const selectedDate = new Date(sessionDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (selectedDate < today) {
+            document.getElementById('session_date').classList.add('is-invalid');
+            document.getElementById('sessionDateError').textContent = 'Session date cannot be in the past';
+            return false;
+        } else {
+            document.getElementById('session_date').classList.remove('is-invalid');
+            document.getElementById('sessionDateError').textContent = '';
+            return true;
+        }
+    }
+    return true;
+}
+
+// Add session validation listeners
+document.getElementById('start_time').addEventListener('change', validateSessionTime);
+document.getElementById('end_time').addEventListener('change', validateSessionTime);
+document.getElementById('session_date').addEventListener('change', validateSessionDate);
+
+// Set minimum date to today
+document.getElementById('session_date').min = new Date().toISOString().split('T')[0];
+
+// Session preview functionality
+function updateSessionPreview() {
+    const sessionTitle = document.getElementById('session_title').value || '-';
+    const instructorSelect = document.getElementById('instructor_id');
+    const instructorName = instructorSelect.options[instructorSelect.selectedIndex]?.text || '-';
+    const sessionDate = document.getElementById('session_date').value;
+    const startTime = document.getElementById('start_time').value;
+    const endTime = document.getElementById('end_time').value;
+    const maxAttendees = document.getElementById('max_attendees').value;
+    const isMandatory = document.getElementById('is_mandatory').checked;
+    const requiresRegistration = document.getElementById('requires_registration').checked;
+    const recurrenceType = document.getElementById('recurrence_type').value;
+    
+    // Update preview elements
+    document.getElementById('previewSessionTitle').textContent = sessionTitle;
+    document.getElementById('previewInstructor').textContent = instructorName === 'Select an instructor' ? '-' : instructorName;
+    
+    // Format date
+    if (sessionDate) {
+        const date = new Date(sessionDate + 'T00:00:00');
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('previewDate').textContent = date.toLocaleDateString('en-US', options);
+    } else {
+        document.getElementById('previewDate').textContent = '-';
+    }
+    
+    // Format time and calculate duration
+    if (startTime && endTime) {
+        const start = new Date(`2000-01-01T${startTime}`);
+        const end = new Date(`2000-01-01T${endTime}`);
+        
+        const startFormatted = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        const endFormatted = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        
+        document.getElementById('previewTime').textContent = `${startFormatted} - ${endFormatted}`;
+        
+        if (start < end) {
+            const durationMs = end - start;
+            const durationMinutes = durationMs / (1000 * 60);
+            const hours = Math.floor(durationMinutes / 60);
+            const minutes = durationMinutes % 60;
+            
+            let durationText = '';
+            if (hours > 0) durationText += `${hours}h `;
+            if (minutes > 0) durationText += `${minutes}m`;
+            
+            document.getElementById('previewDuration').textContent = durationText || '-';
+        } else {
+            document.getElementById('previewDuration').textContent = '-';
+        }
+    } else {
+        document.getElementById('previewTime').textContent = '-';
+        document.getElementById('previewDuration').textContent = '-';
+    }
+    
+    // Max attendees
+    document.getElementById('previewMaxAttendees').textContent = maxAttendees || 'Room Capacity';
+    
+    // Settings
+    let settings = [];
+    if (isMandatory) settings.push('Mandatory');
+    if (requiresRegistration) settings.push('Requires Registration');
+    if (recurrenceType !== 'none') settings.push(`Repeats ${recurrenceType}`);
+    
+    document.getElementById('previewSettings').textContent = settings.length > 0 ? settings.join(', ') : 'Regular session';
+    
+    // Show/hide preview
+    const preview = document.getElementById('sessionPreview');
+    if (sessionTitle !== '-' || instructorName !== '-') {
+        preview.classList.add('show');
+    } else {
+        preview.classList.remove('show');
+    }
+}
+
+// Add session preview listeners
+document.getElementById('session_title').addEventListener('input', updateSessionPreview);
+document.getElementById('instructor_id').addEventListener('change', updateSessionPreview);
+document.getElementById('session_date').addEventListener('change', updateSessionPreview);
+document.getElementById('start_time').addEventListener('change', updateSessionPreview);
+document.getElementById('end_time').addEventListener('change', updateSessionPreview);
+document.getElementById('max_attendees').addEventListener('input', updateSessionPreview);
+document.getElementById('is_mandatory').addEventListener('change', updateSessionPreview);
+document.getElementById('requires_registration').addEventListener('change', updateSessionPreview);
+document.getElementById('recurrence_type').addEventListener('change', updateSessionPreview);
+
+// Room number duplication check
+let roomCheckTimeout;
+document.getElementById('number').addEventListener('input', function() {
+    const roomNumber = this.value.trim();
+    
+    // Clear previous timeout
+    if (roomCheckTimeout) {
+        clearTimeout(roomCheckTimeout);
+    }
+    
+    // Clear previous validation state
+    this.classList.remove('is-invalid', 'is-valid');
+    document.getElementById('numberError').textContent = '';
+    
+    if (roomNumber.length === 0) {
+        return;
+    }
+    
+    // Debounce the API call
+    roomCheckTimeout = setTimeout(() => {
+        fetch(`{{ url_for('admin.check_room_number') }}?room_number=${encodeURIComponent(roomNumber)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    document.getElementById('number').classList.add('is-invalid');
+                    const existingRoom = data.room_info;
+                    document.getElementById('numberError').textContent = 
+                        `Room ${existingRoom.room_number} already exists in ${existingRoom.building}, Floor ${existingRoom.floor}`;
+                } else {
+                    document.getElementById('number').classList.add('is-valid');
+                }
+            })
+            .catch(error => {
+                console.error('Error checking room number:', error);
+            });
+    }, 500); // Wait 500ms after user stops typing
+});
+
 // Form validation
 document.getElementById('addRoomForm').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -575,6 +1017,9 @@ document.getElementById('addRoomForm').addEventListener('submit', function(e) {
         document.getElementById('number').classList.add('is-invalid');
         document.getElementById('numberError').textContent = 'Room number is required';
         isValid = false;
+    } else if (document.getElementById('number').classList.contains('is-invalid')) {
+        // If room number already marked as invalid (duplicate), don't submit
+        isValid = false;
     }
     
     // Room type validation
@@ -591,6 +1036,53 @@ document.getElementById('addRoomForm').addEventListener('submit', function(e) {
         document.getElementById('capacity').classList.add('is-invalid');
         document.getElementById('capacityError').textContent = 'Capacity must be between 1 and 1000';
         isValid = false;
+    }
+    
+    // Session validation if scheduling is enabled
+    const scheduleSession = document.getElementById('schedule_session').checked;
+    if (scheduleSession) {
+        // Session title validation
+        const sessionTitle = formData.get('session_title');
+        if (!sessionTitle || sessionTitle.trim().length === 0) {
+            document.getElementById('session_title').classList.add('is-invalid');
+            document.getElementById('sessionTitleError').textContent = 'Session title is required';
+            isValid = false;
+        }
+        
+        // Instructor validation
+        const instructorId = formData.get('instructor_id');
+        if (!instructorId) {
+            document.getElementById('instructor_id').classList.add('is-invalid');
+            document.getElementById('instructorError').textContent = 'Please select an instructor';
+            isValid = false;
+        }
+        
+        // Date validation
+        if (!validateSessionDate()) {
+            isValid = false;
+        }
+        
+        // Time validation
+        if (!validateSessionTime()) {
+            isValid = false;
+        }
+        
+        // Required session fields
+        const requiredSessionFields = ['session_date', 'start_time', 'end_time'];
+        requiredSessionFields.forEach(fieldName => {
+            const field = document.getElementById(fieldName);
+            const value = formData.get(fieldName);
+            
+            if (!value || value.trim().length === 0) {
+                field.classList.add('is-invalid');
+                const errorElement = document.getElementById(fieldName.replace('_', '') + 'Error') || 
+                                  document.getElementById(fieldName + 'Error');
+                if (errorElement) {
+                    errorElement.textContent = `${fieldName.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} is required`;
+                }
+                isValid = false;
+            }
+        });
     }
     
     if (isValid) {

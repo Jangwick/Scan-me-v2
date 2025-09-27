@@ -1,0 +1,566 @@
+{% extends "dashboard_base.html" %}
+
+{% block page_title %}Edit Room - {{ room.get_full_name() }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-room-header {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-section {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+    }
+
+    .form-section h5 {
+        color: #374151;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .required {
+        color: #ef4444;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        background-color: #fff;
+    }
+
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-control.is-invalid {
+        border-color: #ef4444;
+    }
+
+    .form-control.is-valid {
+        border-color: #10b981;
+    }
+
+    .invalid-feedback {
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        padding-top: 1rem;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 1rem;
+    }
+
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #2563eb;
+        color: white;
+    }
+
+    .btn-primary:disabled {
+        background-color: #9ca3af;
+        cursor: not-allowed;
+    }
+
+    .btn-outline {
+        background-color: transparent;
+        color: #6b7280;
+        border: 2px solid #e5e7eb;
+    }
+
+    .btn-outline:hover {
+        background-color: #f9fafb;
+        color: #374151;
+        text-decoration: none;
+    }
+
+    .room-type-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .room-type-option {
+        position: relative;
+    }
+
+    .room-type-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+    }
+
+    .room-type-option label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background-color: #fff;
+    }
+
+    .room-type-option input[type="radio"]:checked + label {
+        border-color: #3b82f6;
+        background-color: #eff6ff;
+    }
+
+    .room-type-icon {
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .room-type-option input[type="radio"]:checked + label .room-type-icon {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+    .capacity-input {
+        position: relative;
+    }
+
+    .capacity-icon {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6b7280;
+    }
+
+    .floor-select-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .floor-option {
+        position: relative;
+    }
+
+    .floor-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+    }
+
+    .floor-option label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .floor-option input[type="radio"]:checked + label {
+        border-color: #3b82f6;
+        background-color: #eff6ff;
+        color: #1d4ed8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-room-header">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h2 class="mb-2">
+                <i class="fas fa-edit me-2"></i>
+                Edit Room: {{ room.get_full_name() }}
+            </h2>
+            <p class="mb-0 opacity-75">Update room information and settings</p>
+        </div>
+        <a href="{{ url_for('admin.view_room', id=room.id) }}" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> Back to Details
+        </a>
+    </div>
+</div>
+
+<form id="editRoomForm" method="POST" action="{{ url_for('admin.edit_room', id=room.id) }}">
+    <!-- Basic Information Section -->
+    <div class="form-section">
+        <h5>
+            <i class="fas fa-info-circle me-2"></i>
+            Basic Information
+        </h5>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="number" class="form-label">
+                        Room Number
+                        <span class="required">*</span>
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="number" 
+                           name="number" 
+                           value="{{ room_data.room_number if room_data else room.room_number }}"
+                           placeholder="e.g., 101, A-203, Lab-1"
+                           required
+                           maxlength="20">
+                    <div class="invalid-feedback" id="numberError"></div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="name" class="form-label">Room Name</label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="name" 
+                           name="name" 
+                           value="{{ room_data.room_name if room_data else (room.room_name if room.room_name else '') }}"
+                           placeholder="e.g., Main Hall, Conference Room"
+                           maxlength="100">
+                    <div class="invalid-feedback" id="nameError"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Type Section -->
+    <div class="form-section">
+        <h5>
+            <i class="fas fa-door-open me-2"></i>
+            Room Type
+        </h5>
+        <div class="room-type-options">
+            <div class="room-type-option">
+                <input type="radio" 
+                       id="type_classroom" 
+                       name="type" 
+                       value="classroom"
+                       {{ 'checked' if (room_data.room_type if room_data else room.room_type) == 'classroom' else '' }}>
+                <label for="type_classroom">
+                    <div class="room-type-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Classroom</div>
+                        <small class="text-muted">Regular teaching space</small>
+                    </div>
+                </label>
+            </div>
+            <div class="room-type-option">
+                <input type="radio" 
+                       id="type_laboratory" 
+                       name="type" 
+                       value="laboratory"
+                       {{ 'checked' if (room_data.room_type if room_data else room.room_type) == 'laboratory' else '' }}>
+                <label for="type_laboratory">
+                    <div class="room-type-icon">
+                        <i class="fas fa-microscope"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Laboratory</div>
+                        <small class="text-muted">Research & experiments</small>
+                    </div>
+                </label>
+            </div>
+            <div class="room-type-option">
+                <input type="radio" 
+                       id="type_auditorium" 
+                       name="type" 
+                       value="auditorium"
+                       {{ 'checked' if (room_data.room_type if room_data else room.room_type) == 'auditorium' else '' }}>
+                <label for="type_auditorium">
+                    <div class="room-type-icon">
+                        <i class="fas fa-theater-masks"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Auditorium</div>
+                        <small class="text-muted">Large presentations</small>
+                    </div>
+                </label>
+            </div>
+            <div class="room-type-option">
+                <input type="radio" 
+                       id="type_other" 
+                       name="type" 
+                       value="other"
+                       {{ 'checked' if (room_data.room_type if room_data else room.room_type) == 'other' else '' }}>
+                <label for="type_other">
+                    <div class="room-type-icon">
+                        <i class="fas fa-door-open"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Other</div>
+                        <small class="text-muted">Multi-purpose space</small>
+                    </div>
+                </label>
+            </div>
+        </div>
+        <div class="invalid-feedback" id="typeError"></div>
+    </div>
+
+    <!-- Capacity Section -->
+    <div class="form-section">
+        <h5>
+            <i class="fas fa-users me-2"></i>
+            Capacity & Location
+        </h5>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="capacity" class="form-label">
+                        Capacity
+                        <span class="required">*</span>
+                    </label>
+                    <div class="capacity-input">
+                        <input type="number" 
+                               class="form-control" 
+                               id="capacity" 
+                               name="capacity" 
+                               value="{{ room_data.capacity if room_data else room.capacity }}"
+                               placeholder="Maximum occupancy"
+                               required
+                               min="1"
+                               max="1000">
+                        <i class="fas fa-users capacity-icon"></i>
+                    </div>
+                    <div class="invalid-feedback" id="capacityError"></div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="building" class="form-label">
+                        Building
+                        <span class="required">*</span>
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="building" 
+                           name="building" 
+                           value="{{ room_data.building if room_data else room.building }}"
+                           placeholder="e.g., Main Building, Science Block"
+                           required
+                           maxlength="50">
+                    <div class="invalid-feedback" id="buildingError"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floor Section -->
+    <div class="form-section">
+        <h5>
+            <i class="fas fa-layer-group me-2"></i>
+            Floor Selection
+        </h5>
+        <div class="floor-select-grid">
+            <div class="floor-option">
+                <input type="radio" 
+                       id="floor_0" 
+                       name="floor" 
+                       value="0"
+                       {{ 'checked' if (room_data.floor if room_data else room.floor) == 0 else '' }}>
+                <label for="floor_0">Ground</label>
+            </div>
+            {% for floor_num in range(1, 11) %}
+            <div class="floor-option">
+                <input type="radio" 
+                       id="floor_{{ floor_num }}" 
+                       name="floor" 
+                       value="{{ floor_num }}"
+                       {{ 'checked' if (room_data.floor if room_data else room.floor) == floor_num else '' }}>
+                <label for="floor_{{ floor_num }}">{{ floor_num }}</label>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="invalid-feedback" id="floorError"></div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="form-section">
+        <div class="action-buttons">
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+                <i class="fas fa-save"></i> Update Room
+            </button>
+            <a href="{{ url_for('admin.view_room', id=room.id) }}" class="btn btn-outline">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Room number duplication check
+let roomCheckTimeout;
+const originalRoomNumber = '{{ room.room_number }}';
+
+document.getElementById('number').addEventListener('input', function() {
+    const roomNumber = this.value.trim();
+    
+    // Clear previous timeout
+    if (roomCheckTimeout) {
+        clearTimeout(roomCheckTimeout);
+    }
+    
+    // Clear previous validation state
+    this.classList.remove('is-invalid', 'is-valid');
+    document.getElementById('numberError').textContent = '';
+    
+    if (roomNumber.length === 0) {
+        return;
+    }
+    
+    // Don't check if it's the same as original room number
+    if (roomNumber === originalRoomNumber) {
+        this.classList.add('is-valid');
+        return;
+    }
+    
+    // Debounce the API call
+    roomCheckTimeout = setTimeout(() => {
+        fetch(`{{ url_for('admin.check_room_number') }}?room_number=${encodeURIComponent(roomNumber)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    document.getElementById('number').classList.add('is-invalid');
+                    const existingRoom = data.room_info;
+                    document.getElementById('numberError').textContent = 
+                        `Room ${existingRoom.room_number} already exists in ${existingRoom.building}, Floor ${existingRoom.floor}`;
+                } else {
+                    document.getElementById('number').classList.add('is-valid');
+                }
+            })
+            .catch(error => {
+                console.error('Error checking room number:', error);
+            });
+    }, 500);
+});
+
+// Form validation
+document.getElementById('editRoomForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    let isValid = true;
+    const formData = new FormData(this);
+    
+    // Clear previous errors
+    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+    document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+    
+    // Room number validation
+    const number = formData.get('number');
+    if (!number || number.trim().length === 0) {
+        document.getElementById('number').classList.add('is-invalid');
+        document.getElementById('numberError').textContent = 'Room number is required';
+        isValid = false;
+    } else if (document.getElementById('number').classList.contains('is-invalid')) {
+        isValid = false; // Already marked as invalid (duplicate)
+    }
+    
+    // Room type validation
+    const type = formData.get('type');
+    if (!type) {
+        document.getElementById('typeError').textContent = 'Please select a room type';
+        isValid = false;
+    }
+    
+    // Capacity validation
+    const capacity = parseInt(formData.get('capacity'));
+    if (!capacity || capacity < 1 || capacity > 1000) {
+        document.getElementById('capacity').classList.add('is-invalid');
+        document.getElementById('capacityError').textContent = 'Capacity must be between 1 and 1000';
+        isValid = false;
+    }
+    
+    // Building validation
+    const building = formData.get('building');
+    if (!building || building.trim().length === 0) {
+        document.getElementById('building').classList.add('is-invalid');
+        document.getElementById('buildingError').textContent = 'Building is required';
+        isValid = false;
+    }
+    
+    // Floor validation
+    const floor = formData.get('floor');
+    if (floor === null || floor === '') {
+        document.getElementById('floorError').textContent = 'Please select a floor';
+        isValid = false;
+    }
+    
+    if (isValid) {
+        // Show loading state
+        const submitBtn = document.getElementById('submitBtn');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating Room...';
+        submitBtn.disabled = true;
+        
+        // Submit form
+        this.submit();
+    } else {
+        // Scroll to first error
+        const firstError = document.querySelector('.is-invalid');
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstError.focus();
+        }
+    }
+});
+</script>
+{% endblock %}

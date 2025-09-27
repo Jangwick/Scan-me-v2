@@ -1,0 +1,534 @@
+{% extends "dashboard_base.html" %}
+
+{% block page_title %}Edit Session - {{ session.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-session-header {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-container {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-section {
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #f59e0b;
+    }
+
+    .form-section h5 {
+        color: #1f2937;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-group label .required {
+        color: #ef4444;
+        margin-left: 0.25rem;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+        font-size: 1rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #f59e0b;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        outline: none;
+    }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .form-check-input {
+        border: 2px solid #e5e7eb;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    .form-check-input:checked {
+        background-color: #f59e0b;
+        border-color: #f59e0b;
+    }
+
+    .form-check-label {
+        font-weight: 500;
+        color: #374151;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    .btn {
+        padding: 0.875rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: none;
+        font-size: 1rem;
+    }
+
+    .btn-warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+    }
+
+    .btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+        color: white;
+    }
+
+    .btn-outline-secondary {
+        background: transparent;
+        border: 2px solid #6b7280;
+        color: #6b7280;
+    }
+
+    .btn-outline-secondary:hover {
+        background: #6b7280;
+        color: white;
+        text-decoration: none;
+    }
+
+    .invalid-feedback {
+        display: block;
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .is-invalid {
+        border-color: #ef4444;
+    }
+
+    .is-invalid:focus {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+
+    .warning-alert {
+        background-color: #fef3c7;
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .warning-alert i {
+        color: #f59e0b;
+        font-size: 1.25rem;
+    }
+
+    @media (max-width: 768px) {
+        .edit-session-header {
+            padding: 1.5rem;
+        }
+
+        .edit-session-header .d-flex {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .form-container {
+            padding: 1.5rem;
+        }
+
+        .form-section {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-session-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="mb-1">
+                <i class="fas fa-edit me-2"></i>
+                Edit Session
+            </h1>
+            <p class="mb-0 opacity-75">{{ session.title }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('schedule.view_session', id=session.id) }}" class="btn btn-light">
+                <i class="fas fa-eye"></i>
+                View Session
+            </a>
+            <a href="{{ url_for('schedule.manage_sessions') }}" class="btn btn-outline-light">
+                <i class="fas fa-arrow-left"></i>
+                Back to Sessions
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if session.status.value in ['active', 'completed'] %}
+<div class="warning-alert">
+    <i class="fas fa-exclamation-triangle"></i>
+    <div>
+        <strong>Warning:</strong> This session is {{ session.status.value }}. 
+        {% if session.status.value == 'active' %}
+            Editing an active session may affect ongoing attendance tracking.
+        {% elif session.status.value == 'completed' %}
+            Editing a completed session may affect historical records.
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<div class="form-container">
+    <form method="POST" id="editSessionForm">
+        <!-- Basic Information Section -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-info-circle me-2"></i>
+                Basic Information
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="title">
+                            Session Title
+                            <span class="required">*</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="title" 
+                               name="title" 
+                               value="{{ session.title }}"
+                               placeholder="e.g., Computer Science 101, Biology Lab"
+                               required
+                               maxlength="200">
+                        <div class="invalid-feedback" id="titleError"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="room_id">
+                            Room
+                            <span class="required">*</span>
+                        </label>
+                        <select class="form-select" id="room_id" name="room_id" required>
+                            <option value="">Select a room</option>
+                            {% for room in rooms %}
+                            <option value="{{ room.id }}" 
+                                    {% if room.id == session.room_id %}selected{% endif %}>
+                                {{ room.get_full_name() }} (Capacity: {{ room.capacity }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback" id="roomError"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="description">Session Description</label>
+                <textarea class="form-control" 
+                          id="description" 
+                          name="description" 
+                          rows="3" 
+                          placeholder="Optional description of the session..."
+                          maxlength="1000">{{ session.description or '' }}</textarea>
+            </div>
+        </div>
+
+        <!-- Schedule Section -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-calendar-alt me-2"></i>
+                Schedule
+            </h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="session_date">
+                            Session Date
+                            <span class="required">*</span>
+                        </label>
+                        <input type="date" 
+                               class="form-control" 
+                               id="session_date" 
+                               name="session_date"
+                               value="{{ session.session_date.strftime('%Y-%m-%d') }}"
+                               required>
+                        <div class="invalid-feedback" id="sessionDateError"></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="start_time">
+                            Start Time
+                            <span class="required">*</span>
+                        </label>
+                        <input type="time" 
+                               class="form-control" 
+                               id="start_time" 
+                               name="start_time"
+                               value="{{ session.start_time.strftime('%H:%M') }}"
+                               required>
+                        <div class="invalid-feedback" id="startTimeError"></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="end_time">
+                            End Time
+                            <span class="required">*</span>
+                        </label>
+                        <input type="time" 
+                               class="form-control" 
+                               id="end_time" 
+                               name="end_time"
+                               value="{{ session.end_time.strftime('%H:%M') }}"
+                               required>
+                        <div class="invalid-feedback" id="endTimeError"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Settings Section -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-cogs me-2"></i>
+                Attendance Settings
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="max_attendees">Maximum Attendees</label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="max_attendees" 
+                               name="max_attendees" 
+                               value="{{ session.max_attendees or '' }}"
+                               placeholder="Leave blank to use room capacity"
+                               min="1">
+                        <small class="form-text text-muted">
+                            Room capacity: {{ session.room.capacity }} people
+                        </small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="attendance_window_minutes">Attendance Window (minutes)</label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="attendance_window_minutes" 
+                               name="attendance_window_minutes" 
+                               value="{{ session.attendance_window_minutes }}"
+                               min="5" 
+                               max="60"
+                               required>
+                        <small class="form-text text-muted">
+                            How long before session start QR code becomes active
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               id="is_mandatory" 
+                               name="is_mandatory"
+                               {% if session.is_mandatory %}checked{% endif %}>
+                        <label class="form-check-label" for="is_mandatory">
+                            <strong>Mandatory Attendance</strong><br>
+                            <small class="text-muted">Require all students to attend</small>
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               id="requires_registration" 
+                               name="requires_registration"
+                               {% if session.requires_registration %}checked{% endif %}>
+                        <label class="form-check-label" for="requires_registration">
+                            <strong>Requires Registration</strong><br>
+                            <small class="text-muted">Students must register before attending</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="d-flex gap-3 justify-content-end mt-4">
+            <a href="{{ url_for('schedule.view_session', id=session.id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i>
+                Cancel
+            </a>
+            <button type="submit" class="btn btn-warning">
+                <i class="fas fa-save"></i>
+                Update Session
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Form validation
+function validateSessionTime() {
+    const startTime = document.getElementById('start_time').value;
+    const endTime = document.getElementById('end_time').value;
+    
+    if (startTime && endTime) {
+        const start = new Date(`2000-01-01T${startTime}`);
+        const end = new Date(`2000-01-01T${endTime}`);
+        
+        if (start >= end) {
+            document.getElementById('end_time').classList.add('is-invalid');
+            document.getElementById('endTimeError').textContent = 'End time must be after start time';
+            return false;
+        } else {
+            document.getElementById('end_time').classList.remove('is-invalid');
+            document.getElementById('endTimeError').textContent = '';
+            return true;
+        }
+    }
+    return true;
+}
+
+// Add validation listeners
+document.getElementById('start_time').addEventListener('change', validateSessionTime);
+document.getElementById('end_time').addEventListener('change', validateSessionTime);
+
+// Form submission validation
+document.getElementById('editSessionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    let isValid = true;
+    const formData = new FormData(this);
+    
+    // Clear previous errors
+    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+    document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+    
+    // Title validation
+    const title = formData.get('title');
+    if (!title || title.trim().length === 0) {
+        document.getElementById('title').classList.add('is-invalid');
+        document.getElementById('titleError').textContent = 'Session title is required';
+        isValid = false;
+    }
+    
+    // Room validation
+    const roomId = formData.get('room_id');
+    if (!roomId) {
+        document.getElementById('room_id').classList.add('is-invalid');
+        document.getElementById('roomError').textContent = 'Please select a room';
+        isValid = false;
+    }
+    
+    // Time validation
+    if (!validateSessionTime()) {
+        isValid = false;
+    }
+    
+    // Required fields validation
+    const requiredFields = ['session_date', 'start_time', 'end_time'];
+    requiredFields.forEach(fieldName => {
+        const field = document.getElementById(fieldName);
+        const value = formData.get(fieldName);
+        
+        if (!value || value.trim().length === 0) {
+            field.classList.add('is-invalid');
+            const errorElement = document.getElementById(fieldName.replace('_', '') + 'Error') || 
+                              document.getElementById(fieldName + 'Error');
+            if (errorElement) {
+                errorElement.textContent = `${fieldName.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} is required`;
+            }
+            isValid = false;
+        }
+    });
+    
+    if (isValid) {
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating Session...';
+        submitBtn.disabled = true;
+        
+        // Submit form
+        this.submit();
+    } else {
+        // Scroll to first error
+        const firstError = document.querySelector('.is-invalid');
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstError.focus();
+        }
+    }
+});
+
+// Room capacity warning
+document.getElementById('room_id').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const maxAttendeesField = document.getElementById('max_attendees');
+    
+    if (selectedOption.value) {
+        // Extract capacity from option text (format: "Room Name (Capacity: XX)")
+        const capacityMatch = selectedOption.text.match(/Capacity:\s*(\d+)/);
+        if (capacityMatch) {
+            const roomCapacity = parseInt(capacityMatch[1]);
+            const currentMax = parseInt(maxAttendeesField.value);
+            
+            if (currentMax && currentMax > roomCapacity) {
+                if (confirm(`The maximum attendees (${currentMax}) exceeds the room capacity (${roomCapacity}). Would you like to adjust it to match the room capacity?`)) {
+                    maxAttendeesField.value = roomCapacity;
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

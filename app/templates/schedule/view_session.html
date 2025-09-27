@@ -1,0 +1,578 @@
+{% extends "dashboard_base.html" %}
+
+{% block page_title %}{{ session.title }} - Session Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .session-header {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .session-details-container {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .details-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .details-section {
+        margin-bottom: 2rem;
+    }
+
+    .details-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-title i {
+        color: #0ea5e9;
+    }
+
+    .detail-item {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .detail-item:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: #6b7280;
+        min-width: 140px;
+    }
+
+    .detail-value {
+        color: #1f2937;
+        font-weight: 500;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .status-scheduled {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-active {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .status-completed {
+        background-color: #f3f4f6;
+        color: #374151;
+    }
+
+    .status-cancelled {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .status-postponed {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .actions-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        height: fit-content;
+    }
+
+    .action-btn {
+        width: 100%;
+        margin-bottom: 0.75rem;
+        padding: 0.875rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+
+    .action-btn:last-child {
+        margin-bottom: 0;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(14, 165, 233, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+    }
+
+    .btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-outline-secondary {
+        background: transparent;
+        border: 2px solid #6b7280;
+        color: #6b7280;
+    }
+
+    .btn-outline-secondary:hover {
+        background: #6b7280;
+        color: white;
+        text-decoration: none;
+    }
+
+    .info-alert {
+        background-color: #f0f9ff;
+        border: 1px solid #0ea5e9;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .info-alert i {
+        color: #0ea5e9;
+        font-size: 1.25rem;
+    }
+
+    .badge {
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .badge-success {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .badge-warning {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-info {
+        background-color: #e0f2fe;
+        color: #0c4a6e;
+    }
+
+    .qr-section {
+        text-align: center;
+        padding: 2rem;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 2px dashed #cbd5e1;
+    }
+
+    .qr-code {
+        max-width: 200px;
+        height: auto;
+        margin: 1rem auto;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 768px) {
+        .session-header {
+            padding: 1.5rem;
+        }
+
+        .session-header .d-flex {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .session-details-container {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .detail-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+
+        .detail-label {
+            min-width: auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="session-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="mb-1">{{ session.title }}</h1>
+            <p class="mb-0 opacity-75">
+                {% if session.description %}
+                    {{ session.description }}
+                {% else %}
+                    Session Details and Management
+                {% endif %}
+            </p>
+        </div>
+        <a href="{{ url_for('schedule.manage_sessions') }}" class="btn btn-light">
+            <i class="fas fa-arrow-left"></i>
+            Back to Sessions
+        </a>
+    </div>
+</div>
+
+<div class="session-details-container">
+    <div class="details-card">
+        <!-- Basic Information -->
+        <div class="details-section">
+            <h3 class="section-title">
+                <i class="fas fa-info-circle"></i>
+                Basic Information
+            </h3>
+            <div class="detail-item">
+                <span class="detail-label">Title:</span>
+                <span class="detail-value">{{ session.title }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Status:</span>
+                <span class="status-badge status-{{ session.status.value }}">
+                    {{ session.get_status_display() }}
+                </span>
+            </div>
+            {% if session.description %}
+            <div class="detail-item">
+                <span class="detail-label">Description:</span>
+                <span class="detail-value">{{ session.description }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Schedule Information -->
+        <div class="details-section">
+            <h3 class="section-title">
+                <i class="fas fa-calendar-alt"></i>
+                Schedule
+            </h3>
+            <div class="detail-item">
+                <span class="detail-label">Date:</span>
+                <span class="detail-value">{{ session.session_date.strftime('%A, %B %d, %Y') }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Start Time:</span>
+                <span class="detail-value">{{ session.start_time.strftime('%I:%M %p') }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">End Time:</span>
+                <span class="detail-value">{{ session.end_time.strftime('%I:%M %p') }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Duration:</span>
+                <span class="detail-value">{{ session.duration_minutes }} minutes</span>
+            </div>
+            {% if session.recurrence_type.value != 'none' %}
+            <div class="detail-item">
+                <span class="detail-label">Recurrence:</span>
+                <span class="detail-value">
+                    <span class="badge badge-info">
+                        <i class="fas fa-repeat me-1"></i>
+                        {{ session.get_recurrence_display() }}
+                    </span>
+                </span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Location and People -->
+        <div class="details-section">
+            <h3 class="section-title">
+                <i class="fas fa-users"></i>
+                Location & People
+            </h3>
+            <div class="detail-item">
+                <span class="detail-label">Room:</span>
+                <span class="detail-value">{{ session.room.get_full_name() }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Building:</span>
+                <span class="detail-value">{{ session.room.building }}, Floor {{ session.room.floor }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Instructor:</span>
+                <span class="detail-value">{{ session.instructor.get_display_name() }} ({{ session.instructor.get_role_display() }})</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Room Capacity:</span>
+                <span class="detail-value">{{ session.room.capacity }} people</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Max Attendees:</span>
+                <span class="detail-value">{{ session.max_attendees or session.room.capacity }} people</span>
+            </div>
+        </div>
+
+        <!-- Session Settings -->
+        <div class="details-section">
+            <h3 class="section-title">
+                <i class="fas fa-cogs"></i>
+                Session Settings
+            </h3>
+            <div class="detail-item">
+                <span class="detail-label">Attendance Window:</span>
+                <span class="detail-value">{{ session.attendance_window_minutes }} minutes before start</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Mandatory:</span>
+                <span class="detail-value">
+                    {% if session.is_mandatory %}
+                        <span class="badge badge-warning">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            Required
+                        </span>
+                    {% else %}
+                        <span class="badge badge-success">
+                            <i class="fas fa-check me-1"></i>
+                            Optional
+                        </span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Registration:</span>
+                <span class="detail-value">
+                    {% if session.requires_registration %}
+                        <span class="badge badge-warning">
+                            <i class="fas fa-clipboard-check me-1"></i>
+                            Required
+                        </span>
+                    {% else %}
+                        <span class="badge badge-success">
+                            <i class="fas fa-user-plus me-1"></i>
+                            Open
+                        </span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+
+        <!-- QR Code Section (if session is active) -->
+        {% if session.status.value in ['scheduled', 'active'] %}
+        <div class="details-section">
+            <h3 class="section-title">
+                <i class="fas fa-qrcode"></i>
+                Attendance QR Code
+            </h3>
+            <div class="qr-section">
+                <h5>QR Code for Attendance</h5>
+                {% if session.status.value == 'scheduled' %}
+                    <p class="text-muted">QR code will be available {{ session.attendance_window_minutes }} minutes before session starts</p>
+                    <p><strong>Available from:</strong> 
+                    {{ (session.start_time|string|strptime('%H:%M:%S') - timedelta(minutes=session.attendance_window_minutes)).strftime('%I:%M %p') }}
+                    </p>
+                {% elif session.status.value == 'active' %}
+                    <div class="info-alert">
+                        <i class="fas fa-info-circle"></i>
+                        <div>
+                            <strong>Session is Active!</strong><br>
+                            Students can now scan the QR code for attendance.
+                        </div>
+                    </div>
+                    <!-- Add QR code generation here when available -->
+                    <p class="text-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        QR Code is now active for attendance scanning
+                    </p>
+                {% endif %}
+                <a href="{{ url_for('attendance.session_qr', session_id=session.id) }}" 
+                   class="btn btn-primary"
+                   target="_blank">
+                    <i class="fas fa-qrcode"></i>
+                    Generate QR Code
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Actions Panel -->
+    <div class="actions-card">
+        <h3 class="section-title">
+            <i class="fas fa-tools"></i>
+            Actions
+        </h3>
+
+        {% if current_user.is_admin or session.instructor_id == current_user.id %}
+            {% if session.status.value == 'scheduled' %}
+                <button type="button" 
+                        class="action-btn btn-success"
+                        onclick="startSession({{ session.id }})">
+                    <i class="fas fa-play"></i>
+                    Start Session
+                </button>
+            {% endif %}
+            
+            {% if session.status.value in ['scheduled', 'active'] %}
+                <a href="{{ url_for('schedule.edit_session', id=session.id) }}" 
+                   class="action-btn btn-warning">
+                    <i class="fas fa-edit"></i>
+                    Edit Session
+                </a>
+                
+                <button type="button" 
+                        class="action-btn btn-danger"
+                        onclick="cancelSession({{ session.id }})">
+                    <i class="fas fa-times"></i>
+                    Cancel Session
+                </button>
+            {% endif %}
+        {% endif %}
+
+        {% if session.status.value in ['scheduled', 'active'] %}
+            <a href="{{ url_for('attendance.session_attendance', session_id=session.id) }}" 
+               class="action-btn btn-primary">
+                <i class="fas fa-clipboard-list"></i>
+                View Attendance
+            </a>
+        {% endif %}
+
+        <a href="{{ url_for('schedule.add_session') }}?room_id={{ session.room_id }}" 
+           class="action-btn btn-outline-secondary">
+            <i class="fas fa-plus"></i>
+            New Session (Same Room)
+        </a>
+
+        <a href="{{ url_for('schedule.manage_sessions') }}" 
+           class="action-btn btn-outline-secondary">
+            <i class="fas fa-list"></i>
+            All Sessions
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function startSession(sessionId) {
+    if (confirm('Are you sure you want to start this session? Students will be able to scan QR codes for attendance.')) {
+        fetch(`/schedule/sessions/${sessionId}/start`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = `/schedule/sessions`;
+            } else {
+                alert('Failed to start session. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    }
+}
+
+function cancelSession(sessionId) {
+    if (confirm('Are you sure you want to cancel this session? This action cannot be undone.')) {
+        fetch(`/schedule/sessions/${sessionId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = `/schedule/sessions`;
+            } else {
+                alert('Failed to cancel session. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    }
+}
+</script>
+{% endblock %}

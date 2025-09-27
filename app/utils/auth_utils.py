@@ -242,11 +242,16 @@ def validate_room_data(data):
     """
     errors = []
     
-    required_fields = ['room_number', 'room_name', 'building', 'floor', 'capacity']
+    # Required fields (matching the frontend form requirements)
+    required_fields = ['room_number', 'building', 'floor', 'capacity']
     
     for field in required_fields:
         if not data.get(field):
             errors.append(f"{field.replace('_', ' ').title()} is required")
+    
+    # Room name is optional, but if provided should not be empty
+    if data.get('room_name') is not None and data.get('room_name').strip() == '':
+        data['room_name'] = None  # Convert empty string to None for optional field
     
     # Validate capacity
     if data.get('capacity'):

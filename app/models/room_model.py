@@ -15,7 +15,7 @@ class Room(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     room_number = db.Column(db.String(20), unique=True, nullable=False, index=True)
-    room_name = db.Column(db.String(100), nullable=False)
+    room_name = db.Column(db.String(100), nullable=True)
     building = db.Column(db.String(50), nullable=False)
     floor = db.Column(db.Integer, nullable=False)
     capacity = db.Column(db.Integer, nullable=False, default=30)
@@ -30,10 +30,10 @@ class Room(db.Model):
     attendance_records = db.relationship('AttendanceRecord', backref='room', lazy=True, cascade='all, delete-orphan')
     sessions = db.relationship('AttendanceSession', backref='room', lazy=True, cascade='all, delete-orphan')
     
-    def __init__(self, room_number, room_name, building, floor, capacity=30, room_type='classroom'):
+    def __init__(self, room_number, building, floor, capacity=30, room_type='classroom', room_name=None):
         """Initialize room with required fields"""
         self.room_number = room_number
-        self.room_name = room_name
+        self.room_name = room_name  # Now optional
         self.building = building
         self.floor = floor
         self.capacity = capacity
@@ -41,7 +41,9 @@ class Room(db.Model):
     
     def get_full_name(self):
         """Get room's full display name"""
-        return f"{self.room_number} - {self.room_name}"
+        if self.room_name:
+            return f"{self.room_number} - {self.room_name}"
+        return self.room_number
     
     def get_location(self):
         """Get room's full location"""

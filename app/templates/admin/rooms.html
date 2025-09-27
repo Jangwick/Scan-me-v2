@@ -329,7 +329,7 @@
             <i class="fas fa-check-circle"></i>
         </div>
         <div class="stat-number">
-            {{ rooms|selectattr('status', 'equalto', 'active')|list|length if rooms else 0 }}
+            {{ rooms|selectattr('is_active', 'equalto', true)|list|length if rooms else 0 }}
         </div>
         <div class="stat-label">Active Rooms</div>
     </div>
@@ -338,7 +338,7 @@
             <i class="fas fa-tools"></i>
         </div>
         <div class="stat-number">
-            {{ rooms|selectattr('status', 'equalto', 'maintenance')|list|length if rooms else 0 }}
+            {{ rooms|selectattr('is_active', 'equalto', false)|list|length if rooms else 0 }}
         </div>
         <div class="stat-label">Under Maintenance</div>
     </div>
@@ -346,9 +346,7 @@
         <div class="stat-icon inactive">
             <i class="fas fa-times-circle"></i>
         </div>
-        <div class="stat-number">
-            {{ rooms|selectattr('status', 'equalto', 'inactive')|list|length if rooms else 0 }}
-        </div>
+        <div class="stat-number">0</div>
         <div class="stat-label">Inactive Rooms</div>
     </div>
 </div>
@@ -435,21 +433,21 @@
                     <i class="fas fa-edit"></i>
                 </a>
                 
-                {% if room.status != 'maintenance' %}
-                <button onclick="setMaintenance({{ room.id }}, '{{ room.number or room.name }}')" 
+                {% if room.is_active %}
+                <button onclick="setMaintenance({{ room.id }}, '{{ room.get_full_name() }}')" 
                         class="btn btn-outline-warning btn-sm"
                         title="Set Maintenance">
                     <i class="fas fa-tools"></i>
                 </button>
                 {% else %}
-                <button onclick="setActive({{ room.id }}, '{{ room.number or room.name }}')" 
+                <button onclick="setActive({{ room.id }}, '{{ room.get_full_name() }}')" 
                         class="btn btn-outline-success btn-sm"
                         title="Mark Active">
                     <i class="fas fa-check-circle"></i>
                 </button>
                 {% endif %}
                 
-                <button onclick="confirmDelete({{ room.id }}, '{{ room.number or room.name }}')" 
+                <button onclick="confirmDelete({{ room.id }}, '{{ room.get_full_name() }}')" 
                         class="btn btn-outline-danger btn-sm"
                         title="Delete Room">
                     <i class="fas fa-trash"></i>
@@ -474,6 +472,16 @@
 
 {% block extra_js %}
 <script>
+function viewRoom(roomId) {
+    // Redirect to view room page
+    window.location.href = `/admin/rooms/${roomId}/view`;
+}
+
+function editRoom(roomId) {
+    // Redirect to edit room page
+    window.location.href = `/admin/rooms/${roomId}/edit`;
+}
+
 function confirmDelete(roomId, roomName) {
     if (confirm(`Are you sure you want to delete room "${roomName}"? This action cannot be undone.`)) {
         // Create form to submit delete request

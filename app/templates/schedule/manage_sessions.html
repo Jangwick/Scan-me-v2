@@ -1,0 +1,500 @@
+{% extends "dashboard_base.html" %}
+
+{% block page_title %}Manage Sessions{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sessions-header {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .sessions-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        border-left: 4px solid #0ea5e9;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1e40af;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .filters-section {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .sessions-container {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .session-card {
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #0ea5e9;
+        transition: all 0.2s ease;
+    }
+
+    .session-card:hover {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .session-header {
+        display: flex;
+        justify-content: between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .session-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+    }
+
+    .session-status {
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .status-scheduled {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-active {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .status-completed {
+        background-color: #f3f4f6;
+        color: #374151;
+    }
+
+    .status-cancelled {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .session-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    .info-item i {
+        color: #0ea5e9;
+        width: 16px;
+    }
+
+    .session-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+
+    .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        border-radius: 6px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+    }
+
+    .btn-warning:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+        font-size: 0.875rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        outline: none;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #d1d5db;
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .sessions-header {
+            padding: 1.5rem;
+        }
+
+        .sessions-header .d-flex {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .session-info {
+            grid-template-columns: 1fr;
+        }
+
+        .session-actions {
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sessions-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="mb-1">
+                <i class="fas fa-calendar-alt me-2"></i>
+                Manage Sessions
+            </h1>
+            <p class="mb-0 opacity-75">View and manage all scheduled sessions</p>
+        </div>
+        <a href="{{ url_for('schedule.add_session') }}" class="btn btn-light">
+            <i class="fas fa-plus"></i>
+            New Session
+        </a>
+    </div>
+</div>
+
+<!-- Session Statistics -->
+<div class="sessions-stats">
+    <div class="stat-card">
+        <div class="stat-value">{{ sessions|length }}</div>
+        <div class="stat-label">Total Sessions</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ sessions|selectattr('status', 'equalto', 'scheduled')|list|length }}</div>
+        <div class="stat-label">Scheduled</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ sessions|selectattr('status', 'equalto', 'active')|list|length }}</div>
+        <div class="stat-label">Active</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ sessions|selectattr('status', 'equalto', 'completed')|list|length }}</div>
+        <div class="stat-label">Completed</div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="filters-section">
+    <form method="GET" class="row align-items-end">
+        <div class="col-md-3">
+            <label for="room_id" class="form-label">Filter by Room</label>
+            <select name="room_id" id="room_id" class="form-select">
+                <option value="">All Rooms</option>
+                {% for room in rooms %}
+                <option value="{{ room.id }}" 
+                        {% if current_room_id == room.id %}selected{% endif %}>
+                    {{ room.get_full_name() }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="status" class="form-label">Filter by Status</label>
+            <select name="status" id="status" class="form-select">
+                <option value="all" {% if current_status == 'all' %}selected{% endif %}>All Status</option>
+                <option value="scheduled" {% if current_status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                <option value="active" {% if current_status == 'active' %}selected{% endif %}>Active</option>
+                <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>Completed</option>
+                <option value="cancelled" {% if current_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="date" class="form-label">Filter by Date</label>
+            <select name="date" id="date" class="form-select">
+                <option value="all" {% if current_date == 'all' %}selected{% endif %}>All Dates</option>
+                <option value="today" {% if current_date == 'today' %}selected{% endif %}>Today</option>
+                <option value="week" {% if current_date == 'week' %}selected{% endif %}>This Week</option>
+                <option value="upcoming" {% if current_date == 'upcoming' %}selected{% endif %}>Upcoming</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-filter me-1"></i>
+                Apply Filters
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Sessions List -->
+<div class="sessions-container">
+    {% if sessions %}
+        {% for session in sessions %}
+        <div class="session-card">
+            <div class="session-header">
+                <div>
+                    <h3 class="session-title">{{ session.title }}</h3>
+                    {% if session.description %}
+                    <p class="text-muted mb-0">{{ session.description }}</p>
+                    {% endif %}
+                </div>
+                <span class="session-status status-{{ session.status }}">
+                    {{ session.status.title() }}
+                </span>
+            </div>
+
+            <div class="session-info">
+                <div class="info-item">
+                    <i class="fas fa-calendar"></i>
+                    <span>{{ session.session_date.strftime('%A, %B %d, %Y') }}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-clock"></i>
+                    <span>{{ session.start_time.strftime('%I:%M %p') }} - {{ session.end_time.strftime('%I:%M %p') }}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-door-open"></i>
+                    <span>{{ session.room.get_full_name() }}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-user-tie"></i>
+                    <span>{{ session.instructor.get_display_name() }}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-users"></i>
+                    <span>Max: {{ session.max_attendees or session.room.capacity }} people</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-hourglass-half"></i>
+                    <span>{{ session.duration_minutes }} minutes</span>
+                </div>
+                {% if session.is_mandatory %}
+                <div class="info-item">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span class="text-warning">Mandatory Attendance</span>
+                </div>
+                {% endif %}
+                {% if session.recurrence_type.value != 'none' %}
+                <div class="info-item">
+                    <i class="fas fa-repeat"></i>
+                    <span>Repeats {{ session.recurrence_type.value.title() }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="session-actions">
+                <a href="{{ url_for('schedule.view_session', id=session.id) }}" 
+                   class="btn btn-primary btn-sm">
+                    <i class="fas fa-eye"></i>
+                    View
+                </a>
+                
+                {% if current_user.is_admin or session.instructor_id == current_user.id %}
+                <a href="{{ url_for('schedule.edit_session', id=session.id) }}" 
+                   class="btn btn-warning btn-sm">
+                    <i class="fas fa-edit"></i>
+                    Edit
+                </a>
+                {% endif %}
+                
+                {% if session.status == 'scheduled' %}
+                <button type="button" 
+                        class="btn btn-success btn-sm"
+                        onclick="startSession({{ session.id }})">
+                    <i class="fas fa-play"></i>
+                    Start
+                </button>
+                {% endif %}
+                
+                {% if session.status in ['scheduled', 'active'] %}
+                <button type="button" 
+                        class="btn btn-danger btn-sm"
+                        onclick="cancelSession({{ session.id }})">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-calendar-times"></i>
+            <h4>No Sessions Found</h4>
+            <p>No sessions match your current filters.</p>
+            <a href="{{ url_for('schedule.add_session') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Create Your First Session
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function startSession(sessionId) {
+    if (confirm('Are you sure you want to start this session?')) {
+        fetch(`/schedule/sessions/${sessionId}/start`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Failed to start session. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    }
+}
+
+function cancelSession(sessionId) {
+    if (confirm('Are you sure you want to cancel this session? This action cannot be undone.')) {
+        fetch(`/schedule/sessions/${sessionId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Failed to cancel session. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    }
+}
+
+// Auto-submit filters on change
+document.getElementById('room_id').addEventListener('change', function() {
+    this.form.submit();
+});
+
+document.getElementById('status').addEventListener('change', function() {
+    this.form.submit();
+});
+
+document.getElementById('date').addEventListener('change', function() {
+    this.form.submit();
+});
+</script>
+{% endblock %}
