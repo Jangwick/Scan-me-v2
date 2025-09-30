@@ -270,6 +270,11 @@ class AttendanceSession(db.Model):
         now = datetime.utcnow()
         return self.start_time <= now <= self.end_time and self.is_active
     
+    def get_attendance_count(self):
+        """Get the count of unique students who attended this session"""
+        unique_students = len(set(record.student_id for record in self.attendance_records))
+        return unique_students
+    
     def get_attendance_summary(self):
         """Get attendance summary for this session"""
         total_scans = len(self.attendance_records)
@@ -302,6 +307,25 @@ class AttendanceSession(db.Model):
             return 'completed'
         else:
             return 'active'
+    
+    def get_status(self):
+        """Alias for get_session_status for template compatibility"""
+        return self.get_session_status()
+    
+    def get_status_class(self):
+        """Get CSS class for session status"""
+        status = self.get_session_status()
+        status_classes = {
+            'active': 'status-active',
+            'scheduled': 'status-scheduled', 
+            'completed': 'status-completed',
+            'inactive': 'status-inactive'
+        }
+        return status_classes.get(status, 'status-unknown')
+    
+    def is_active(self):
+        """Check if session is active (for template compatibility)"""
+        return self.is_active and self.get_session_status() == 'active'
     
     def to_dict(self):
         """Convert session to dictionary for JSON serialization"""
