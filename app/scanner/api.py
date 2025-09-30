@@ -98,25 +98,13 @@ def scan_qr_code():
             )
         ).first()
         
-        # If no student found, try creating one (if QR has enough data)
+        # If no student found, return error instead of creating mock students
         if not student:
-            # For demo purposes, create a mock student
-            if student_id and len(student_id) >= 3:
-                # Generate a name from the ID for demo
-                mock_name = f"Student {student_id[-3:]}"
-                mock_email = f"student{student_id[-3:]}@university.edu"
-                
-                student = Student(
-                    name=mock_name,
-                    email=mock_email,
-                    student_id=student_id,
-                    phone="000-000-0000",
-                    department="General"
-                )
-                db.session.add(student)
-                db.session.commit()
-            else:
-                return jsonify({'success': False, 'message': 'Invalid QR code format'})
+            return jsonify({
+                'success': False, 
+                'message': 'Student not found. Please ensure the student is registered in the system.',
+                'hint': 'Contact an administrator to register this student or verify the QR code is correct'
+            })
         
         # Check if already scanned today for this session
         today = datetime.now().date()
@@ -216,19 +204,12 @@ def scan_qr_code_data(qr_data, session_id):
         ).first()
         
         if not student:
-            # Create mock student for demo
-            mock_name = f"Student {qr_data[-3:]}"
-            mock_email = f"student{qr_data[-3:]}@university.edu"
-            
-            student = Student(
-                name=mock_name,
-                email=mock_email,
-                student_id=qr_data,
-                phone="000-000-0000",
-                department="General"
-            )
-            db.session.add(student)
-            db.session.commit()
+            # Return error instead of creating mock students
+            return jsonify({
+                'success': False, 
+                'message': 'Student not found. Please ensure the student is registered in the system.',
+                'hint': 'Contact an administrator to register this student or verify the QR code is correct'
+            })
         
         # Check for existing attendance
         today = datetime.now().date()

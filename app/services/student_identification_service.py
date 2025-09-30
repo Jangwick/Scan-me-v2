@@ -28,7 +28,7 @@ class StudentIdentificationService:
                 error_info: dict with error details or None
         """
         try:
-            if validated_qr_data.get('legacy'):
+            if validated_qr_data.get('legacy') or validated_qr_data.get('type') == 'scanme_qr_code':
                 return StudentIdentificationService._handle_legacy_lookup(validated_qr_data)
             else:
                 return StudentIdentificationService._handle_structured_lookup(validated_qr_data)
@@ -42,38 +42,62 @@ class StudentIdentificationService:
     
     @staticmethod
     def _handle_legacy_lookup(validated_qr_data):
-        """Handle legacy QR code format (just student number)"""
-        student_no = validated_qr_data.get('student_no')
-        
-        if not student_no:
-            return None, {
-                'error': 'Legacy QR code missing student number',
-                'error_code': 'MISSING_STUDENT_NO'
-            }
-        
-        # Edge Case: Case sensitivity handling
-        student = Student.query.filter(
-            func.lower(Student.student_no) == func.lower(student_no)
-        ).first()
-        
-        # Edge Case: Multiple students with similar numbers
-        if not student:
-            similar_students = Student.query.filter(
-                Student.student_no.like(f'%{student_no}%')
-            ).all()
+        """Handle legacy QR code format and SCANME_ format"""
+        if validated_qr_data.get('type') == 'scanme_qr_code':
+            # This is our SCANME_ QR code format
+            qr_data = validated_qr_data.get('qr_data')
             
-            if len(similar_students) == 1:
-                logger.info(f"Found similar student number match: {similar_students[0].student_no} for {student_no}")
-                student = similar_students[0]
-            elif len(similar_students) > 1:
-                logger.warning(f"Multiple similar student numbers found for {student_no}")
+            if not qr_data:
                 return None, {
-                    'error': f'Multiple students found with similar numbers to {student_no}',
-                    'error_code': 'MULTIPLE_SIMILAR_STUDENTS',
-                    'similar_count': len(similar_students)
+                    'error': 'SCANME QR code missing data',
+                    'error_code': 'MISSING_QR_DATA'
                 }
+            
+            # Look up student by QR code data
+            student = Student.query.filter_by(qr_code_data=qr_data).first()
+            
+            if not student:
+                logger.warning(f"No student found for QR data: {qr_data}")
+                return None, {
+                    'error': f'No student found with QR code: {qr_data[:20]}...',
+                    'error_code': 'STUDENT_NOT_FOUND'
+                }
+            
+            return student, None
         
-        return student, None
+        else:
+            # Legacy student number lookup
+            student_no = validated_qr_data.get('student_no')
+            
+            if not student_no:
+                return None, {
+                    'error': 'Legacy QR code missing student number',
+                    'error_code': 'MISSING_STUDENT_NO'
+                }
+            
+            # Edge Case: Case sensitivity handling
+            student = Student.query.filter(
+                func.lower(Student.student_no) == func.lower(student_no)
+            ).first()
+            
+            # Edge Case: Multiple students with similar numbers
+            if not student:
+                similar_students = Student.query.filter(
+                    Student.student_no.like(f'%{student_no}%')
+                ).all()
+                
+                if len(similar_students) == 1:
+                    logger.info(f"Found similar student number match: {similar_students[0].student_no} for {student_no}")
+                    student = similar_students[0]
+                elif len(similar_students) > 1:
+                    logger.warning(f"Multiple similar student numbers found for {student_no}")
+                    return None, {
+                        'error': f'Multiple students found with similar numbers to {student_no}',
+                        'error_code': 'MULTIPLE_SIMILAR_STUDENTS',
+                        'similar_count': len(similar_students)
+                    }
+            
+            return student, None
     
     @staticmethod
     def _handle_structured_lookup(validated_qr_data):

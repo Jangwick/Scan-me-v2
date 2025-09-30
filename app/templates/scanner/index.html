@@ -776,7 +776,7 @@ class ScannerApp {
     scanForQRCode() {
         const video = document.getElementById('cameraVideo');
         const canvas = document.getElementById('qrCanvas');
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
             canvas.width = video.videoWidth;
@@ -846,15 +846,22 @@ class ScannerApp {
             // Capture current frame
             const video = document.getElementById('cameraVideo');
             const canvas = document.getElementById('qrCanvas');
-            const ctx = canvas.getContext('2d');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // For demo purposes, simulate QR detection
-            // In production, you would use a QR detection library here
-            await this.simulateQRDetection();
+            // Detect QR code from current frame
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const qrCode = this.detectQRCode(imageData);
+            
+            if (qrCode) {
+                // Process the detected QR code
+                await this.processQRCode(qrCode);
+            } else {
+                this.showAlert('warning', 'No QR code found in the image. Please ensure the image contains a clear, valid student QR code.');
+            }
 
         } catch (error) {
             this.showAlert('error', 'Scan failed: ' + error.message);
@@ -864,15 +871,6 @@ class ScannerApp {
             document.getElementById('scanBtn').disabled = false;
             document.getElementById('scanBtn').innerHTML = '<i class="fas fa-qrcode"></i> Scan QR Code';
         }
-    }
-
-    async simulateQRDetection() {
-        // Simulate processing delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Simulate finding a QR code (for demo)
-        const mockStudentId = 'STU' + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        await this.processQRCode(mockStudentId);
     }
 
     async processManualInput() {

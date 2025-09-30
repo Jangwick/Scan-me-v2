@@ -230,6 +230,31 @@ def download_qr_code(id):
         flash(f'Error downloading QR code: {str(e)}', 'error')
         return redirect(url_for('students.view_student', id=id))
 
+@student_bp.route('/<int:id>/generate-qr', methods=['POST'])
+@login_required
+@requires_professor_or_admin
+def generate_qr_code(id):
+    """Generate QR code for a student"""
+    try:
+        student = Student.query.get_or_404(id)
+        
+        # Generate QR code
+        student.generate_qr_code()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'QR code generated for {student.get_full_name()}',
+            'qr_code_path': student.qr_code_path
+        })
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @student_bp.route('/api/search')
 @login_required
 @requires_professor_or_admin

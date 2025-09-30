@@ -690,9 +690,8 @@ class ScannerApp {
         // Simulate scanning delay
         await new Promise(resolve => setTimeout(resolve, 2000));
         
-        // Simulate finding a QR code (for demo)
-        const mockStudentId = 'STU' + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        await this.processQRCode(mockStudentId);
+        // Show message that no QR code was found instead of creating mock data
+        this.showAlert('warning', 'No QR code found in the image. Please ensure the image contains a clear, valid student QR code.');
     }
 
     async processManualInput() {

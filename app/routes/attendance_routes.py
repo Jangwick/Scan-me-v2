@@ -298,3 +298,48 @@ def view_session(session_id):
     except Exception as e:
         flash(f'Error loading session: {str(e)}', 'error')
         return redirect(url_for('attendance.manage_sessions'))
+
+@attendance_bp.route('/sessions/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+@requires_professor_or_admin
+def edit_session(id):
+    """Edit an existing attendance session"""
+    try:
+        session = AttendanceSession.query.get_or_404(id)
+        
+        if request.method == 'POST':
+            # Update session details
+            session.session_name = request.form.get('session_name')
+            session.subject = request.form.get('subject')
+            session.instructor = request.form.get('instructor')
+            session.expected_students = int(request.form.get('expected_students', 0))
+            
+            # Parse start and end times
+            start_time_str = request.form.get('start_time')
+            end_time_str = request.form.get('end_time')
+            
+            if start_time_str:
+                session.start_time = datetime.strptime(start_time_str, '%H:%M').time()
+            if end_time_str:
+                session.end_time = datetime.strptime(end_time_str, '%H:%M').time()
+            
+            # Update room if provided
+            room_id = request.form.get('room_id')
+            if room_id:
+                session.room_id = int(room_id)
+            
+            db.session.commit()
+            flash('Session updated successfully!', 'success')
+            return redirect(url_for('attendance.view_session', session_id=session.id))
+        
+        # GET request - show edit form
+        rooms = Room.query.filter_by(is_active=True).all()
+        
+        return render_template('attendance/edit_session.html', 
+                             session=session,
+                             rooms=rooms)
+    
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating session: {str(e)}', 'error')
+        return redirect(url_for('attendance.manage_sessions'))

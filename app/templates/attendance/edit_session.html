@@ -1,0 +1,357 @@
+{% extends "dashboard_base.html" %}
+
+{% block page_title %}Edit Attendance Session{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-session-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .form-section {
+        padding: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        background-color: white;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        margin-right: 1rem;
+        text-decoration: none;
+        display: inline-block;
+        transition: background-color 0.2s;
+    }
+
+    .btn-secondary:hover {
+        background: #4b5563;
+        color: white;
+        text-decoration: none;
+    }
+
+    .time-inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .required {
+        color: #ef4444;
+    }
+
+    .help-text {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+
+    @media (max-width: 768px) {
+        .time-inputs {
+            grid-template-columns: 1fr;
+        }
+        
+        .edit-session-header {
+            padding: 1.5rem;
+        }
+        
+        .form-section {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Header -->
+    <div class="edit-session-header">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <h1 class="h2 mb-2">Edit Attendance Session</h1>
+                <p class="mb-0 opacity-90">Update session details and settings</p>
+            </div>
+            <div class="d-flex align-items-center">
+                <i class="fas fa-edit fa-2x opacity-75"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Form -->
+    <div class="form-container">
+        <form method="POST" action="{{ url_for('attendance.edit_session', id=session.id) }}">
+            <!-- Basic Information -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Basic Information
+                </h3>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="session_name" class="form-label">
+                                Session Name <span class="required">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="session_name" 
+                                   name="session_name" 
+                                   class="form-input" 
+                                   value="{{ session.session_name }}"
+                                   required>
+                            <div class="help-text">A descriptive name for this attendance session</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="subject" class="form-label">
+                                Subject/Course <span class="required">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="subject" 
+                                   name="subject" 
+                                   class="form-input" 
+                                   value="{{ session.subject }}"
+                                   required>
+                            <div class="help-text">Subject or course code</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="instructor" class="form-label">
+                                Instructor <span class="required">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="instructor" 
+                                   name="instructor" 
+                                   class="form-input" 
+                                   value="{{ session.instructor }}"
+                                   required>
+                            <div class="help-text">Name of the instructor/professor</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="expected_students" class="form-label">
+                                Expected Students
+                            </label>
+                            <input type="number" 
+                                   id="expected_students" 
+                                   name="expected_students" 
+                                   class="form-input" 
+                                   value="{{ session.expected_students }}"
+                                   min="0" 
+                                   max="500">
+                            <div class="help-text">Approximate number of expected attendees</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Session Schedule -->
+            <div class="form-section" style="border-top: 1px solid #e5e7eb;">
+                <h3 class="section-title">
+                    <i class="fas fa-clock me-2"></i>
+                    Session Schedule
+                </h3>
+                
+                <div class="time-inputs">
+                    <div class="form-group">
+                        <label for="start_time" class="form-label">
+                            Start Time <span class="required">*</span>
+                        </label>
+                        <input type="time" 
+                               id="start_time" 
+                               name="start_time" 
+                               class="form-input" 
+                               value="{{ session.start_time.strftime('%H:%M') if session.start_time else '' }}"
+                               required>
+                        <div class="help-text">Session start time</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="end_time" class="form-label">
+                            End Time <span class="required">*</span>
+                        </label>
+                        <input type="time" 
+                               id="end_time" 
+                               name="end_time" 
+                               class="form-input" 
+                               value="{{ session.end_time.strftime('%H:%M') if session.end_time else '' }}"
+                               required>
+                        <div class="help-text">Session end time</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Room Selection -->
+            <div class="form-section" style="border-top: 1px solid #e5e7eb;">
+                <h3 class="section-title">
+                    <i class="fas fa-door-open me-2"></i>
+                    Room Assignment
+                </h3>
+                
+                <div class="form-group">
+                    <label for="room_id" class="form-label">
+                        Room <span class="required">*</span>
+                    </label>
+                    <select id="room_id" name="room_id" class="form-select" required>
+                        <option value="">Select a room...</option>
+                        {% for room in rooms %}
+                        <option value="{{ room.id }}" 
+                                {% if session.room_id == room.id %}selected{% endif %}>
+                            {{ room.get_full_name() }} (Capacity: {{ room.capacity }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="help-text">Select the room where this session will take place</div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-section" style="border-top: 1px solid #e5e7eb; background-color: #f9fafb;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="{{ url_for('attendance.view_session', session_id=session.id) }}" 
+                           class="btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Cancel
+                        </a>
+                    </div>
+                    
+                    <div>
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save me-2"></i>
+                            Update Session
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.querySelector('form');
+    const startTimeInput = document.getElementById('start_time');
+    const endTimeInput = document.getElementById('end_time');
+    
+    function validateTimes() {
+        const startTime = startTimeInput.value;
+        const endTime = endTimeInput.value;
+        
+        if (startTime && endTime) {
+            if (startTime >= endTime) {
+                endTimeInput.setCustomValidity('End time must be after start time');
+            } else {
+                endTimeInput.setCustomValidity('');
+            }
+        }
+    }
+    
+    startTimeInput.addEventListener('change', validateTimes);
+    endTimeInput.addEventListener('change', validateTimes);
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        validateTimes();
+        
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        form.classList.add('was-validated');
+    });
+});
+</script>
+{% endblock %}

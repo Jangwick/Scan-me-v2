@@ -10,6 +10,7 @@ import uuid
 
 from app import db
 from app.models import Student, Room, AttendanceRecord, AttendanceSession
+from app.services.qr_image_service import QRImageProcessingService
 from . import scanner
 
 @scanner.route('/')
@@ -176,18 +177,15 @@ def api_scan_qr_code():
                 'error_code': student_error['error_code']
             })
         
-        # Edge Case: Student not found - Auto-creation with comprehensive validation
+        # Edge Case: Student not found - Return error instead of auto-creation
         if not student:
-            current_app.logger.info(f"Student not found, attempting auto-creation from QR data")
-            student, creation_error = StudentIdentificationService.create_student_from_qr_data(validated_data)
-            
-            if creation_error:
-                return jsonify({
-                    'success': False,
-                    'message': creation_error['error'],
-                    'error_code': creation_error['error_code'],
-                    'hint': 'Please ensure the student is registered in the system or contact an administrator'
-                })
+            current_app.logger.warning(f"Student not found for QR data: {qr_data[:50]}...")
+            return jsonify({
+                'success': False,
+                'message': 'Student not found. Please ensure the student is registered in the system.',
+                'error_code': 'STUDENT_NOT_FOUND',
+                'hint': 'Contact an administrator to register this student or verify the QR code is correct'
+            })
         
         # Validate student for attendance
         is_valid, validation_error = StudentIdentificationService.validate_student_for_attendance(student)
@@ -244,83 +242,6 @@ def api_scan_qr_code():
         db.session.rollback()
         current_app.logger.error(f"Error processing QR scan: {str(e)}")
         return jsonify({'success': False, 'message': f'Failed to process scan: {str(e)}'})
-        
-        # Find student by ID, email, or student number
-        student = Student.query.filter(
-            or_(
-                Student.student_no == student_id,
-                Student.email == student_id,
-                func.cast(Student.id, db.String) == str(student_id)
-            )
-        ).first()
-        
-        # If no student found, try creating one (if QR has enough data)
-        if not student:
-            # For demo purposes, create a mock student
-            if student_id and len(str(student_id)) >= 3:
-                # Generate a name from the ID for demo
-                first_name = f"Student"
-                last_name = f"{str(student_id)[-3:]}"
-                email = f"student{str(student_id)[-3:]}@university.edu"
-                
-                student = Student(
-                    first_name=first_name,
-                    last_name=last_name,
-                    email=email,
-                    student_no=str(student_id),
-                    phone="000-000-0000",
-                    department="General"
-                )
-                db.session.add(student)
-                db.session.flush()  # Get ID without committing
-            else:
-                return jsonify({'success': False, 'message': 'Invalid QR code format'})
-        
-        # Check if already scanned today for this session
-        today = datetime.now().date()
-        existing_attendance = AttendanceRecord.query.filter(
-            and_(
-                AttendanceRecord.student_id == student.id,
-                AttendanceRecord.session_id == session.id,
-                func.date(AttendanceRecord.scan_time) == today
-            )
-        ).first()
-        
-        if existing_attendance:
-            return jsonify({
-                'success': False, 
-                'message': f'{student.get_full_name()} already marked present for this session',
-                'student_name': student.get_full_name()
-            })
-        
-        # Determine if late
-        now = datetime.now()
-        is_late = now > (session.start_time + timedelta(minutes=10))  # 10-minute grace period
-        
-        # Create attendance record
-        attendance = AttendanceRecord(
-            student_id=student.id,
-            room_id=session.room_id,
-            session_id=session.id,
-            scanned_by=current_user.id,
-            is_late=is_late
-        )
-        
-        db.session.add(attendance)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': f'Successfully marked {student.get_full_name()} as present' + (' (Late)' if is_late else ''),
-            'student_name': student.get_full_name(),
-            'is_late': is_late,
-            'timestamp': now.isoformat()
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(f"Error processing QR scan: {str(e)}")
-        return jsonify({'success': False, 'message': f'Failed to process scan: {str(e)}'})
 
 @scanner.route('/api/scan-image', methods=['POST'])
 @login_required
@@ -336,17 +257,36 @@ def api_scan_image():
         if not session_id:
             return jsonify({'success': False, 'message': 'No session selected'})
         
-        if file.filename == '':
-            return jsonify({'success': False, 'message': 'No file selected'})
+        # Validate the uploaded file
+        validation_result = QRImageProcessingService.validate_image_file(file)
+        if not validation_result['valid']:
+            return jsonify({'success': False, 'message': validation_result['error']})
         
-        # For demo purposes, simulate QR code detection from image
-        # In production, you'd use a QR code detection library like pyzbar
+        # Extract QR code data from the image
+        extraction_result = QRImageProcessingService.extract_qr_codes(file)
         
-        # Mock QR data extraction (in real implementation, decode QR from image)
-        mock_qr_data = f"STU{str(uuid.uuid4())[:3].upper()}"
+        if not extraction_result['success']:
+            return jsonify({
+                'success': False, 
+                'message': extraction_result['error'],
+                'details': extraction_result.get('details', {})
+            })
+        
+        # Get the first valid QR code
+        qr_data = extraction_result['qr_codes'][0]
+        current_app.logger.info(f"QR code extracted from image: {qr_data}")
         
         # Process the extracted QR data using the same logic as scan_qr_code
-        return process_qr_data(mock_qr_data, session_id)
+        result = process_qr_data(qr_data, session_id)
+        
+        # Add processing details to successful result
+        if isinstance(result.response, list) and len(result.response) > 0:
+            result_data = json.loads(result.response[0])
+            if result_data.get('success'):
+                result_data['image_details'] = extraction_result.get('details', {})
+                return jsonify(result_data)
+        
+        return result
         
     except Exception as e:
         current_app.logger.error(f"Error processing image scan: {str(e)}")

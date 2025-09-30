@@ -326,9 +326,23 @@ def validate_qr_data(qr_content):
                 'data': None
             }
         
-        # Try legacy format (just student number)
+        # Try legacy format (just student number) or SCANME_ format
         if cleaned_content and len(cleaned_content.strip()) > 0:
-            # Validate legacy format
+            # Check if it's SCANME_ format (our QR code format)
+            if cleaned_content.startswith('SCANME_'):
+                # This is our QR code format - extract the hash and treat as QR data
+                return {
+                    'valid': True,
+                    'data': {
+                        'type': 'scanme_qr_code',
+                        'qr_data': cleaned_content,
+                        'legacy': False
+                    },
+                    'error': None,
+                    'error_code': None
+                }
+            
+            # Validate legacy format (plain student number)
             if len(cleaned_content) > 20:
                 return {
                     'valid': False,

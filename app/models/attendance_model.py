@@ -329,6 +329,21 @@ class AttendanceSession(db.Model):
         active_status = getattr(self, 'is_active', True)
         return active_status and self.get_session_status() == 'active'
     
+    def is_ended(self):
+        """Check if session has ended"""
+        status = self.get_session_status()
+        return status == 'completed' or not self.is_active
+    
+    def close_session(self):
+        """Close/end the session"""
+        self.is_active = False
+        return self
+    
+    def reopen_session(self):
+        """Reopen a closed session"""
+        self.is_active = True
+        return self
+    
     def to_dict(self):
         """Convert session to dictionary for JSON serialization"""
         return {
