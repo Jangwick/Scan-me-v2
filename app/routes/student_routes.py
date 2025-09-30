@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from app import db
 from app.models.student_model import Student
-from app.utils.auth_utils import requires_professor_or_admin, validate_student_data
+from app.utils.auth_utils import requires_professor_or_admin, validate_student_data, validate_student_edit_data
 from app.utils.qr_utils import generate_student_qr_code
 from datetime import datetime
 
@@ -150,8 +150,8 @@ def edit_student(id):
             'year_level': request.form.get('year_level', type=int)
         }
         
-        # Validate data
-        validation = validate_student_data(student_data)
+        # Validate data (use edit validation which doesn't require student_no)
+        validation = validate_student_edit_data(student_data)
         if not validation['valid']:
             for error in validation['errors']:
                 flash(error, 'error')
@@ -206,10 +206,23 @@ def download_qr_code(id):
         if not student.qr_code_path:
             student.generate_qr_code()
         
-        from flask import send_file
+        from flask import send_file, current_app
         import os
         
-        qr_path = os.path.join('app', 'static', student.qr_code_path)
+        # Get the absolute path to the QR code file
+        static_folder = current_app.static_folder
+        qr_path = os.path.join(static_folder, student.qr_code_path)
+        
+        # Check if file exists
+        if not os.path.exists(qr_path):
+            # Try to regenerate the QR code
+            student.generate_qr_code()
+            qr_path = os.path.join(static_folder, student.qr_code_path)
+            
+            if not os.path.exists(qr_path):
+                flash('QR code file not found. Please try again.', 'error')
+                return redirect(url_for('students.view_student', id=id))
+        
         return send_file(qr_path, as_attachment=True, 
                         download_name=f"{student.student_no}_qr.png")
     

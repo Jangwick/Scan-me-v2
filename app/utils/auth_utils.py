@@ -232,6 +232,41 @@ def validate_student_data(data):
         'errors': errors
     }
 
+def validate_student_edit_data(data):
+    """
+    Validate student edit data (excludes student_no since it's read-only)
+    Args:
+        data (dict): Student data to validate
+    Returns:
+        dict: Validation result
+    """
+    errors = []
+    
+    # Required fields for editing (no student_no)
+    required_fields = ['first_name', 'last_name', 'email', 'department', 'section', 'year_level']
+    
+    for field in required_fields:
+        if not data.get(field):
+            errors.append(f"{field.replace('_', ' ').title()} is required")
+    
+    # Validate email
+    if data.get('email') and not validate_email(data['email']):
+        errors.append("Invalid email address format")
+    
+    # Validate year level
+    if data.get('year_level'):
+        try:
+            year = int(data['year_level'])
+            if year < 1 or year > 6:
+                errors.append("Year level must be between 1 and 6")
+        except (ValueError, TypeError):
+            errors.append("Year level must be a number")
+    
+    return {
+        'valid': len(errors) == 0,
+        'errors': errors
+    }
+
 def validate_room_data(data):
     """
     Validate room data

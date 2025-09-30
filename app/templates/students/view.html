@@ -357,7 +357,7 @@
                 <i class="fas fa-calendar-alt"></i>
                 Date Added
             </span>
-            <span class="info-value">{{ student.date_created.strftime('%B %d, %Y') }}</span>
+            <span class="info-value">{{ student.created_at.strftime('%B %d, %Y') if student.created_at else 'Unknown' }}</span>
         </div>
         <div class="info-item">
             <span class="info-label">
@@ -507,7 +507,7 @@
     
     <div class="timeline-item">
         <div class="timeline-content">
-            <div class="timeline-time">{{ student.date_created.strftime('%B %d, %Y at %I:%M %p') }}</div>
+            <div class="timeline-time">{{ student.created_at.strftime('%B %d, %Y at %I:%M %p') if student.created_at else 'Unknown' }}</div>
             <p class="timeline-event">Student record created</p>
         </div>
     </div>
@@ -515,7 +515,7 @@
     {% if student.qr_code_path %}
     <div class="timeline-item">
         <div class="timeline-content">
-            <div class="timeline-time">{{ student.date_created.strftime('%B %d, %Y at %I:%M %p') }}</div>
+            <div class="timeline-time">{{ student.created_at.strftime('%B %d, %Y at %I:%M %p') if student.created_at else 'Unknown' }}</div>
             <p class="timeline-event">QR Code generated</p>
         </div>
     </div>

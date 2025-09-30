@@ -337,7 +337,7 @@
                     View
                 </a>
                 
-                {% if session.is_active() %}
+                {% if session.is_session_active() %}
                 <a href="{{ url_for('scanner_new.index') }}" class="btn-outline-primary">
                     <i class="fas fa-qrcode"></i>
                     Scan

@@ -145,6 +145,54 @@ def export_records(format):
         flash(f'Export error: {str(e)}', 'error')
         return redirect(url_for('attendance.reports'))
 
+@attendance_bp.route('/student/<int:student_id>')
+@login_required
+@requires_professor_or_admin
+def view_student_attendance(student_id):
+    """View attendance records for a specific student"""
+    try:
+        from app.models.student_model import Student
+        
+        student = Student.query.get_or_404(student_id)
+        
+        # Get date range from request args
+        end_date = request.args.get('end_date', date.today().isoformat())
+        start_date = request.args.get('start_date', (date.today() - timedelta(days=30)).isoformat())
+        
+        # Parse dates
+        try:
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+        except ValueError:
+            start_date_obj = date.today() - timedelta(days=30)
+            end_date_obj = date.today()
+            start_date = start_date_obj.isoformat()
+            end_date = end_date_obj.isoformat()
+        
+        # Get attendance records for this student
+        records = AttendanceRecord.query.filter(
+            AttendanceRecord.student_id == student_id,
+            db.func.date(AttendanceRecord.scan_time) >= start_date_obj,
+            db.func.date(AttendanceRecord.scan_time) <= end_date_obj
+        ).order_by(AttendanceRecord.scan_time.desc()).all()
+        
+        # Get attendance statistics
+        attendance_stats = student.get_attendance_stats(
+            datetime.combine(start_date_obj, datetime.min.time()),
+            datetime.combine(end_date_obj, datetime.max.time())
+        )
+        
+        return render_template('attendance/student_attendance.html',
+                             student=student,
+                             records=records,
+                             attendance_stats=attendance_stats,
+                             start_date=start_date,
+                             end_date=end_date)
+        
+    except Exception as e:
+        flash(f'Error loading student attendance: {str(e)}', 'error')
+        return redirect(url_for('students.view_student', id=student_id))
+
 @attendance_bp.route('/sessions')
 @login_required
 @requires_professor_or_admin

@@ -310,7 +310,7 @@
     </h6>
     <p>
         <strong>Student Number:</strong> {{ student.student_no }} (cannot be changed) |
-        <strong>Date Created:</strong> {{ student.date_created.strftime('%B %d, %Y') }} |
+        <strong>Date Created:</strong> {{ student.created_at.strftime('%B %d, %Y') if student.created_at else 'Unknown' }} |
         <strong>Status:</strong> {% if student.is_active %}Active{% else %}Inactive{% endif %}
     </p>
 </div>

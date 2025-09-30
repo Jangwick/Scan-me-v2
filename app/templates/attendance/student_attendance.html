@@ -1,0 +1,423 @@
+{% extends "dashboard_base.html" %}
+
+{% block page_title %}{{ student.get_full_name() }} - Attendance Records{% endblock %}
+
+{% block extra_css %}
+<style>
+    .student-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .student-info {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .student-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: bold;
+        backdrop-filter: blur(10px);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        margin: 0 auto 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .stat-icon.scans { background: linear-gradient(135deg, #10b981 0%, #065f46 100%); }
+    .stat-icon.days { background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); }
+    .stat-icon.rooms { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+    .stat-icon.late { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .filter-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .records-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .record-item {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .record-item:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .record-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .record-time {
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .record-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-in_room {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-timed_out {
+        background: #e0e7ff;
+        color: #3730a3;
+    }
+
+    .status-late {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .record-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.5rem;
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #d1d5db;
+        margin-bottom: 1rem;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: none;
+        font-size: 0.875rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-outline-secondary {
+        background: transparent;
+        border: 2px solid #6b7280;
+        color: #6b7280;
+    }
+
+    .btn-outline-secondary:hover {
+        background: #6b7280;
+        color: white;
+        text-decoration: none;
+    }
+
+    .form-control {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+        font-size: 0.875rem;
+    }
+
+    .form-control:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        outline: none;
+    }
+
+    @media (max-width: 768px) {
+        .student-info {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .record-header {
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: flex-start;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Student Header -->
+<div class="student-header">
+    <div class="student-info">
+        <div class="student-avatar">
+            {{ student.first_name[0] }}{{ student.last_name[0] }}
+        </div>
+        <div>
+            <h1 class="mb-1">{{ student.get_full_name() }}</h1>
+            <p class="mb-0 opacity-75">{{ student.student_no }} • {{ student.department }} • {{ student.section }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon scans">
+            <i class="fas fa-qrcode"></i>
+        </div>
+        <div class="stat-value">{{ attendance_stats.total_scans }}</div>
+        <div class="stat-label">Total Scans</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon days">
+            <i class="fas fa-calendar-day"></i>
+        </div>
+        <div class="stat-value">{{ attendance_stats.unique_days }}</div>
+        <div class="stat-label">Days Attended</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon rooms">
+            <i class="fas fa-door-open"></i>
+        </div>
+        <div class="stat-value">{{ attendance_stats.rooms_visited }}</div>
+        <div class="stat-label">Rooms Visited</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon late">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-value">{{ attendance_stats.late_arrivals }}</div>
+        <div class="stat-label">Late Arrivals</div>
+    </div>
+</div>
+
+<!-- Date Filter -->
+<div class="filter-section">
+    <h5 class="mb-3">
+        <i class="fas fa-filter me-2"></i>
+        Filter Attendance Records
+    </h5>
+    
+    <form method="GET" class="row g-3">
+        <div class="col-md-4">
+            <label for="start_date" class="form-label">Start Date</label>
+            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+        </div>
+        <div class="col-md-4">
+            <label for="end_date" class="form-label">End Date</label>
+            <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary me-2">
+                <i class="fas fa-search"></i>
+                Apply Filter
+            </button>
+            <a href="{{ url_for('attendance.view_student_attendance', student_id=student.id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-undo"></i>
+                Reset
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Attendance Records -->
+<div class="records-section">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>
+            Attendance Records ({{ records|length }})
+        </h5>
+        <a href="{{ url_for('students.view_student', id=student.id) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i>
+            Back to Student
+        </a>
+    </div>
+    
+    {% if records %}
+        {% for record in records %}
+        <div class="record-item">
+            <div class="record-header">
+                <div class="record-time">
+                    {{ record.scan_time.strftime('%B %d, %Y at %I:%M %p') }}
+                </div>
+                <div>
+                    <span class="record-status status-{{ record.get_status() }}">
+                        {% if record.get_status() == 'in_room' %}
+                            <i class="fas fa-sign-in-alt me-1"></i>
+                            In Room
+                        {% elif record.get_status() == 'timed_out' %}
+                            <i class="fas fa-sign-out-alt me-1"></i>
+                            Timed Out
+                        {% else %}
+                            <i class="fas fa-question me-1"></i>
+                            {{ record.get_status().title() }}
+                        {% endif %}
+                    </span>
+                    {% if record.is_late %}
+                        <span class="record-status status-late ms-1">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            Late
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="record-details">
+                <div><strong>Room:</strong> {{ record.room.get_full_name() if record.room else 'Unknown' }}</div>
+                <div><strong>Time In:</strong> {{ record.time_in.strftime('%I:%M %p') if record.time_in else 'N/A' }}</div>
+                <div><strong>Time Out:</strong> {{ record.time_out.strftime('%I:%M %p') if record.time_out else 'Still in room' }}</div>
+                <div><strong>Duration:</strong> {{ record.get_duration() }} minutes</div>
+                {% if record.time_in_scanned_by_user %}
+                <div><strong>Scanned By:</strong> {{ record.time_in_scanned_by_user.username }}</div>
+                {% endif %}
+                {% if record.notes %}
+                <div class="col-span-full"><strong>Notes:</strong> {{ record.notes }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-calendar-times"></i>
+            <h6>No Attendance Records Found</h6>
+            <p>No attendance records found for {{ student.get_full_name() }} in the selected date range.</p>
+            <p class="small text-muted">Try adjusting the date filter or check if the student has scanned any QR codes.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Set default date range
+document.addEventListener('DOMContentLoaded', function() {
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    
+    // Set max date to today
+    const today = new Date().toISOString().split('T')[0];
+    startDateInput.max = today;
+    endDateInput.max = today;
+    
+    // If no dates are set, set defaults
+    if (!startDateInput.value) {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        startDateInput.value = thirtyDaysAgo.toISOString().split('T')[0];
+    }
+    
+    if (!endDateInput.value) {
+        endDateInput.value = today;
+    }
+});
+
+// Validate date range
+document.getElementById('start_date').addEventListener('change', function() {
+    const startDate = new Date(this.value);
+    const endDateInput = document.getElementById('end_date');
+    const endDate = new Date(endDateInput.value);
+    
+    if (startDate > endDate) {
+        endDateInput.value = this.value;
+    }
+});
+
+document.getElementById('end_date').addEventListener('change', function() {
+    const endDate = new Date(this.value);
+    const startDateInput = document.getElementById('start_date');
+    const startDate = new Date(startDateInput.value);
+    
+    if (endDate < startDate) {
+        startDateInput.value = this.value;
+    }
+});
+</script>
+{% endblock %}

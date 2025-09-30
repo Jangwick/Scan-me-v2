@@ -74,11 +74,16 @@ class Student(db.Model):
             if save_to_file:
                 # Save QR code to file
                 filename = f"qr_{self.student_no}.png"
-                filepath = os.path.join('app', 'static', 'qr_codes', filename)
+                
+                # Use Flask's static folder path
+                from flask import current_app
+                static_folder = current_app.static_folder if current_app else 'app/static'
+                qr_codes_dir = os.path.join(static_folder, 'qr_codes')
                 
                 # Create directory if it doesn't exist
-                os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                os.makedirs(qr_codes_dir, exist_ok=True)
                 
+                filepath = os.path.join(qr_codes_dir, filename)
                 img.save(filepath)
                 self.qr_code_path = f"qr_codes/{filename}"
                 db.session.commit()
@@ -112,7 +117,10 @@ class Student(db.Model):
     
     def get_attendance_stats(self, start_date=None, end_date=None):
         """Get attendance statistics for student"""
-        query = self.attendance_records
+        from app.models.attendance_model import AttendanceRecord
+        
+        # Create a proper query instead of using the relationship directly
+        query = AttendanceRecord.query.filter(AttendanceRecord.student_id == self.id)
         
         if start_date:
             query = query.filter(AttendanceRecord.scan_time >= start_date)

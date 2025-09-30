@@ -323,9 +323,11 @@ class AttendanceSession(db.Model):
         }
         return status_classes.get(status, 'status-unknown')
     
-    def is_active(self):
-        """Check if session is active (for template compatibility)"""
-        return self.is_active and self.get_session_status() == 'active'
+    def is_session_active(self):
+        """Check if session is currently active (method for templates)"""
+        # Access the database column value directly  
+        active_status = getattr(self, 'is_active', True)
+        return active_status and self.get_session_status() == 'active'
     
     def to_dict(self):
         """Convert session to dictionary for JSON serialization"""
