@@ -68,7 +68,7 @@ def create_app(config_name=None):
     
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix='/auth')
-    app.register_blueprint(scanner_bp, url_prefix='/scanner')
+    # app.register_blueprint(scanner_bp, url_prefix='/scanner')  # Temporarily disabled due to conflict
     app.register_blueprint(student_bp, url_prefix='/students')
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(attendance_bp, url_prefix='/attendance')

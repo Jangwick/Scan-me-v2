@@ -67,13 +67,33 @@ def api_get_sessions():
         current_app.logger.error(f"Error fetching sessions: {str(e)}")
         return jsonify([]), 500
 
+@scanner.route('/api/test-qr', methods=['POST'])
+@login_required
+def test_qr_endpoint():
+    """Test endpoint to debug QR scanning issues"""
+    try:
+        current_app.logger.info("Test QR endpoint called")
+        data = request.get_json()
+        current_app.logger.info(f"Received data: {data}")
+        return jsonify({
+            'success': True,
+            'message': 'Test endpoint working',
+            'received_data': data
+        })
+    except Exception as e:
+        current_app.logger.error(f"Test endpoint error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
 @scanner.route('/api/scan-qr', methods=['POST'])
 @login_required
 def api_scan_qr_code():
     """Process a scanned QR code for time-in or time-out with comprehensive validation"""
     try:
+        current_app.logger.info("=== QR SCAN REQUEST RECEIVED ===")
+        
         # Edge Case: Request validation
         if not request.is_json:
+            current_app.logger.error("Request is not JSON")
             return jsonify({
                 'success': False, 
                 'message': 'Request must be JSON',
@@ -81,7 +101,10 @@ def api_scan_qr_code():
             }), 400
         
         data = request.get_json()
+        current_app.logger.info(f"Request data received: {data}")
+        
         if not data:
+            current_app.logger.error("No data provided in request")
             return jsonify({
                 'success': False, 
                 'message': 'No data provided',
@@ -275,7 +298,6 @@ def api_scan_qr_code():
         is_late = now > (session.start_time + timedelta(minutes=10))  # 10-minute grace period
         
         # Create attendance record
-        from flask_login import current_user
         attendance = AttendanceRecord(
             student_id=student.id,
             room_id=session.room_id,
@@ -583,7 +605,6 @@ def process_qr_data(qr_data, session_id):
         now = datetime.now()
         is_late = now > (session.start_time + timedelta(minutes=10))
         
-        from flask_login import current_user
         attendance = AttendanceRecord(
             student_id=student.id,
             room_id=session.room_id,
