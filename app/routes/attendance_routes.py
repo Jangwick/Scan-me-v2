@@ -267,3 +267,34 @@ def analytics():
     except Exception as e:
         flash(f'Error loading analytics: {str(e)}', 'error')
         return render_template('attendance/analytics.html', stats={})
+
+@attendance_bp.route('/sessions/<int:session_id>')
+@login_required
+@requires_professor_or_admin
+def view_session(session_id):
+    """View individual session details"""
+    try:
+        session = AttendanceSession.query.get_or_404(session_id)
+        
+        # Get attendance records for this session
+        attendance_records = AttendanceRecord.query.filter_by(session_id=session_id)\
+            .order_by(AttendanceRecord.time_in.desc()).all()
+        
+        # Get session statistics
+        session_stats = session.get_attendance_summary()
+        
+        # Get currently active students in this session
+        active_students = AttendanceRecord.query.filter_by(
+            session_id=session_id,
+            is_active=True
+        ).all()
+        
+        return render_template('attendance/session_detail.html', 
+                             session=session,
+                             attendance_records=attendance_records,
+                             session_stats=session_stats,
+                             active_students=active_students)
+    
+    except Exception as e:
+        flash(f'Error loading session: {str(e)}', 'error')
+        return redirect(url_for('attendance.manage_sessions'))

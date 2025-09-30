@@ -1,0 +1,477 @@
+{% extends "dashboard_base.html" %}
+
+{% block page_title %}{{ session.session_name }} - Session Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .session-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .session-info {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .session-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: bold;
+        backdrop-filter: blur(10px);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        margin: 0 auto 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .stat-icon.students { background: linear-gradient(135deg, #10b981 0%, #065f46 100%); }
+    .stat-icon.scans { background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); }
+    .stat-icon.late { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+    .stat-icon.active { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .session-status {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .status-active {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-completed {
+        background: #e0e7ff;
+        color: #3730a3;
+    }
+
+    .status-scheduled {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-inactive {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .records-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .record-item {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .record-item:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .record-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .student-name {
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .record-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-in_room {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-timed_out {
+        background: #e0e7ff;
+        color: #3730a3;
+    }
+
+    .record-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.5rem;
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    .active-students-section {
+        background: #f0fdf4;
+        border: 2px solid #16a34a;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .active-student-item {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .duration-badge {
+        background: #3b82f6;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #d1d5db;
+        margin-bottom: 1rem;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: none;
+        font-size: 0.875rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-outline-secondary {
+        background: transparent;
+        border: 2px solid #6b7280;
+        color: #6b7280;
+    }
+
+    .btn-outline-secondary:hover {
+        background: #6b7280;
+        color: white;
+        text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+        .session-info {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .record-header {
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: flex-start;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Session Header -->
+<div class="session-header">
+    <div class="session-info">
+        <div class="session-icon">
+            <i class="fas fa-chalkboard-teacher"></i>
+        </div>
+        <div>
+            <h1 class="mb-1">{{ session.session_name }}</h1>
+            <p class="mb-2 opacity-75">
+                {{ session.subject or 'No Subject' }} • {{ session.instructor or 'No Instructor' }}
+            </p>
+            <div class="d-flex align-items-center gap-3">
+                <span class="session-status status-{{ session.get_status_class().replace('status-', '') }}">
+                    {% if session.get_status() == 'active' %}
+                        <i class="fas fa-play-circle"></i>
+                        Active
+                    {% elif session.get_status() == 'completed' %}
+                        <i class="fas fa-check-circle"></i>
+                        Completed
+                    {% elif session.get_status() == 'scheduled' %}
+                        <i class="fas fa-clock"></i>
+                        Scheduled
+                    {% else %}
+                        <i class="fas fa-pause-circle"></i>
+                        Inactive
+                    {% endif %}
+                </span>
+                <span class="opacity-75">
+                    {{ session.start_time.strftime('%B %d, %Y') }} • 
+                    {{ session.start_time.strftime('%I:%M %p') }} - {{ session.end_time.strftime('%I:%M %p') }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Session Statistics -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon students">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-value">{{ session_stats.unique_students }}</div>
+        <div class="stat-label">Unique Students</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon scans">
+            <i class="fas fa-qrcode"></i>
+        </div>
+        <div class="stat-value">{{ session_stats.total_scans }}</div>
+        <div class="stat-label">Total Scans</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon late">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-value">{{ session_stats.late_arrivals }}</div>
+        <div class="stat-label">Late Arrivals</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon active">
+            <i class="fas fa-user-check"></i>
+        </div>
+        <div class="stat-value">{{ active_students|length }}</div>
+        <div class="stat-label">Currently Active</div>
+    </div>
+</div>
+
+<!-- Currently Active Students -->
+{% if active_students %}
+<div class="active-students-section">
+    <h5 class="mb-3">
+        <i class="fas fa-users text-success me-2"></i>
+        Currently Active Students ({{ active_students|length }})
+    </h5>
+    
+    {% for record in active_students %}
+    <div class="active-student-item">
+        <div>
+            <div class="student-name">{{ record.student.get_full_name() }}</div>
+            <div class="text-muted small">{{ record.student.student_no }} • Time In: {{ record.time_in.strftime('%I:%M %p') }}</div>
+        </div>
+        <div class="duration-badge">
+            {{ record.get_duration() }} min
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Attendance Records -->
+<div class="records-section">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>
+            All Attendance Records ({{ attendance_records|length }})
+        </h5>
+        <a href="{{ url_for('attendance.manage_sessions') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i>
+            Back to Sessions
+        </a>
+    </div>
+    
+    {% if attendance_records %}
+        {% for record in attendance_records %}
+        <div class="record-item">
+            <div class="record-header">
+                <div class="student-name">
+                    {{ record.student.get_full_name() if record.student else 'Unknown Student' }}
+                </div>
+                <div>
+                    <span class="record-status status-{{ record.get_status() }}">
+                        {% if record.get_status() == 'in_room' %}
+                            <i class="fas fa-sign-in-alt me-1"></i>
+                            In Room
+                        {% elif record.get_status() == 'timed_out' %}
+                            <i class="fas fa-sign-out-alt me-1"></i>
+                            Completed
+                        {% else %}
+                            <i class="fas fa-question me-1"></i>
+                            {{ record.get_status().title() }}
+                        {% endif %}
+                    </span>
+                    {% if record.is_late %}
+                        <span class="record-status status-late ms-1">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            Late
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="record-details">
+                <div><strong>Student No:</strong> {{ record.student.student_no if record.student else 'Unknown' }}</div>
+                <div><strong>Time In:</strong> {{ record.time_in.strftime('%I:%M %p') }}</div>
+                <div><strong>Time Out:</strong> {{ record.time_out.strftime('%I:%M %p') if record.time_out else 'Still in room' }}</div>
+                <div><strong>Duration:</strong> {{ record.get_duration() }} minutes</div>
+                {% if record.time_in_scanned_by_user %}
+                <div><strong>Scanned By:</strong> {{ record.time_in_scanned_by_user.username }}</div>
+                {% endif %}
+                {% if record.notes %}
+                <div class="col-span-full"><strong>Notes:</strong> {{ record.notes }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-user-times"></i>
+            <h6>No Attendance Records</h6>
+            <p>No students have scanned for this session yet.</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Session Actions -->
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <a href="{{ url_for('attendance.manage_sessions') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i>
+            Back to Sessions
+        </a>
+    </div>
+    
+    <div class="d-flex gap-2">
+        {% if session.get_status() == 'active' %}
+        <a href="{{ url_for('scanner.session', session_id=session.id) }}" class="btn btn-primary">
+            <i class="fas fa-qrcode"></i>
+            Open Scanner
+        </a>
+        {% endif %}
+        
+        <button class="btn btn-primary" onclick="exportSession({{ session.id }})">
+            <i class="fas fa-download"></i>
+            Export Data
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function exportSession(sessionId) {
+    // Simple CSV export functionality
+    const records = [];
+    document.querySelectorAll('.record-item').forEach(item => {
+        const name = item.querySelector('.student-name').textContent.trim();
+        const details = Array.from(item.querySelectorAll('.record-details div')).map(d => d.textContent.trim());
+        records.push([name, ...details].join(','));
+    });
+    
+    const csv = 'Student Name,Student No,Time In,Time Out,Duration,Scanned By,Notes\n' + records.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `session_${sessionId}_attendance.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+// Auto-refresh active students every 30 seconds
+setInterval(() => {
+    if (document.querySelector('.active-students-section')) {
+        location.reload();
+    }
+}, 30000);
+</script>
+{% endblock %}

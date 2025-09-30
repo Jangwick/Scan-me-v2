@@ -2,7 +2,7 @@
 Scanner routes for QR code scanning functionality
 """
 from flask import render_template, request, jsonify, current_app
-from flask_login import login_required
+from flask_login import login_required, current_user
 from datetime import datetime, date, time, timedelta
 from sqlalchemy import func, and_, or_
 import json
@@ -178,102 +178,44 @@ def api_scan_qr_code():
         # Log successful identification
         StudentIdentificationService.log_identification_attempt(qr_data, student, True)
         
-        # Check if student has an active record in this room
-        active_record = AttendanceRecord.get_student_active_record(student.id, session.room_id)
+        # Process QR scan with comprehensive edge case handling
+        from app.services.attendance_state_service import AttendanceStateService
+        from app.services.time_management_service import TimeManagementService
         
-        from flask_login import current_user
+        # Get client information for tracking
+        user_agent = request.headers.get('User-Agent', 'Unknown')
+        ip_address = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
         
-        # Determine action based on current state and scan_type
-        if scan_type == 'time_out' or (scan_type == 'auto' and active_record):
-            # Time-out logic
-            if not active_record:
-                return jsonify({
-                    'success': False, 
-                    'message': f'{student.get_full_name()} is not currently timed in to this room',
-                    'student_name': student.get_full_name(),
-                    'action': 'none'
-                })
+        # Process the scan using the comprehensive state service
+        result = AttendanceStateService.process_attendance_scan(
+            student_id=student.id,
+            room_id=session.room_id,
+            session_id=session.id,
+            scanned_by=current_user.id,
+            scan_type=scan_type,
+            user_agent=user_agent,
+            ip_address=ip_address
+        )
+        
+        # Add additional time analysis if successful
+        if result['success'] and result['action'] in ['time_in', 'time_out']:
+            # Get comprehensive time info for debugging
+            time_info = TimeManagementService.get_current_time_info()
+            result['debug_time_info'] = time_info
             
-            # Process time-out
-            success, message = active_record.time_out_student(current_user.id)
-            
-            if success:
-                duration = active_record.get_duration()
-                return jsonify({
-                    'success': True,
-                    'message': f'Successfully timed out {student.get_full_name()}. Duration: {duration} minutes',
-                    'student_name': student.get_full_name(),
-                    'action': 'time_out',
-                    'time_in': active_record.time_in.isoformat(),
-                    'time_out': active_record.time_out.isoformat(),
-                    'duration_minutes': duration,
-                    'timestamp': active_record.time_out.isoformat()
-                })
-            else:
-                return jsonify({
-                    'success': False,
-                    'message': message,
-                    'student_name': student.get_full_name(),
-                    'action': 'error'
-                })
-                
-        else:
-            # Time-in logic
-            if active_record:
-                return jsonify({
-                    'success': False, 
-                    'message': f'{student.get_full_name()} is already timed in to this room',
-                    'student_name': student.get_full_name(),
-                    'action': 'duplicate',
-                    'time_in': active_record.time_in.isoformat(),
-                    'current_duration': active_record.get_duration()
-                })
-            
-            # Check for recent time-in (prevent duplicates within 5 minutes)
-            from datetime import timedelta
-            recent_time = datetime.now() - timedelta(minutes=5)
-            recent_record = AttendanceRecord.query.filter(
-                AttendanceRecord.student_id == student.id,
-                AttendanceRecord.room_id == session.room_id,
-                AttendanceRecord.time_in >= recent_time
-            ).first()
-            
-            if recent_record and not recent_record.time_out:
-                return jsonify({
-                    'success': False, 
-                    'message': f'{student.get_full_name()} was already timed in recently',
-                    'student_name': student.get_full_name(),
-                    'action': 'recent_duplicate'
-                })
-            
-            # Determine if late
-            now = datetime.now()
-            is_late = now > (session.start_time + timedelta(minutes=10))  # 10-minute grace period
-            
-            # Create new time-in record
-            attendance = AttendanceRecord(
-                student_id=student.id,
-                room_id=session.room_id,
-                session_id=session.id,
-                scanned_by=current_user.id,
-                is_late=is_late
-            )
-            
-            # Check for duplicate status after creation
-            attendance.check_and_set_duplicate_status()
-            
-            db.session.add(attendance)
-            db.session.commit()
-            
-            return jsonify({
-                'success': True,
-                'message': f'Successfully timed in {student.get_full_name()}' + (' (Late)' if is_late else ''),
-                'student_name': student.get_full_name(),
-                'action': 'time_in',
-                'is_late': is_late,
-                'time_in': attendance.time_in.isoformat(),
-                'timestamp': attendance.time_in.isoformat()
-            })
+            # If this was a time_out, add duration analysis
+            if result['action'] == 'time_out':
+                duration_analysis = TimeManagementService.calculate_duration_safe(
+                    datetime.fromisoformat(result['time_in'].replace('Z', '')),
+                    datetime.fromisoformat(result['time_out'].replace('Z', ''))
+                )
+                result['duration_analysis'] = {
+                    'warnings': duration_analysis.get('warnings', []),
+                    'corrections_applied': duration_analysis.get('corrections_applied', []),
+                    'is_reasonable_duration': duration_analysis.get('is_reasonable_duration', True)
+                }
+        
+        return jsonify(result)
         
     except Exception as e:
         db.session.rollback()
