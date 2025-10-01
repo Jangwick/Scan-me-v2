@@ -1,0 +1,101 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Session Attendance - {{ session.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-clipboard-list"></i>
+                        Session Attendance: {{ session.name }}
+                    </h4>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Session Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p><strong>Room:</strong> {{ session.room.name }}</p>
+                            <p><strong>Start Time:</strong> {{ session.start_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Status:</strong> 
+                                <span class="badge badge-{{ 'success' if session.status.value == 'active' else 'secondary' }}">
+                                    {{ session.status.value.title() }}
+                                </span>
+                            </p>
+                            <p><strong>Total Records:</strong> {{ attendance_records|length }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Attendance Records -->
+                    {% if attendance_records %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Student No</th>
+                                    <th>Time In</th>
+                                    <th>Time Out</th>
+                                    <th>Duration</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in attendance_records %}
+                                <tr>
+                                    <td>{{ record.student.get_full_name() }}</td>
+                                    <td>{{ record.student.student_no }}</td>
+                                    <td>{{ record.time_in.strftime('%H:%M:%S') if record.time_in else '-' }}</td>
+                                    <td>{{ record.time_out.strftime('%H:%M:%S') if record.time_out else '-' }}</td>
+                                    <td>
+                                        {% if record.time_out and record.time_in %}
+                                            {{ ((record.time_out - record.time_in).total_seconds() / 3600) | round(2) }}h
+                                        {% elif record.time_in %}
+                                            <span class="text-warning">Active</span>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if record.time_out %}
+                                            <span class="badge badge-success">Complete</span>
+                                        {% elif record.time_in %}
+                                            <span class="badge badge-warning">Active</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">No Data</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-clipboard-check fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No attendance records found</h5>
+                        <p class="text-muted">Students haven't started scanning for this session yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="card-footer">
+                    <a href="{{ url_for('attendance.manage_sessions') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Sessions
+                    </a>
+                    <a href="{{ url_for('attendance.view_session', session_id=session.id) }}" class="btn btn-primary">
+                        <i class="fas fa-eye"></i>
+                        View Session Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

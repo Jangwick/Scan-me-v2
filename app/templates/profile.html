@@ -502,7 +502,7 @@
             View Attendance
         </a>
         {% elif user.role == 'professor' %}
-        <a href="{{ url_for('attendance.sessions') }}" class="btn btn-outline-secondary">
+        <a href="{{ url_for('attendance.manage_sessions') }}" class="btn btn-outline-secondary">
             <i class="fas fa-clipboard-list"></i>
             Manage Sessions
         </a>

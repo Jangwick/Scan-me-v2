@@ -2,13 +2,27 @@
 QR Code Image Processing Service
 Handles edge cases for QR code detection from uploaded images
 """
-import cv2
-import numpy as np
-from pyzbar import pyzbar
-from PIL import Image
 import io
 import logging
 from typing import Optional, List, Dict, Any
+from PIL import Image
+
+# Optional imports with fallbacks
+try:
+    import cv2
+    import numpy as np
+    CV2_AVAILABLE = True
+except ImportError:
+    CV2_AVAILABLE = False
+    cv2 = None
+    np = None
+
+try:
+    from pyzbar import pyzbar
+    PYZBAR_AVAILABLE = True
+except ImportError:
+    PYZBAR_AVAILABLE = False
+    pyzbar = None
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +99,7 @@ class QRImageProcessingService:
         - No QR Code Found: Images without QR codes
         - Poor Image Quality: Blurry, low-resolution images
         - Binary Data: Non-text QR code content
+        - Missing Dependencies: Graceful fallback when libraries unavailable
         
         Returns:
             dict: {
@@ -95,6 +110,15 @@ class QRImageProcessingService:
             }
         """
         try:
+            # Check if QR detection libraries are available
+            if not PYZBAR_AVAILABLE:
+                return {
+                    'success': False,
+                    'qr_codes': [],
+                    'error': 'QR code detection libraries not available. Please install pyzbar.',
+                    'details': {'missing_libraries': ['pyzbar']}
+                }
+            
             # Read the uploaded file
             image_data = file.read()
             
@@ -129,20 +153,8 @@ class QRImageProcessingService:
             if image.mode != 'RGB':
                 image = image.convert('RGB')
             
-            # Convert PIL image to OpenCV format
-            try:
-                opencv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-            except Exception as e:
-                logger.error(f"Failed to convert image to OpenCV format: {str(e)}")
-                return {
-                    'success': False,
-                    'qr_codes': [],
-                    'error': 'Failed to process image format',
-                    'details': {'opencv_error': str(e)}
-                }
-            
-            # Multiple detection attempts for better success rate
-            qr_codes = cls._detect_qr_codes_multiple_methods(opencv_image)
+            # Detect QR codes using available methods
+            qr_codes = cls._detect_qr_codes_with_available_libraries(image)
             
             if not qr_codes:
                 return {
@@ -152,7 +164,8 @@ class QRImageProcessingService:
                     'details': {
                         'image_size': f"{width}x{height}",
                         'file_size': len(image_data),
-                        'detection_attempts': 'multiple_methods'
+                        'cv2_available': CV2_AVAILABLE,
+                        'pyzbar_available': PYZBAR_AVAILABLE
                     }
                 }
             
@@ -202,7 +215,8 @@ class QRImageProcessingService:
                 'error': None,
                 'details': {
                     'image_size': f"{width}x{height}",
-                    'file_size': len(image_data)
+                    'file_size': len(image_data),
+                    'detection_method': 'pyzbar' + (' + opencv' if CV2_AVAILABLE else '')
                 }
             }
             
@@ -216,12 +230,67 @@ class QRImageProcessingService:
             }
     
     @classmethod
+    def _detect_qr_codes_with_available_libraries(cls, pil_image) -> List[str]:
+        """
+        Detect QR codes using available libraries with fallback methods
+        """
+        qr_codes = []
+        
+        if not PYZBAR_AVAILABLE:
+            logger.warning("pyzbar not available, cannot detect QR codes from images")
+            return qr_codes
+        
+        # Method 1: Direct PIL to pyzbar detection
+        try:
+            detected = pyzbar.decode(pil_image)
+            for qr in detected:
+                try:
+                    data = qr.data.decode('utf-8')
+                    qr_codes.append(data)
+                except UnicodeDecodeError:
+                    logger.warning(f"QR code contains binary data: {qr.data}")
+                    continue
+        except Exception as e:
+            logger.debug(f"PIL direct detection failed: {str(e)}")
+        
+        # If OpenCV is available, try enhanced methods
+        if CV2_AVAILABLE and not qr_codes:
+            try:
+                # Convert PIL to OpenCV format
+                opencv_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+                qr_codes = cls._detect_qr_codes_multiple_methods(opencv_image)
+            except Exception as e:
+                logger.debug(f"OpenCV detection failed: {str(e)}")
+        
+        # If still no QR codes and we have basic image processing, try simple enhancements
+        if not qr_codes:
+            try:
+                # Convert to grayscale using PIL
+                gray_image = pil_image.convert('L')
+                detected = pyzbar.decode(gray_image)
+                for qr in detected:
+                    try:
+                        data = qr.data.decode('utf-8')
+                        if data not in qr_codes:
+                            qr_codes.append(data)
+                    except UnicodeDecodeError:
+                        continue
+            except Exception as e:
+                logger.debug(f"Grayscale detection failed: {str(e)}")
+        
+        return qr_codes
+    
+    @classmethod
     def _detect_qr_codes_multiple_methods(cls, opencv_image) -> List[str]:
         """
         Try multiple detection methods for better success rate
         Handles edge case: Poor Image Quality
+        Only works when OpenCV is available
         """
         qr_codes = []
+        
+        if not CV2_AVAILABLE or not PYZBAR_AVAILABLE:
+            return qr_codes
         
         # Method 1: Direct detection
         try:

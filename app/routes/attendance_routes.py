@@ -343,3 +343,41 @@ def edit_session(id):
         db.session.rollback()
         flash(f'Error updating session: {str(e)}', 'error')
         return redirect(url_for('attendance.manage_sessions'))
+
+@attendance_bp.route('/sessions/<int:session_id>/qr')
+@login_required
+@requires_professor_or_admin
+def session_qr(session_id):
+    """Generate QR code for session"""
+    try:
+        session = AttendanceSession.query.get_or_404(session_id)
+        
+        # For now, redirect to the main session view
+        # In a full implementation, this would generate/display a QR code
+        flash('QR code generation feature coming soon!', 'info')
+        return redirect(url_for('attendance.view_session', session_id=session_id))
+        
+    except Exception as e:
+        flash(f'Error generating QR code: {str(e)}', 'error')
+        return redirect(url_for('attendance.manage_sessions'))
+
+@attendance_bp.route('/sessions/<int:session_id>/attendance')
+@login_required
+@requires_professor_or_admin
+def session_attendance(session_id):
+    """View attendance for specific session"""
+    try:
+        session = AttendanceSession.query.get_or_404(session_id)
+        
+        # Get attendance records for this session
+        attendance_records = AttendanceRecord.query.filter_by(
+            session_id=session_id
+        ).join(Student).order_by(Student.last_name, Student.first_name).all()
+        
+        return render_template('attendance/session_attendance.html',
+                             session=session,
+                             attendance_records=attendance_records)
+        
+    except Exception as e:
+        flash(f'Error loading session attendance: {str(e)}', 'error')
+        return redirect(url_for('attendance.manage_sessions'))
