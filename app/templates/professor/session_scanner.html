@@ -1,0 +1,816 @@
+{% extends "dashboard_base.html" %}
+
+{% block page_title %}{{ session.session_name }} - Scanner{% endblock %}
+
+{% block extra_css %}
+<style>
+    .session-scanner {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 2rem;
+        height: calc(100vh - 120px);
+        padding: 1rem;
+    }
+
+    .scanner-area {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .session-info {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .session-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #2d3748;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .session-meta {
+        color: #718096;
+        font-size: 0.9rem;
+        margin: 0.25rem 0;
+    }
+
+    .session-status {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 0.5rem;
+    }
+
+    .status-active {
+        background: #c6f6d5;
+        color: #22543d;
+    }
+
+    .status-scheduled {
+        background: #bee3f8;
+        color: #2a4365;
+    }
+
+    .status-completed {
+        background: #e2e8f0;
+        color: #4a5568;
+    }
+
+    .camera-container {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        flex: 1;
+    }
+
+    .camera-preview {
+        width: 100%;
+        max-width: 500px;
+        height: 400px;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        border: 3px dashed #cbd5e0;
+        margin: 0 auto 1.5rem;
+    }
+
+    .camera-active {
+        border-color: #4c6ef5;
+        background: #000;
+    }
+
+    .camera-placeholder {
+        text-align: center;
+        color: #718096;
+    }
+
+    .camera-placeholder i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .scan-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 250px;
+        height: 250px;
+        border: 3px solid #4c6ef5;
+        border-radius: 12px;
+        display: none;
+    }
+
+    .scan-overlay.active {
+        display: block;
+        animation: scanPulse 2s infinite;
+    }
+
+    @keyframes scanPulse {
+        0%, 100% { 
+            border-color: #4c6ef5; 
+            box-shadow: 0 0 0 0 rgba(76, 110, 245, 0.4);
+        }
+        50% { 
+            border-color: #10b981; 
+            box-shadow: 0 0 0 20px rgba(76, 110, 245, 0);
+        }
+    }
+
+    .scanner-controls {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .control-btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-start {
+        background: #10b981;
+        color: white;
+    }
+
+    .btn-start:hover {
+        background: #059669;
+    }
+
+    .btn-stop {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn-stop:hover {
+        background: #dc2626;
+    }
+
+    .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        max-height: 100%;
+        overflow-y: auto;
+    }
+
+    .stats-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #2d3748;
+        margin: 0;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: #718096;
+        margin: 0.25rem 0 0 0;
+    }
+
+    .recent-scans {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .scan-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
+        transition: background 0.2s ease;
+    }
+
+    .scan-item:hover {
+        background: #f7fafc;
+    }
+
+    .scan-item:last-child {
+        border-bottom: none;
+    }
+
+    .scan-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+
+    .scan-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .scan-name {
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .scan-meta {
+        color: #718096;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+    }
+
+    .scan-status {
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-info {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .alert-custom {
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        border: none;
+        margin-bottom: 1rem;
+    }
+
+    .alert-success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .alert-error {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .alert-warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .back-button {
+        background: #6b7280;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: background 0.2s ease;
+    }
+
+    .back-button:hover {
+        background: #4b5563;
+        color: white;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="session-scanner">
+    <!-- Scanner Area -->
+    <div class="scanner-area">
+        <!-- Back Button and Session Info -->
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('professor.dashboard') }}" class="back-button">
+                <i class="fas fa-arrow-left"></i>Back to Dashboard
+            </a>
+            <a href="{{ url_for('professor.session_detail', session_id=session.id) }}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-chart-bar"></i>View Details
+            </a>
+        </div>
+
+        <div class="session-info">
+            <h1 class="session-title">{{ session.session_name }}</h1>
+            <p class="session-meta">
+                <i class="fas fa-door-open me-1"></i>{{ session.room.room_name or session.room.room_number }}
+            </p>
+            <p class="session-meta">
+                <i class="fas fa-clock me-1"></i>{{ session.start_time.strftime('%H:%M') }} - {{ session.end_time.strftime('%H:%M') }}
+            </p>
+            {% if session.subject %}
+            <p class="session-meta">
+                <i class="fas fa-book me-1"></i>{{ session.subject }}
+            </p>
+            {% endif %}
+            <span class="session-status status-{{ session.get_session_status() }}">
+                {{ session.get_session_status().title() }}
+            </span>
+        </div>
+
+        <!-- Camera Container -->
+        <div class="camera-container">
+            <div class="camera-header mb-3">
+                <h4>QR Code Scanner</h4>
+                <p class="text-muted">Scan student QR codes for attendance</p>
+            </div>
+            
+            <div class="camera-preview" id="cameraPreview">
+                <div class="camera-placeholder" id="cameraPlaceholder">
+                    <i class="fas fa-qrcode"></i>
+                    <h4>Ready to Scan</h4>
+                    <p>Click "Start Camera" to begin scanning student QR codes</p>
+                </div>
+                <div class="scan-overlay" id="scanOverlay"></div>
+            </div>
+
+            <div class="scanner-controls">
+                <button class="btn btn-primary" id="startCameraBtn" onclick="sessionScanner.startCamera()">
+                    <i class="fas fa-video"></i> Start Camera
+                </button>
+                <button class="btn btn-danger" id="stopCameraBtn" onclick="sessionScanner.stopCamera()" style="display: none;">
+                    <i class="fas fa-stop"></i> Stop Camera
+                </button>
+                <button class="btn btn-success" id="scanBtn" onclick="sessionScanner.scanQRCode()" disabled>
+                    <i class="fas fa-qrcode"></i> Scan QR Code
+                </button>
+            </div>
+
+            <!-- Manual QR Input -->
+            <div class="manual-input mt-3">
+                <label class="form-label small">Manual QR Code Entry:</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="manualQrInput" placeholder="Enter QR code manually...">
+                    <button class="btn btn-outline-primary" id="scanManualBtn">
+                        <i class="fas fa-keyboard"></i> Submit
+                    </button>
+                </div>
+            </div>
+
+            <!-- Image Upload -->
+            <div class="image-upload mt-3">
+                <label class="form-label small">Upload QR Code Image:</label>
+                <input type="file" class="form-control" id="imageUpload" accept="image/*">
+                <small class="text-muted">Upload an image containing a QR code (max 5MB)</small>
+            </div>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="messageContainer"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <!-- Real-time Statistics -->
+        <div class="stats-card">
+            <h3 class="mb-3">
+                <i class="fas fa-chart-line me-2"></i>
+                Session Statistics
+            </h3>
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-item">
+                    <p class="stat-number" id="totalScans">0</p>
+                    <p class="stat-label">Total Scans</p>
+                </div>
+                <div class="stat-item">
+                    <p class="stat-number" id="uniqueStudents">0</p>
+                    <p class="stat-label">Students</p>
+                </div>
+                <div class="stat-item">
+                    <p class="stat-number" id="studentsInRoom">0</p>
+                    <p class="stat-label">In Room</p>
+                </div>
+                <div class="stat-item">
+                    <p class="stat-number" id="attendanceRate">0%</p>
+                    <p class="stat-label">Attendance</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Scans -->
+        <div class="stats-card">
+            <h3 class="mb-3">
+                <i class="fas fa-history me-2"></i>
+                Recent Scans
+            </h3>
+            <div class="recent-scans" id="recentScansList">
+                <div class="text-center p-3 text-muted">
+                    <i class="fas fa-inbox mb-2" style="font-size: 2rem;"></i>
+                    <p class="mb-0 small">No recent scans</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+class SessionScanner {
+    constructor() {
+        this.sessionId = {{ session.id }};
+        this.video = null;
+        this.canvas = null;
+        this.context = null;
+        this.isScanning = false;
+        this.animationFrame = null;
+        
+        this.initializeElements();
+        this.setupEventListeners();
+        this.loadStatistics();
+        this.loadRecentScans();
+        
+        // Auto-refresh every 10 seconds
+        setInterval(() => {
+            this.loadStatistics();
+            this.loadRecentScans();
+        }, 10000);
+    }
+
+    initializeElements() {
+        this.startButton = document.getElementById('startCameraBtn');
+        this.stopButton = document.getElementById('stopCameraBtn');
+        this.scanButton = document.getElementById('scanBtn');
+        this.cameraPreview = document.getElementById('cameraPreview');
+        this.cameraPlaceholder = document.getElementById('cameraPlaceholder');
+        this.scanOverlay = document.getElementById('scanOverlay');
+        this.messageContainer = document.getElementById('messageContainer');
+        
+        // Create canvas for QR scanning
+        this.canvas = document.createElement('canvas');
+        this.context = this.canvas.getContext('2d');
+    }
+
+    setupEventListeners() {
+        this.startButton.addEventListener('click', () => this.startCamera());
+        this.stopButton.addEventListener('click', () => this.stopCamera());
+        this.scanButton.addEventListener('click', () => this.scanQRCode());
+        
+        // Manual QR input event listener
+        const manualInput = document.getElementById('manualQrInput');
+        if (manualInput) {
+            manualInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.processManualInput();
+                }
+            });
+        }
+        
+        // Scan manual input button
+        const scanManualBtn = document.getElementById('scanManualBtn');
+        if (scanManualBtn) {
+            scanManualBtn.addEventListener('click', () => this.processManualInput());
+        }
+        
+        // Image upload
+        const imageUpload = document.getElementById('imageUpload');
+        if (imageUpload) {
+            imageUpload.addEventListener('change', (e) => this.handleImageUpload(e));
+        }
+    }
+
+    async startCamera() {
+        try {
+            this.showMessage('Starting camera...', 'info');
+
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: 'environment',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                } 
+            });
+
+            this.video = document.createElement('video');
+            this.video.srcObject = stream;
+            this.video.style.width = '100%';
+            this.video.style.height = '100%';
+            this.video.style.objectFit = 'cover';
+            this.video.autoplay = true;
+            this.video.playsInline = true;
+
+            this.cameraPlaceholder.style.display = 'none';
+            this.cameraPreview.classList.add('camera-active');
+            this.cameraPreview.appendChild(this.video);
+
+            this.startButton.style.display = 'none';
+            this.stopButton.style.display = 'inline-flex';
+            this.scanButton.disabled = false;
+
+            this.video.addEventListener('loadedmetadata', () => {
+                this.canvas.width = this.video.videoWidth;
+                this.canvas.height = this.video.videoHeight;
+            });
+
+            this.showMessage('Camera started successfully', 'success');
+
+        } catch (error) {
+            this.showMessage('Error starting camera: ' + error.message, 'error');
+        }
+    }
+
+    stopCamera() {
+        this.isScanning = false;
+        
+        if (this.animationFrame) {
+            cancelAnimationFrame(this.animationFrame);
+        }
+        
+        if (this.video && this.video.srcObject) {
+            this.video.srcObject.getTracks().forEach(track => track.stop());
+            this.video.remove();
+        }
+        
+        this.cameraPreview.classList.remove('camera-active');
+        this.scanOverlay.classList.remove('active');
+        this.cameraPlaceholder.style.display = 'block';
+        
+        this.startButton.style.display = 'inline-flex';
+        this.stopButton.style.display = 'none';
+        this.scanButton.disabled = true;
+        
+        this.showMessage('Camera stopped', 'info');
+    }
+
+    scanQRCode() {
+        if (!this.video || !this.isScanning) {
+            this.isScanning = true;
+            this.scanOverlay.classList.add('active');
+            this.performScan();
+        }
+    }
+    
+    performScan() {
+        if (!this.isScanning || !this.video) return;
+
+        if (this.video.readyState === this.video.HAVE_ENOUGH_DATA) {
+            this.context.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+            const imageData = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+            if (code) {
+                this.isScanning = false;
+                this.scanOverlay.classList.remove('active');
+                this.processQRCode(code.data);
+                return;
+            }
+        }
+
+        this.animationFrame = requestAnimationFrame(() => this.performScan());
+    }
+
+    async processQRCode(qrData) {
+        try {
+            this.showMessage('Processing scan...', 'info');
+
+            const response = await fetch(`/professor/api/session/${this.sessionId}/scan`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ student_qr: qrData })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                const action = result.action === 'time_in' ? 'Time In' : 'Time Out';
+                this.showMessage(`✅ ${action}: ${result.student.name}`, 'success');
+                
+                // Refresh stats and recent scans
+                this.loadStatistics();
+                this.loadRecentScans();
+            } else {
+                this.showMessage(result.error, 'error');
+            }
+
+            // Resume scanning after 2 seconds
+            setTimeout(() => {
+                if (this.video && this.video.srcObject) {
+                    this.isScanning = true;
+                    this.performScan();
+                }
+            }, 2000);
+
+        } catch (error) {
+            this.showMessage('Error processing scan: ' + error.message, 'error');
+            
+            // Resume scanning after error
+            setTimeout(() => {
+                if (this.video && this.video.srcObject) {
+                    this.isScanning = true;
+                    this.performScan();
+                }
+            }, 2000);
+        }
+    }
+    
+    async processManualInput() {
+        const input = document.getElementById('manualQrInput');
+        const qrData = input.value.trim();
+
+        if (!qrData) {
+            this.showMessage('Please enter QR code data', 'error');
+            return;
+        }
+
+        await this.processQRCode(qrData);
+        input.value = '';
+    }
+
+    async handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            this.showMessage('Please select an image file', 'error');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            this.showMessage('File size must be less than 5MB', 'error');
+            return;
+        }
+
+        try {
+            this.showMessage('Processing image...', 'info');
+
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('session_id', this.sessionId);
+
+            const response = await fetch('/professor/api/scan-image', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showMessage(`✅ Image processed: ${result.student_name || 'Student'}`, 'success');
+                this.loadStatistics();
+                this.loadRecentScans();
+            } else {
+                this.showMessage(result.message || 'Failed to process image', 'error');
+            }
+
+        } catch (error) {
+            this.showMessage('Error processing image: ' + error.message, 'error');
+        }
+
+        // Clear the file input
+        event.target.value = '';
+    }
+
+    async loadStatistics() {
+        try {
+            const response = await fetch(`/professor/api/session/${this.sessionId}/statistics`);
+            const stats = await response.json();
+
+            if (stats.success) {
+                document.getElementById('totalScans').textContent = stats.total_scans || 0;
+                document.getElementById('uniqueStudents').textContent = stats.unique_students || 0;
+                document.getElementById('studentsInRoom').textContent = stats.students_in_room || 0;
+                document.getElementById('attendanceRate').textContent = (stats.attendance_rate || 0) + '%';
+            }
+        } catch (error) {
+            console.error('Failed to load statistics:', error);
+        }
+    }
+
+    async loadRecentScans() {
+        try {
+            const response = await fetch(`/professor/api/session/${this.sessionId}/recent-events?limit=10`);
+            const events = await response.json();
+
+            const container = document.getElementById('recentScansList');
+
+            if (events.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center p-3 text-muted">
+                        <i class="fas fa-inbox mb-2" style="font-size: 2rem;"></i>
+                        <p class="mb-0 small">No recent scans</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = events.map(event => {
+                const avatarColor = this.getAvatarColor(event.student_name);
+                
+                let actionDisplay, actionClass;
+                if (event.action_type === 'time_in') {
+                    actionDisplay = 'Time In';
+                    actionClass = 'status-success';
+                } else {
+                    actionDisplay = 'Time Out';
+                    actionClass = 'status-info';
+                }
+
+                return `
+                    <div class="scan-item">
+                        <div class="scan-avatar" style="background: ${avatarColor};">
+                            ${event.student_name.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="scan-info">
+                            <div class="scan-name">${event.student_name}</div>
+                            <div class="scan-meta">${event.student_no} • ${event.time_ago}</div>
+                        </div>
+                        <div class="scan-status ${actionClass}">${actionDisplay}</div>
+                    </div>
+                `;
+            }).join('');
+
+        } catch (error) {
+            console.error('Failed to load recent scans:', error);
+        }
+    }
+
+    getAvatarColor(name) {
+        const colors = [
+            '#3b82f6', '#ef4444', '#10b981', '#f59e0b', 
+            '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'
+        ];
+        const hash = name.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+        return colors[hash % colors.length];
+    }
+
+    showMessage(message, type) {
+        const alertClass = type === 'success' ? 'alert-success' : 
+                          type === 'error' ? 'alert-error' : 'alert-warning';
+        
+        const messageHtml = `
+            <div class="alert-custom ${alertClass}">
+                ${message}
+            </div>
+        `;
+        
+        this.messageContainer.innerHTML = messageHtml;
+        
+        // Clear message after 5 seconds
+        setTimeout(() => {
+            this.messageContainer.innerHTML = '';
+        }, 5000);
+    }
+}
+
+// Initialize scanner when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    new SessionScanner();
+});
+</script>
+{% endblock %}

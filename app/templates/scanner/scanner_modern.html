@@ -309,6 +309,16 @@
         color: #991b1b;
     }
 
+    .status-info {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-secondary {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
     .alert-custom {
         padding: 1rem 1.5rem;
         border-radius: 12px;
@@ -851,8 +861,22 @@ class ScannerApp {
 
             container.innerHTML = scans.map(scan => {
                 const avatarColor = this.getAvatarColor(scan.student_name);
-                const statusClass = scan.is_late ? 'status-warning' : 'status-success';
-                const statusText = scan.is_late ? 'Late' : 'On Time';
+                
+                // Display action type (time_in or time_out) with proper styling
+                let actionDisplay, actionClass;
+                if (scan.action_type === 'time_in') {
+                    actionDisplay = 'Time In';
+                    actionClass = 'status-success';
+                } else if (scan.action_type === 'time_out') {
+                    actionDisplay = 'Time Out';
+                    actionClass = 'status-info';
+                } else {
+                    actionDisplay = 'Unknown';
+                    actionClass = 'status-secondary';
+                }
+                
+                // Add late status if applicable
+                const lateText = scan.is_late ? ' (Late)' : '';
 
                 return `
                     <div class="scan-item">
@@ -863,7 +887,7 @@ class ScannerApp {
                             <div class="scan-name">${scan.student_name}</div>
                             <div class="scan-meta">${scan.room_name} • ${scan.time_ago}</div>
                         </div>
-                        <div class="scan-status ${statusClass}">${statusText}</div>
+                        <div class="scan-status ${actionClass}">${actionDisplay}${lateText}</div>
                     </div>
                 `;
             }).join('');

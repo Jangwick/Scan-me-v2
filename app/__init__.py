@@ -37,6 +37,21 @@ def create_app(config_name=None):
         from app.models import User
         return User.query.get(int(user_id))
     
+    # Register template filters during app initialization
+    @app.template_filter('avatar_color')
+    def avatar_color_filter(index):
+        """Template filter for avatar colors"""
+        colors = [
+            '#3b82f6', '#ef4444', '#10b981', '#f59e0b', 
+            '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'
+        ]
+        # Ensure index is an integer
+        try:
+            index = int(index) if index is not None else 0
+        except (ValueError, TypeError):
+            index = 0
+        return colors[index % len(colors)]
+    
     # Template context processors
     @app.context_processor
     def utility_processor():
@@ -64,6 +79,7 @@ def create_app(config_name=None):
     from app.routes.admin_routes import admin_bp
     from app.routes.attendance_routes import attendance_bp
     from app.routes.schedule_routes import schedule_bp
+    from app.routes.professor_routes import professor_bp
     from app.scanner import scanner
     
     app.register_blueprint(main_bp)
@@ -73,6 +89,7 @@ def create_app(config_name=None):
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(attendance_bp, url_prefix='/attendance')
     app.register_blueprint(schedule_bp, url_prefix='/schedule')
+    app.register_blueprint(professor_bp, url_prefix='/professor')
     app.register_blueprint(scanner)  # Scanner blueprint with its own URL prefix
     
     # Error handlers

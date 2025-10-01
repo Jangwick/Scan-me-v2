@@ -427,6 +427,20 @@
         </div>
         {% endif %}
         
+        {% if current_user.is_professor() or current_user.is_admin() %}
+        <div class="nav-group">
+            <div class="nav-group-title">Professor</div>
+            <ul class="sidebar-nav">
+                <li class="nav-item">
+                    <a href="{{ url_for('professor.dashboard') }}" class="nav-link {{ 'active' if request.endpoint == 'professor.dashboard' }}">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        My Classes
+                    </a>
+                </li>
+            </ul>
+        </div>
+        {% endif %}
+        
         {% if current_user.is_admin() %}
         <div class="nav-group">
             <div class="nav-group-title">Admin</div>

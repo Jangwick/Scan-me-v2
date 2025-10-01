@@ -10,6 +10,7 @@ This service implements all the edge cases from QR_ATTENDANCE_EDGE_CASES.md:
 
 from app import db
 from app.models.attendance_model import AttendanceRecord, AttendanceSession
+from app.models.attendance_event_model import AttendanceEvent
 from app.models.student_model import Student
 from app.models.room_model import Room
 from datetime import datetime, timedelta, timezone
@@ -430,6 +431,23 @@ class AttendanceStateService:
             attendance.check_and_set_duplicate_status()
             
             db.session.add(attendance)
+            db.session.flush()  # Get the attendance ID before creating event
+            
+            # Create time-in event for audit trail
+            time_in_event = AttendanceEvent(
+                student_id=student.id,
+                room_id=room.id,
+                session_id=session.id if session else None,
+                scanned_by=scanned_by,
+                event_type='time_in',
+                ip_address=ip_address,
+                user_agent=user_agent,
+                attendance_record_id=attendance.id
+            )
+            # Set the event time to match the normalized time
+            time_in_event.event_time = normalized_time
+            
+            db.session.add(time_in_event)
             db.session.commit()
             
             # Log the time-in
@@ -498,6 +516,22 @@ class AttendanceStateService:
                 active_record.notes = (active_record.notes or '') + warning_note
                 logger.warning(f"Extreme duration: Student {student.id} in room {room.id} for {duration} minutes")
             
+            # Create time-out event for audit trail
+            time_out_event = AttendanceEvent(
+                student_id=student.id,
+                room_id=room.id,
+                session_id=session.id if session else None,
+                scanned_by=scanned_by,
+                event_type='time_out',
+                ip_address=ip_address,
+                user_agent=user_agent,
+                attendance_record_id=active_record.id,
+                duration_minutes=duration
+            )
+            # Set the event time to match the normalized time
+            time_out_event.event_time = normalized_time
+            
+            db.session.add(time_out_event)
             db.session.commit()
             
             # Log the time-out

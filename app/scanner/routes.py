@@ -276,17 +276,115 @@ def api_scan_image():
         qr_data = extraction_result['qr_codes'][0]
         current_app.logger.info(f"QR code extracted from image: {qr_data}")
         
-        # Process the extracted QR data using the same logic as scan_qr_code
-        result = process_qr_data(qr_data, session_id)
+        # Process the extracted QR data using the same comprehensive logic as api_scan_qr_code
+        # Comprehensive QR validation using enhanced utility
+        from app.utils.qr_utils import validate_qr_data
+        qr_validation = validate_qr_data(qr_data)
         
-        # Add processing details to successful result
-        if isinstance(result.response, list) and len(result.response) > 0:
-            result_data = json.loads(result.response[0])
-            if result_data.get('success'):
-                result_data['image_details'] = extraction_result.get('details', {})
-                return jsonify(result_data)
+        if not qr_validation['valid']:
+            return jsonify({
+                'success': False,
+                'message': f'Invalid QR code: {qr_validation["error"]}',
+                'error_code': qr_validation.get('error_code', 'QR_VALIDATION_FAILED'),
+                'hint': 'Please scan a valid student QR code or enter student information manually'
+            })
         
-        return result
+        # Get validated data
+        validated_data = qr_validation['data']
+        
+        # Get the session with validation
+        session = AttendanceSession.query.get(session_id)
+        if not session:
+            return jsonify({
+                'success': False, 
+                'message': 'Invalid session ID',
+                'error_code': 'INVALID_SESSION'
+            })
+        
+        # Edge Case: Inactive session
+        if not session.is_active:
+            return jsonify({
+                'success': False,
+                'message': 'Session is not active',
+                'error_code': 'INACTIVE_SESSION'
+            })
+        
+        # Student identification with comprehensive edge case handling
+        from app.services.student_identification_service import StudentIdentificationService
+        
+        student, student_error = StudentIdentificationService.find_student_by_qr_data(validated_data)
+        
+        if student_error:
+            return jsonify({
+                'success': False,
+                'message': student_error['error'],
+                'error_code': student_error['error_code']
+            })
+        
+        # Edge Case: Student not found - Return error instead of auto-creation
+        if not student:
+            current_app.logger.warning(f"Student not found for QR data: {qr_data[:50]}...")
+            return jsonify({
+                'success': False,
+                'message': 'Student not found. Please ensure the student is registered in the system.',
+                'error_code': 'STUDENT_NOT_FOUND',
+                'hint': 'Contact an administrator to register this student or verify the QR code is correct'
+            })
+        
+        # Validate student for attendance
+        is_valid, validation_error = StudentIdentificationService.validate_student_for_attendance(student)
+        if not is_valid:
+            return jsonify({
+                'success': False,
+                'message': validation_error['error'],
+                'error_code': validation_error['error_code']
+            })
+        
+        # Log successful identification
+        StudentIdentificationService.log_identification_attempt(qr_data, student, True)
+        
+        # Process QR scan with comprehensive edge case handling
+        from app.services.attendance_state_service import AttendanceStateService
+        from app.services.time_management_service import TimeManagementService
+        
+        # Get client information for tracking
+        user_agent = request.headers.get('User-Agent', 'Unknown')
+        ip_address = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+        
+        # Process the scan using the comprehensive state service
+        result = AttendanceStateService.process_attendance_scan(
+            student_id=student.id,
+            room_id=session.room_id,
+            session_id=session.id,
+            scanned_by=current_user.id,
+            scan_type='auto',
+            user_agent=user_agent,
+            ip_address=ip_address
+        )
+        
+        # Add additional time analysis if successful
+        if result['success'] and result['action'] in ['time_in', 'time_out']:
+            # Get comprehensive time info for debugging
+            time_info = TimeManagementService.get_current_time_info()
+            result['debug_time_info'] = time_info
+            
+            # If this was a time_out, add duration analysis
+            if result['action'] == 'time_out':
+                duration_analysis = TimeManagementService.calculate_duration_safe(
+                    datetime.fromisoformat(result['time_in'].replace('Z', '')),
+                    datetime.fromisoformat(result['time_out'].replace('Z', ''))
+                )
+                result['duration_analysis'] = {
+                    'warnings': duration_analysis.get('warnings', []),
+                    'corrections_applied': duration_analysis.get('corrections_applied', []),
+                    'is_reasonable_duration': duration_analysis.get('is_reasonable_duration', True)
+                }
+        
+        # Add image processing details to the result
+        if result['success']:
+            result['image_details'] = extraction_result.get('details', {})
+        
+        return jsonify(result)
         
     except Exception as e:
         current_app.logger.error(f"Error processing image scan: {str(e)}")

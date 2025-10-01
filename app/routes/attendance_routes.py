@@ -319,9 +319,13 @@ def edit_session(id):
             end_time_str = request.form.get('end_time')
             
             if start_time_str:
-                session.start_time = datetime.strptime(start_time_str, '%H:%M').time()
+                # Parse time and combine with today's date
+                time_obj = datetime.strptime(start_time_str, '%H:%M').time()
+                session.start_time = datetime.combine(datetime.now().date(), time_obj)
             if end_time_str:
-                session.end_time = datetime.strptime(end_time_str, '%H:%M').time()
+                # Parse time and combine with today's date
+                time_obj = datetime.strptime(end_time_str, '%H:%M').time()
+                session.end_time = datetime.combine(datetime.now().date(), time_obj)
             
             # Update room if provided
             room_id = request.form.get('room_id')

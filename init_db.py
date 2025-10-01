@@ -92,35 +92,52 @@ def init_database():
             if AttendanceSession.query.count() == 0:
                 print("Creating sample attendance sessions...")
                 
-                sample_sessions = [
-                    {
-                        'name': 'Morning Session',
-                        'start_time': time(8, 0),  # 8:00 AM
-                        'end_time': time(11, 30),  # 11:30 AM
-                        'is_active': True,
-                        'description': 'Morning classes and lectures'
-                    },
-                    {
-                        'name': 'Afternoon Session',
-                        'start_time': time(13, 0),  # 1:00 PM
-                        'end_time': time(16, 30),   # 4:30 PM
-                        'is_active': True,
-                        'description': 'Afternoon classes and laboratories'
-                    },
-                    {
-                        'name': 'Evening Session',
-                        'start_time': time(18, 0),  # 6:00 PM
-                        'end_time': time(21, 0),    # 9:00 PM
-                        'is_active': True,
-                        'description': 'Evening classes for working students'
-                    }
-                ]
+                # Get first room and user for the sessions
+                first_room = Room.query.first()
+                first_user = User.query.first()
                 
-                for session_data in sample_sessions:
-                    session = AttendanceSession(**session_data)
-                    db.session.add(session)
-                
-                print(f"✓ Created {len(sample_sessions)} sample attendance sessions")
+                if first_room and first_user:
+                    today = datetime.now().date()
+                    sample_sessions = [
+                        {
+                            'room_id': first_room.id,
+                            'session_name': 'Morning Session',
+                            'start_time': datetime.combine(today, time(8, 0)),  # 8:00 AM
+                            'end_time': datetime.combine(today, time(11, 30)),  # 11:30 AM
+                            'created_by': first_user.id,
+                            'subject': 'General',
+                            'instructor': 'Default Instructor',
+                            'expected_students': 30
+                        },
+                        {
+                            'room_id': first_room.id,
+                            'session_name': 'Afternoon Session',
+                            'start_time': datetime.combine(today, time(13, 0)),  # 1:00 PM
+                            'end_time': datetime.combine(today, time(16, 30)),   # 4:30 PM
+                            'created_by': first_user.id,
+                            'subject': 'General',
+                            'instructor': 'Default Instructor',
+                            'expected_students': 25
+                        },
+                        {
+                            'room_id': first_room.id,
+                            'session_name': 'Evening Session',
+                            'start_time': datetime.combine(today, time(18, 0)),  # 6:00 PM
+                            'end_time': datetime.combine(today, time(21, 0)),    # 9:00 PM
+                            'created_by': first_user.id,
+                            'subject': 'General',
+                            'instructor': 'Default Instructor',
+                            'expected_students': 20
+                        }
+                    ]
+                    
+                    for session_data in sample_sessions:
+                        session = AttendanceSession(**session_data)
+                        db.session.add(session)
+                    
+                    print(f"✓ Created {len(sample_sessions)} sample attendance sessions")
+                else:
+                    print("⚠ Skipping session creation - no rooms or users found")
             else:
                 print(f"✓ Found {AttendanceSession.query.count()} existing attendance sessions")
             

@@ -1,0 +1,384 @@
+{% extends "dashboard_base.html" %}
+
+{% block page_title %}Professor Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .professor-dashboard {
+        padding: 2rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border: 1px solid #e2e8f0;
+    }
+
+    .stat-card h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+        font-weight: bold;
+        color: #2d3748;
+    }
+
+    .stat-card p {
+        margin: 0;
+        color: #718096;
+        font-size: 0.9rem;
+    }
+
+    .sessions-section {
+        margin-bottom: 2rem;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #2d3748;
+        margin: 0;
+    }
+
+    .sessions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .session-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .session-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+    }
+
+    .session-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .session-title {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #2d3748;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .session-meta {
+        color: #718096;
+        font-size: 0.9rem;
+        margin: 0.25rem 0;
+    }
+
+    .session-body {
+        padding: 1rem 1.5rem;
+    }
+
+    .session-status {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-active {
+        background: #c6f6d5;
+        color: #22543d;
+    }
+
+    .status-scheduled {
+        background: #bee3f8;
+        color: #2a4365;
+    }
+
+    .status-completed {
+        background: #e2e8f0;
+        color: #4a5568;
+    }
+
+    .session-actions {
+        padding: 1rem 1.5rem;
+        background: #f7fafc;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-scanner {
+        background: #4c6ef5;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: background 0.2s ease;
+    }
+
+    .btn-scanner:hover {
+        background: #3c5aa6;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-view {
+        background: #48bb78;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: background 0.2s ease;
+    }
+
+    .btn-view:hover {
+        background: #38a169;
+        color: white;
+        text-decoration: none;
+    }
+
+    .attendance-stats {
+        display: flex;
+        gap: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .attendance-stat {
+        font-size: 0.8rem;
+        color: #718096;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #718096;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="professor-dashboard">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Professor Dashboard</h1>
+        <span class="text-muted">Welcome, {{ current_user.username }}</span>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>{{ stats.active_sessions }}</h3>
+            <p>Active Sessions</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ stats.total_classes_today }}</h3>
+            <p>Classes Today</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ stats.total_students_today }}</h3>
+            <p>Students Today</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ stats.total_scans_today }}</h3>
+            <p>Total Scans Today</p>
+        </div>
+    </div>
+
+    <!-- Current/Active Sessions -->
+    {% if current_sessions %}
+    <div class="sessions-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-play-circle me-2" style="color: #48bb78;"></i>
+                Active Sessions
+            </h2>
+        </div>
+        <div class="sessions-grid">
+            {% for session in current_sessions %}
+            <div class="session-card">
+                <div class="session-header">
+                    <h3 class="session-title">{{ session.session_name }}</h3>
+                    <p class="session-meta">
+                        <i class="fas fa-door-open me-1"></i>{{ session.room.room_name or session.room.room_number }}
+                    </p>
+                    <p class="session-meta">
+                        <i class="fas fa-clock me-1"></i>{{ session.start_time.strftime('%H:%M') }} - {{ session.end_time.strftime('%H:%M') }}
+                    </p>
+                    {% if session.subject %}
+                    <p class="session-meta">
+                        <i class="fas fa-book me-1"></i>{{ session.subject }}
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="session-body">
+                    <span class="session-status status-active">Active Now</span>
+                    <div class="attendance-stats">
+                        {% set summary = session.get_attendance_summary() %}
+                        <span class="attendance-stat">{{ summary.unique_students }} students</span>
+                        <span class="attendance-stat">{{ summary.total_scans }} scans</span>
+                        <span class="attendance-stat">{{ summary.attendance_rate }}% attendance</span>
+                    </div>
+                </div>
+                <div class="session-actions">
+                    <a href="{{ url_for('professor.session_scanner', session_id=session.id) }}" class="btn-scanner">
+                        <i class="fas fa-qrcode"></i>Open Scanner
+                    </a>
+                    <a href="{{ url_for('professor.session_detail', session_id=session.id) }}" class="btn-view">
+                        <i class="fas fa-eye"></i>View Details
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Upcoming Sessions -->
+    {% if upcoming_sessions %}
+    <div class="sessions-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-calendar-alt me-2" style="color: #4c6ef5;"></i>
+                Upcoming Sessions
+            </h2>
+        </div>
+        <div class="sessions-grid">
+            {% for session in upcoming_sessions %}
+            <div class="session-card">
+                <div class="session-header">
+                    <h3 class="session-title">{{ session.session_name }}</h3>
+                    <p class="session-meta">
+                        <i class="fas fa-door-open me-1"></i>{{ session.room.room_name or session.room.room_number }}
+                    </p>
+                    <p class="session-meta">
+                        <i class="fas fa-clock me-1"></i>{{ session.start_time.strftime('%m/%d %H:%M') }} - {{ session.end_time.strftime('%H:%M') }}
+                    </p>
+                    {% if session.subject %}
+                    <p class="session-meta">
+                        <i class="fas fa-book me-1"></i>{{ session.subject }}
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="session-body">
+                    <span class="session-status status-scheduled">Scheduled</span>
+                    <div class="attendance-stats">
+                        <span class="attendance-stat">{{ session.expected_students }} expected students</span>
+                    </div>
+                </div>
+                <div class="session-actions">
+                    <a href="{{ url_for('professor.session_detail', session_id=session.id) }}" class="btn-view">
+                        <i class="fas fa-eye"></i>View Details
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Past Sessions -->
+    {% if past_sessions %}
+    <div class="sessions-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-history me-2" style="color: #718096;"></i>
+                Recent Sessions
+            </h2>
+        </div>
+        <div class="sessions-grid">
+            {% for session in past_sessions %}
+            <div class="session-card">
+                <div class="session-header">
+                    <h3 class="session-title">{{ session.session_name }}</h3>
+                    <p class="session-meta">
+                        <i class="fas fa-door-open me-1"></i>{{ session.room.room_name or session.room.room_number }}
+                    </p>
+                    <p class="session-meta">
+                        <i class="fas fa-clock me-1"></i>{{ session.start_time.strftime('%m/%d %H:%M') }} - {{ session.end_time.strftime('%H:%M') }}
+                    </p>
+                    {% if session.subject %}
+                    <p class="session-meta">
+                        <i class="fas fa-book me-1"></i>{{ session.subject }}
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="session-body">
+                    <span class="session-status status-completed">Completed</span>
+                    <div class="attendance-stats">
+                        {% set summary = session.get_attendance_summary() %}
+                        <span class="attendance-stat">{{ summary.unique_students }} students</span>
+                        <span class="attendance-stat">{{ summary.total_scans }} scans</span>
+                        <span class="attendance-stat">{{ summary.attendance_rate }}% attendance</span>
+                    </div>
+                </div>
+                <div class="session-actions">
+                    <a href="{{ url_for('professor.session_detail', session_id=session.id) }}" class="btn-view">
+                        <i class="fas fa-eye"></i>View Details
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Empty State -->
+    {% if not current_sessions and not upcoming_sessions and not past_sessions %}
+    <div class="empty-state">
+        <i class="fas fa-calendar-times"></i>
+        <h3>No Sessions Found</h3>
+        <p>You don't have any sessions assigned yet. Contact your administrator to set up your classes.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh every 30 seconds to update session statuses
+    setInterval(function() {
+        location.reload();
+    }, 30000);
+</script>
+{% endblock %}
