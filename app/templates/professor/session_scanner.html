@@ -445,6 +445,49 @@
         margin: 0;
     }
 
+    /* Single stat card styles */
+    .single-stat {
+        text-align: center;
+        padding: 2rem 1rem;
+    }
+
+    .single-stat .stat-number.large {
+        font-size: 4rem;
+        font-weight: 900;
+        margin-bottom: 1rem;
+        line-height: 1;
+    }
+
+    .single-stat .stat-label {
+        font-size: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    /* Color themes for Time In/Out cards */
+    .text-success {
+        color: #10b981 !important;
+    }
+
+    .text-danger {
+        color: #ef4444 !important;
+    }
+
+    #timeInCount {
+        color: #10b981;
+        background: linear-gradient(135deg, #10b981, #34d399);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    #timeOutCount {
+        color: #ef4444;
+        background: linear-gradient(135deg, #ef4444, #f87171);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
     .recent-scans {
         max-height: 400px;
         overflow-y: auto;
@@ -750,7 +793,7 @@
         }
 
         .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 1rem;
         }
 
@@ -913,9 +956,27 @@
                         <div class="stat-label">In Room</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number" id="attendanceRate">0</div>
+                        <div class="stat-number" id="attendanceRate">0%</div>
                         <div class="stat-label">Attendance</div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Time In Card -->
+            <div class="stats-card">
+                <h3><i class="fas fa-sign-in-alt text-success"></i>Time In</h3>
+                <div class="single-stat">
+                    <div class="stat-number large" id="timeInCount">0</div>
+                    <div class="stat-label">Students Entered</div>
+                </div>
+            </div>
+
+            <!-- Time Out Card -->
+            <div class="stats-card">
+                <h3><i class="fas fa-sign-out-alt text-danger"></i>Time Out</h3>
+                <div class="single-stat">
+                    <div class="stat-number large" id="timeOutCount">0</div>
+                    <div class="stat-label">Students Exited</div>
                 </div>
             </div>
 
@@ -950,6 +1011,8 @@
         totalScans: 0,
         uniqueStudents: new Set(),
         studentsInRoom: new Set(),
+        timeInCount: 0,
+        timeOutCount: 0,
         scans: []
     };
 
@@ -1195,8 +1258,10 @@
         
         if (scanType === 'time_in') {
             sessionStats.studentsInRoom.add(studentId);
+            sessionStats.timeInCount++;
         } else if (scanType === 'time_out') {
             sessionStats.studentsInRoom.delete(studentId);
+            sessionStats.timeOutCount++;
         }
         
         updateStatisticsDisplay();
@@ -1224,6 +1289,8 @@
         document.getElementById('totalScans').textContent = sessionStats.totalScans;
         document.getElementById('uniqueStudents').textContent = sessionStats.uniqueStudents.size;
         document.getElementById('studentsInRoom').textContent = sessionStats.studentsInRoom.size;
+        document.getElementById('timeInCount').textContent = sessionStats.timeInCount;
+        document.getElementById('timeOutCount').textContent = sessionStats.timeOutCount;
         
         // Calculate attendance rate
         const attendanceRate = sessionStats.uniqueStudents.size > 0 
