@@ -172,12 +172,12 @@ def process_session_scan(session_id):
         if not data:
             return jsonify({'success': False, 'error': 'No data provided'}), 400
         
-        student_qr = data.get('student_qr')
-        if not student_qr:
-            return jsonify({'success': False, 'error': 'Student QR code required'}), 400
+        qr_data = data.get('qr_data')
+        if not qr_data:
+            return jsonify({'success': False, 'error': 'QR code data required'}), 400
         
         # Validate QR code using the same logic as main scanner
-        qr_validation = validate_qr_data(student_qr)
+        qr_validation = validate_qr_data(qr_data)
         if not qr_validation['valid']:
             return jsonify({
                 'success': False, 
@@ -427,3 +427,35 @@ def get_session_statistics(session_id):
         
     except Exception as e:
         return jsonify({'success': False, 'error': f'Failed to load statistics: {str(e)}'}), 500
+
+
+@professor_bp.route('/api/session/<int:session_id>/stats')
+@login_required
+@requires_professor_access
+def get_session_stats(session_id):
+    """Get real-time session statistics for the scanner"""
+    try:
+        session = AttendanceSession.query.get_or_404(session_id)
+        
+        # Get all attendance records for this session
+        attendance_records = AttendanceRecord.query.filter_by(session_id=session_id).all()
+        
+        # Calculate statistics
+        total_scans = len(attendance_records)
+        unique_students = set(record.student_id for record in attendance_records)
+        
+        # Get students currently in room (is_active = True)
+        students_in_room = set()
+        for record in attendance_records:
+            if record.is_active:  # Student is currently in room
+                students_in_room.add(record.student_id)
+        
+        return jsonify({
+            'success': True,
+            'total_scans': total_scans,
+            'unique_students': list(unique_students),
+            'students_in_room': list(students_in_room)
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Failed to load session stats: {str(e)}'}), 500
