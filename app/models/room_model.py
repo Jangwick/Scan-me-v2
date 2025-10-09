@@ -5,6 +5,7 @@ Handles room information and capacity management
 
 from app import db
 from datetime import datetime
+from sqlalchemy import func
 
 class Room(db.Model):
     """
@@ -58,35 +59,45 @@ class Room(db.Model):
             suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(floor % 10, 'th')
         return suffix
     
-    def get_current_occupancy(self):
-        """Get current number of students in room (today)"""
+    def get_current_occupancy(self, session_id=None):
+        """Get current number of students in room (session-specific or room-wide)"""
+        from app.models.attendance_model import AttendanceRecord
         from datetime import date
         today = date.today()
         
-        # Count unique students who scanned in today
-        unique_students = db.session.query(AttendanceRecord.student_id)\
+        # Count unique active students in room
+        query = db.session.query(AttendanceRecord.student_id)\
             .filter(AttendanceRecord.room_id == self.id)\
-            .filter(db.func.date(AttendanceRecord.scan_time) == today)\
-            .distinct().count()
+            .filter(AttendanceRecord.is_active == True)
         
+        # If session_id provided, filter by specific session only
+        if session_id:
+            query = query.filter(AttendanceRecord.session_id == session_id)
+        
+        unique_students = query.distinct().count()
         return unique_students
     
-    def get_occupancy_percentage(self):
-        """Get current occupancy as percentage of capacity"""
-        current = self.get_current_occupancy()
+    def get_occupancy_percentage(self, session_id=None):
+        """Get current occupancy as percentage of capacity (session-specific or room-wide)"""
+        current = self.get_current_occupancy(session_id)
         if self.capacity == 0:
             return 0
         return min((current / self.capacity) * 100, 100)
     
-    def is_over_capacity(self):
-        """Check if room is over capacity"""
-        return self.get_current_occupancy() > self.capacity
+    def is_over_capacity(self, session_id=None):
+        """Check if room is over capacity (session-specific or room-wide)"""
+        return self.get_current_occupancy(session_id) > self.capacity
     
-    def get_attendance_stats(self, start_date=None, end_date=None):
-        """Get attendance statistics for room"""
-        from sqlalchemy import func
+    def get_attendance_stats(self, start_date=None, end_date=None, session_id=None):
+        """Get attendance statistics for room (session-specific or room-wide)"""
+        from app.models.attendance_model import AttendanceRecord
+        from app import db
         
-        query = self.attendance_records
+        query = db.session.query(AttendanceRecord).filter(AttendanceRecord.room_id == self.id)
+        
+        # SESSION ISOLATION: Filter by specific session if provided
+        if session_id:
+            query = query.filter(AttendanceRecord.session_id == session_id)
         
         if start_date:
             query = query.filter(AttendanceRecord.scan_time >= start_date)
@@ -109,12 +120,22 @@ class Room(db.Model):
             'unique_days': len(daily_counts),
             'average_daily_attendance': sum(len(students) for students in daily_counts.values()) / len(daily_counts) if daily_counts else 0,
             'peak_attendance': max(len(students) for students in daily_counts.values()) if daily_counts else 0,
-            'daily_breakdown': {str(date): len(students) for date, students in daily_counts.items()}
+            'daily_breakdown': {str(date): len(students) for date, students in daily_counts.items()},
+            'session_specific': session_id is not None
         }
     
-    def get_recent_visitors(self, limit=10):
-        """Get recent visitors to the room"""
-        recent_records = self.attendance_records\
+    def get_recent_visitors(self, limit=10, session_id=None):
+        """Get recent visitors to the room (session-specific or room-wide)"""
+        from app.models.attendance_model import AttendanceRecord
+        from app import db
+        
+        query = db.session.query(AttendanceRecord).filter(AttendanceRecord.room_id == self.id)
+        
+        # SESSION ISOLATION: Filter by specific session if provided
+        if session_id:
+            query = query.filter(AttendanceRecord.session_id == session_id)
+        
+        recent_records = query\
             .order_by(AttendanceRecord.scan_time.desc())\
             .limit(limit)\
             .all()
@@ -122,7 +143,8 @@ class Room(db.Model):
         return [{
             'student': record.student,
             'scan_time': record.scan_time,
-            'is_late': record.is_late
+            'is_late': record.is_late,
+            'session_id': record.session_id
         } for record in recent_records]
     
     def to_dict(self):

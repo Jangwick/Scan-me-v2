@@ -115,8 +115,8 @@ def scan_qr_code():
         if not room:
             return jsonify({'success': False, 'error': 'Invalid room selected'}), 400
         
-        # Process attendance using AttendanceStateService
-        result = AttendanceStateService.process_attendance_scan(
+        # Process attendance using NEW AttendanceStateService logic
+        result = AttendanceStateService.process_attendance_scan_new_logic(
             student_id=student.id,
             room_id=room.id,
             session_id=session_id,

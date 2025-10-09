@@ -85,7 +85,9 @@ def dashboard():
                              current_sessions=current_sessions,
                              upcoming_sessions=upcoming_sessions,
                              past_sessions=past_sessions[:10],  # Limit past sessions
-                             stats=stats)
+                             stats=stats,
+                             datetime=datetime,  # Pass datetime for grace period calculations
+                             now=datetime.now())  # Pass current time
         
     except Exception as e:
         flash(f'Error loading professor dashboard: {str(e)}', 'error')
@@ -137,16 +139,27 @@ def session_detail(session_id):
 def session_scanner(session_id):
     """Integrated scanner for a specific session"""
     try:
-        session = AttendanceSession.query.get_or_404(session_id)
+        # First try SessionSchedule (new system)
+        from app.models.session_schedule_model import SessionSchedule
+        session = SessionSchedule.query.get(session_id)
         
-        # Verify professor has access to this session
-        professor_name = current_user.username
-        if not (session.instructor == professor_name or 
-                session.created_by == current_user.id or 
-                current_user.is_admin()):
-            flash('Access denied. You do not have permission to access this scanner.', 'error')
-            return redirect(url_for('professor.dashboard'))
-        
+        if not session:
+            # Fallback to AttendanceSession (legacy)
+            session = AttendanceSession.query.get_or_404(session_id)
+            
+            # Verify professor has access to this session
+            professor_name = current_user.username
+            if not (session.instructor == professor_name or 
+                    session.created_by == current_user.id or 
+                    current_user.is_admin()):
+                flash('Access denied. You do not have permission to access this scanner.', 'error')
+                return redirect(url_for('professor.dashboard'))
+        else:
+            # For SessionSchedule, check instructor_id
+            if not (session.instructor_id == current_user.id or current_user.is_admin()):
+                flash('Access denied. You do not have permission to access this scanner.', 'error')
+                return redirect(url_for('professor.dashboard'))
+
         return render_template('professor/session_scanner.html', session=session)
         
     except Exception as e:
@@ -159,23 +172,102 @@ def session_scanner(session_id):
 def process_session_scan(session_id):
     """Process QR code scan for a specific session"""
     try:
-        session = AttendanceSession.query.get_or_404(session_id)
+        # First try SessionSchedule (new system)
+        from app.models.session_schedule_model import SessionSchedule
+        session = SessionSchedule.query.get(session_id)
+        is_schedule_session = session is not None
         
-        # Verify professor has access to this session
-        professor_name = current_user.username
-        if not (session.instructor == professor_name or 
-                session.created_by == current_user.id or 
-                current_user.is_admin()):
-            return jsonify({'success': False, 'error': 'Access denied'}), 403
-        
+        if not session:
+            # Fallback to AttendanceSession (legacy)
+            session = AttendanceSession.query.get_or_404(session_id)
+            
+            # Verify professor has access to this session
+            professor_name = current_user.username
+            if not (session.instructor == professor_name or 
+                    session.created_by == current_user.id or 
+                    current_user.is_admin()):
+                return jsonify({'success': False, 'error': 'Access denied'}), 403
+        else:
+            # For SessionSchedule, check instructor_id
+            if not (session.instructor_id == current_user.id or current_user.is_admin()):
+                return jsonify({'success': False, 'error': 'Access denied'}), 403
+
         data = request.get_json()
         if not data:
             return jsonify({'success': False, 'error': 'No data provided'}), 400
-        
+
         qr_data = data.get('qr_data')
         if not qr_data:
             return jsonify({'success': False, 'error': 'QR code data required'}), 400
-        
+
+        # If this is a SessionSchedule, use the new attendance logic
+        if is_schedule_session:
+            # Validate QR code using the same logic as main scanner
+            qr_validation = validate_qr_data(qr_data)
+            if not qr_validation['valid']:
+                return jsonify({
+                    'success': False, 
+                    'error': f'Invalid QR code: {qr_validation["error"]}'
+                }), 400
+
+            # Get decoded data
+            decoded_data = qr_validation['data']
+            
+            # Find student based on QR data type
+            student = None
+            if decoded_data.get('type') == 'scanme_qr_code':
+                # This is our SCANME_ format QR code
+                student = Student.query.filter_by(qr_code_data=decoded_data['qr_data']).first()
+            elif decoded_data.get('type') == 'student_attendance':
+                # Standard JSON format
+                if decoded_data.get('student_id'):
+                    student = Student.query.get(decoded_data['student_id'])
+                elif decoded_data.get('student_no'):
+                    student = Student.query.filter_by(student_no=decoded_data['student_no']).first()
+            elif decoded_data.get('type') == 'legacy_student_no':
+                # Legacy format (just student number)
+                student = Student.query.filter_by(student_no=decoded_data['student_no']).first()
+
+            if not student:
+                return jsonify({
+                    'success': False, 
+                    'error': 'Student not found'
+                }), 404
+
+            # DEBUG: Write session timing to file
+            import sys
+            sys.stdout.flush()
+            with open('debug_session_timing.txt', 'w') as f:
+                f.write(f"=== PROFESSOR ROUTE DEBUG ===\n")
+                f.write(f"Session ID: {session.id}\n")
+                f.write(f"Session date: {session.session_date}\n")
+                f.write(f"Start time: {session.start_time}\n")
+                f.write(f"End time: {session.end_time}\n")
+                f.write(f"Session datetime: {session.get_session_datetime()}\n")
+                f.write(f"Current time: {datetime.now()}\n")
+                f.write(f"================================\n")
+            
+            # Use SessionSchedule attendance processing
+            result = session.process_student_attendance(student.id, scanned_by_user_id=current_user.id)
+            
+            if result['success']:
+                return jsonify({
+                    'success': True,
+                    'message': result['message'],
+                    'action': result['action'],
+                    'student': {
+                        'id': student.id,
+                        'name': student.get_full_name(),
+                        'student_no': student.student_no
+                    }
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': result['message']
+                }), 400
+
+        # Legacy AttendanceSession processing
         # Validate QR code using the same logic as main scanner
         qr_validation = validate_qr_data(qr_data)
         if not qr_validation['valid']:
@@ -205,8 +297,8 @@ def process_session_scan(session_id):
         if not student:
             return jsonify({'success': False, 'error': 'Student not found'}), 404
         
-        # Process the attendance scan
-        result = AttendanceStateService.process_attendance_scan(
+        # Process the attendance scan using NEW logic with grace period support
+        result = AttendanceStateService.process_attendance_scan_new_logic(
             student_id=student.id,
             room_id=session.room_id,
             session_id=session.id,
@@ -435,27 +527,58 @@ def get_session_statistics(session_id):
 def get_session_stats(session_id):
     """Get real-time session statistics for the scanner"""
     try:
-        session = AttendanceSession.query.get_or_404(session_id)
+        # First try SessionSchedule (new system)
+        from app.models.session_schedule_model import SessionSchedule
+        session = SessionSchedule.query.get(session_id)
+        is_schedule_session = session is not None
         
-        # Get all attendance records for this session
-        attendance_records = AttendanceRecord.query.filter_by(session_id=session_id).all()
-        
-        # Calculate statistics
-        total_scans = len(attendance_records)
-        unique_students = set(record.student_id for record in attendance_records)
-        
-        # Get students currently in room (is_active = True)
-        students_in_room = set()
-        for record in attendance_records:
-            if record.is_active:  # Student is currently in room
-                students_in_room.add(record.student_id)
-        
-        return jsonify({
-            'success': True,
-            'total_scans': total_scans,
-            'unique_students': list(unique_students),
-            'students_in_room': list(students_in_room)
-        })
+        if is_schedule_session:
+            # Use SessionSchedule attendance summary
+            attendance_summary = session.get_session_attendance_summary()
+            
+            # Get all attendance records for this SessionSchedule
+            attendance_records = AttendanceRecord.query.filter_by(schedule_session_id=session_id).all()
+            
+            # Calculate unique students and students in room
+            unique_students = set(record.student_id for record in attendance_records)
+            students_in_room = set()
+            
+            # For SessionSchedule, student is "in room" if they have time_in but no time_out
+            for record in attendance_records:
+                if record.time_in and not record.time_out:
+                    students_in_room.add(record.student_id)
+            
+            return jsonify({
+                'success': True,
+                'total_scans': len(attendance_records),
+                'unique_students': list(unique_students),
+                'students_in_room': list(students_in_room),
+                'time_in_count': attendance_summary.get('complete_records', 0) + len(students_in_room),
+                'time_out_count': attendance_summary.get('complete_records', 0)
+            })
+        else:
+            # Fallback to AttendanceSession (legacy)
+            session = AttendanceSession.query.get_or_404(session_id)
+            
+            # Get all attendance records for this session
+            attendance_records = AttendanceRecord.query.filter_by(session_id=session_id).all()
+            
+            # Calculate statistics
+            total_scans = len(attendance_records)
+            unique_students = set(record.student_id for record in attendance_records)
+            
+            # Get students currently in room (is_active = True)
+            students_in_room = set()
+            for record in attendance_records:
+                if record.is_active:  # Student is currently in room
+                    students_in_room.add(record.student_id)
+            
+            return jsonify({
+                'success': True,
+                'total_scans': total_scans,
+                'unique_students': list(unique_students),
+                'students_in_room': list(students_in_room)
+            })
         
     except Exception as e:
         return jsonify({'success': False, 'error': f'Failed to load session stats: {str(e)}'}), 500

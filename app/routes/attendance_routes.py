@@ -50,6 +50,7 @@ def api_records():
         end_date = request.args.get('end_date')
         room_id = request.args.get('room_id', type=int)
         student_id = request.args.get('student_id', type=int)
+        session_id = request.args.get('session_id', type=int)  # SESSION ISOLATION
         limit = request.args.get('limit', 100, type=int)
         
         # Build query
@@ -69,6 +70,10 @@ def api_records():
         if student_id:
             query = query.filter(AttendanceRecord.student_id == student_id)
         
+        # SESSION ISOLATION: Filter by session if provided
+        if session_id:
+            query = query.filter(AttendanceRecord.session_id == session_id)
+        
         records = query.order_by(AttendanceRecord.scan_time.desc()).limit(limit).all()
         
         return jsonify([record.to_dict() for record in records])
@@ -87,6 +92,7 @@ def export_records(format):
         end_date = request.args.get('end_date')
         room_id = request.args.get('room_id', type=int)
         student_id = request.args.get('student_id', type=int)
+        session_id = request.args.get('session_id', type=int)  # SESSION ISOLATION
         
         # Build query
         query = AttendanceRecord.query
@@ -104,6 +110,10 @@ def export_records(format):
         
         if student_id:
             query = query.filter(AttendanceRecord.student_id == student_id)
+        
+        # SESSION ISOLATION: Filter by session if provided
+        if session_id:
+            query = query.filter(AttendanceRecord.session_id == session_id)
         
         records = query.order_by(AttendanceRecord.scan_time.desc()).all()
         

@@ -157,7 +157,6 @@ def get_user_permissions(user):
         dict: Dictionary of permissions
     """
     permissions = {
-        'can_scan_attendance': False,
         'can_view_reports': False,
         'can_manage_students': False,
         'can_manage_rooms': False,
@@ -172,9 +171,6 @@ def get_user_permissions(user):
     
     # Base permissions for all authenticated users
     permissions['can_view_dashboard'] = True
-    
-    if user.role in ['student', 'professor', 'admin']:
-        permissions['can_scan_attendance'] = True
     
     if user.role in ['professor', 'admin']:
         permissions['can_view_reports'] = True

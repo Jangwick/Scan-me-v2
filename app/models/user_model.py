@@ -76,7 +76,7 @@ class User(UserMixin, db.Model):
     
     def can_scan_attendance(self):
         """Check if user can scan QR codes for attendance"""
-        return self.role in ['admin', 'student', 'professor']
+        return self.role in ['admin', 'professor']
     
     def get_display_name(self):
         """Get display name for user"""

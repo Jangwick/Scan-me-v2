@@ -18,6 +18,9 @@ class AttendanceRecord(db.Model):
     room_id = db.Column(db.Integer, db.ForeignKey('rooms.id'), nullable=False, index=True)
     session_id = db.Column(db.Integer, db.ForeignKey('attendance_sessions.id'), nullable=True, index=True)
     
+    # Support for SessionSchedule (class scheduling system)
+    schedule_session_id = db.Column(db.Integer, db.ForeignKey('session_schedules.id'), nullable=True, index=True)
+    
     # Time tracking fields
     time_in = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
     time_out = db.Column(db.DateTime, nullable=True, index=True)

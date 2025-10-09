@@ -6,6 +6,7 @@ Handles session scheduling and management
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from datetime import datetime, date, time, timedelta
+from sqlalchemy import func
 from app import db
 from app.models.session_schedule_model import SessionSchedule, SessionStatus, RecurrenceType
 from app.models.room_model import Room
@@ -290,12 +291,50 @@ def delete_session(id):
         session = SessionSchedule.query.get_or_404(id)
         session_title = session.title
         
-        # Check if session has attendance records
-        if session.attendance_records:
-            flash(f'Cannot delete session "{session_title}" because it has attendance records. Cancel it instead.', 'error')
-        else:
-            db.session.delete(session)
-            db.session.commit()
+        # Get force delete parameter
+        force_delete = request.form.get('force_delete') == 'true'
+        
+        # Import attendance models to check for related records
+        from app.models.attendance_model import AttendanceRecord
+        from app.models.attendance_event_model import AttendanceEvent
+        
+        # Check for related attendance records and events
+        attendance_count = AttendanceRecord.query.filter_by(session_id=session.id).count()
+        event_count = AttendanceEvent.query.filter_by(session_id=session.id).count()
+        
+        has_related_data = attendance_count > 0 or event_count > 0
+        
+        if has_related_data and not force_delete:
+            # Provide detailed information about what's preventing deletion
+            details = []
+            if attendance_count > 0:
+                details.append(f"{attendance_count} attendance record(s)")
+            if event_count > 0:
+                details.append(f"{event_count} attendance event(s)")
+            
+            flash(f'Cannot delete session "{session_title}" because it has {", ".join(details)}. Cancel the session instead, or use force delete to remove all related data.', 'error')
+            return redirect(url_for('schedule.view_session', id=id))
+        
+        if force_delete and has_related_data:
+            # Force delete: Remove all related records first
+            try:
+                # Delete attendance events first (they may reference attendance records)
+                AttendanceEvent.query.filter_by(session_id=session.id).delete(synchronize_session=False)
+                
+                # Delete attendance records
+                AttendanceRecord.query.filter_by(session_id=session.id).delete(synchronize_session=False)
+                
+                flash(f'Force deleted session "{session_title}" and removed {attendance_count} attendance records and {event_count} events.', 'warning')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error during force delete: {str(e)}', 'error')
+                return redirect(url_for('schedule.view_session', id=id))
+        
+        # Delete the session
+        db.session.delete(session)
+        db.session.commit()
+        
+        if not force_delete:
             flash(f'Session "{session_title}" deleted successfully.', 'success')
         
         return redirect(url_for('schedule.manage_sessions'))
@@ -304,6 +343,132 @@ def delete_session(id):
         db.session.rollback()
         flash(f'Error deleting session: {str(e)}', 'error')
         return redirect(url_for('schedule.view_session', id=id))
+
+@schedule_bp.route('/sessions/<int:id>/delete-info')
+@login_required
+@requires_admin
+def delete_session_info(id):
+    """Get information about session deletion impact (AJAX endpoint)"""
+    try:
+        session = SessionSchedule.query.get_or_404(id)
+        
+        # Import attendance models
+        from app.models.attendance_model import AttendanceRecord
+        from app.models.attendance_event_model import AttendanceEvent
+        
+        # Check for related data
+        attendance_count = AttendanceRecord.query.filter_by(session_id=session.id).count()
+        event_count = AttendanceEvent.query.filter_by(session_id=session.id).count()
+        
+        # Get some sample student names affected
+        affected_students = db.session.query(
+            AttendanceRecord.student_id,
+            func.count(AttendanceRecord.id).label('record_count')
+        ).filter_by(session_id=session.id).group_by(AttendanceRecord.student_id).limit(5).all()
+        
+        student_info = []
+        if affected_students:
+            from app.models.student_model import Student
+            for student_id, record_count in affected_students:
+                student = Student.query.get(student_id)
+                if student:
+                    student_info.append({
+                        'name': student.get_full_name(),
+                        'record_count': record_count
+                    })
+        
+        return jsonify({
+            'success': True,
+            'session_title': session.title,
+            'can_delete_safely': attendance_count == 0 and event_count == 0,
+            'attendance_count': attendance_count,
+            'event_count': event_count,
+            'affected_students': student_info,
+            'total_affected_students': len(affected_students)
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
+@schedule_bp.route('/sessions/bulk-delete', methods=['POST'])
+@login_required
+@requires_admin
+def bulk_delete_sessions():
+    """Delete multiple sessions at once"""
+    try:
+        session_ids = request.form.getlist('session_ids')
+        force_delete = request.form.get('force_delete') == 'true'
+        
+        if not session_ids:
+            flash('No sessions selected for deletion.', 'error')
+            return redirect(url_for('schedule.manage_sessions'))
+        
+        # Convert to integers
+        session_ids = [int(sid) for sid in session_ids]
+        
+        # Import attendance models
+        from app.models.attendance_model import AttendanceRecord
+        from app.models.attendance_event_model import AttendanceEvent
+        
+        deleted_count = 0
+        skipped_count = 0
+        force_deleted_count = 0
+        
+        for session_id in session_ids:
+            try:
+                session = SessionSchedule.query.get(session_id)
+                if not session:
+                    continue
+                
+                # Check for related data
+                attendance_count = AttendanceRecord.query.filter_by(session_id=session.id).count()
+                event_count = AttendanceEvent.query.filter_by(session_id=session.id).count()
+                has_related_data = attendance_count > 0 or event_count > 0
+                
+                if has_related_data and not force_delete:
+                    skipped_count += 1
+                    continue
+                
+                if force_delete and has_related_data:
+                    # Delete related records first
+                    AttendanceEvent.query.filter_by(session_id=session.id).delete(synchronize_session=False)
+                    AttendanceRecord.query.filter_by(session_id=session.id).delete(synchronize_session=False)
+                    force_deleted_count += 1
+                
+                # Delete the session
+                db.session.delete(session)
+                deleted_count += 1
+                
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error deleting session {session_id}: {str(e)}', 'error')
+                continue
+        
+        db.session.commit()
+        
+        # Provide summary feedback
+        messages = []
+        if deleted_count > 0:
+            messages.append(f"{deleted_count} sessions deleted successfully")
+        if force_deleted_count > 0:
+            messages.append(f"{force_deleted_count} sessions force-deleted with attendance data")
+        if skipped_count > 0:
+            messages.append(f"{skipped_count} sessions skipped due to attendance data")
+        
+        if messages:
+            flash('. '.join(messages) + '.', 'success' if skipped_count == 0 else 'warning')
+        else:
+            flash('No sessions were deleted.', 'info')
+        
+        return redirect(url_for('schedule.manage_sessions'))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error during bulk deletion: {str(e)}', 'error')
+        return redirect(url_for('schedule.manage_sessions'))
 
 @schedule_bp.route('/api/check_room_availability')
 @login_required

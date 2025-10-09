@@ -381,15 +381,6 @@
                     </a>
                 </li>
                 
-                {% if current_user.can_scan_attendance() %}
-                <li class="nav-item">
-                    <a href="{{ url_for('scanner_new.index') }}" class="nav-link {{ 'active' if request.endpoint == 'scanner_new.index' }}">
-                        <i class="fas fa-camera"></i>
-                        Scanner
-                    </a>
-                </li>
-                {% endif %}
-                
                 {% if current_user.can_manage_students() %}
                 <li class="nav-item">
                     <a href="{{ url_for('students.list_students') }}" class="nav-link {{ 'active' if 'students' in request.endpoint }}">

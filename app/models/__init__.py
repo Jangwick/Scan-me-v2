@@ -8,6 +8,7 @@ from app.models.student_model import Student
 from app.models.room_model import Room
 from app.models.attendance_model import AttendanceRecord, AttendanceSession
 from app.models.attendance_event_model import AttendanceEvent
+from app.models.session_schedule_model import SessionSchedule, SessionStatus, RecurrenceType
 
 __all__ = [
     'User',
@@ -15,5 +16,8 @@ __all__ = [
     'Room',
     'AttendanceRecord',
     'AttendanceSession',
-    'AttendanceEvent'
+    'AttendanceEvent',
+    'SessionSchedule',
+    'SessionStatus',
+    'RecurrenceType'
 ]

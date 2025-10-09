@@ -116,26 +116,192 @@ class SessionSchedule(db.Model):
         return session_end
     
     def is_active_now(self):
-        """Check if session is currently active"""
-        if self.status != SessionStatus.SCHEDULED:
+        """Check if session is currently active with proper timezone handling"""
+        if self.status not in [SessionStatus.SCHEDULED, SessionStatus.ACTIVE]:
             return False
         
         now = datetime.now()
         session_start = self.get_session_datetime()
         session_end = self.get_session_end_datetime()
         
-        return session_start <= now <= session_end
+        # Include grace period for attendance (15 minutes before and after)
+        grace_period = timedelta(minutes=15)
+        attendance_window_start = session_start - grace_period
+        attendance_window_end = session_end + grace_period
+        
+        return attendance_window_start <= now <= attendance_window_end
     
-    def can_take_attendance(self):
-        """Check if attendance can be taken (within attendance window)"""
-        if not self.qr_code_active:
+    def can_time_in(self):
+        """Check if students can time in to this session"""
+        if not self.qr_code_active or self.status not in [SessionStatus.SCHEDULED, SessionStatus.ACTIVE]:
             return False
         
         now = datetime.now()
         session_start = self.get_session_datetime()
-        attendance_end = session_start + timedelta(minutes=self.attendance_window_minutes)
+        session_end = self.get_session_end_datetime()
         
-        return session_start <= now <= attendance_end
+        # Can time in from 15 minutes before session until 15 minutes after session ends (grace period)
+        grace_period = timedelta(minutes=15)
+        time_in_start = session_start - grace_period
+        time_in_end = session_end + grace_period  # Extended to include grace period
+        
+        return time_in_start <= now <= time_in_end
+    
+    def can_time_out(self):
+        """Check if students can time out from this session"""
+        if not self.qr_code_active or self.status not in [SessionStatus.SCHEDULED, SessionStatus.ACTIVE]:
+            return False
+        
+        now = datetime.now()
+        session_start = self.get_session_datetime()
+        session_end = self.get_session_end_datetime()
+        
+        # Can time out from session start until 15 minutes after session ends
+        grace_period = timedelta(minutes=15)
+        time_out_start = session_start
+        time_out_end = session_end + grace_period
+        
+        return time_out_start <= now <= time_out_end
+    
+    def process_student_attendance(self, student_id, scanned_by_user_id):
+        """
+        Process student attendance for this session using new logic
+        Returns: dict with success, message, and action
+        """
+        try:
+            from app.services.new_attendance_service import NewAttendanceService
+            from app.models import Student, Room
+            
+            # Get required entities
+            student = Student.query.get(student_id)
+            room = Room.query.get(self.room_id)
+            
+            if not student or not room:
+                return {
+                    'success': False,
+                    'message': 'Student or room not found',
+                    'action': 'error'
+                }
+            
+            # Use the new attendance service
+            service = NewAttendanceService()
+            result = service.process_session_schedule_attendance(
+                student_id=student_id,
+                session_schedule=self,
+                scanned_by=scanned_by_user_id
+            )
+            
+            return result
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'Error processing attendance: {str(e)}',
+                'action': 'error'
+            }
+    
+    def get_student_attendance_status(self, student_id):
+        """
+        Get student's attendance status for this session
+        Returns: dict with status, time_in, time_out info
+        """
+        try:
+            from app.models import AttendanceRecord
+            
+            # Look for attendance record for this student in this session
+            record = AttendanceRecord.query.filter_by(
+                student_id=student_id,
+                schedule_session_id=self.id
+            ).first()
+            
+            if not record:
+                return {
+                    'status': 'not_attended',
+                    'time_in': None,
+                    'time_out': None,
+                    'duration': 0
+                }
+            
+            if record.time_out:
+                return {
+                    'status': 'completed',
+                    'time_in': record.time_in,
+                    'time_out': record.time_out,
+                    'duration': record.get_duration()
+                }
+            else:
+                return {
+                    'status': 'timed_in',
+                    'time_in': record.time_in,
+                    'time_out': None,
+                    'duration': record.get_duration()  # Current duration
+                }
+                
+        except Exception as e:
+            return {
+                'status': 'error',
+                'error': str(e)
+            }
+    
+    def get_session_attendance_summary(self):
+        """
+        Get attendance summary for this session
+        Returns: dict with counts and statistics
+        """
+        try:
+            from app.models import AttendanceRecord, Student
+            
+            # Get all attendance records for this session
+            records = AttendanceRecord.query.filter_by(schedule_session_id=self.id).all()
+            
+            total_students = len(records)
+            completed_attendance = len([r for r in records if r.time_out is not None])
+            currently_in_session = len([r for r in records if r.time_out is None])
+            late_arrivals = len([r for r in records if r.is_late])
+            
+            # Calculate average duration for completed attendances
+            completed_records = [r for r in records if r.time_out is not None]
+            avg_duration = 0
+            if completed_records:
+                total_duration = sum(r.get_duration() for r in completed_records)
+                avg_duration = total_duration / len(completed_records)
+            
+            return {
+                'total_students': total_students,
+                'completed_attendance': completed_attendance,
+                'currently_in_session': currently_in_session,
+                'late_arrivals': late_arrivals,
+                'average_duration_minutes': round(avg_duration, 1),
+                'attendance_rate': round((completed_attendance / max(total_students, 1)) * 100, 1)
+            }
+            
+        except Exception as e:
+            return {
+                'total_students': 0,
+                'completed_attendance': 0,
+                'currently_in_session': 0,
+                'late_arrivals': 0,
+                'average_duration_minutes': 0,
+                'attendance_rate': 0,
+                'error': str(e)
+            }
+    
+    def can_take_attendance(self):
+        """Check if attendance can be taken (within attendance window)"""
+        if not self.qr_code_active or self.status not in [SessionStatus.SCHEDULED, SessionStatus.ACTIVE]:
+            return False
+        
+        now = datetime.now()
+        session_start = self.get_session_datetime()
+        session_end = self.get_session_end_datetime()
+        
+        # Allow attendance from 15 minutes before until 15 minutes after session
+        grace_before = timedelta(minutes=15)
+        grace_after = timedelta(minutes=15)
+        attendance_start = session_start - grace_before
+        attendance_end = session_end + grace_after
+        
+        return attendance_start <= now <= attendance_end
     
     def get_formatted_time(self):
         """Get formatted time range"""

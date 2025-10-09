@@ -3,177 +3,281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ScanMe Attendance System{% endblock %}</title>
+    <title>{% block title %}ScanMe Dashboard{% endblock %}</title>
     
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" 
-          integrity="sha384-p3eW0OGRBnvYPVNf6D0k+XzNR9YqWKeFwY8xfgMNmgLwCvCUKG3pj5N7rQ7Cz0Q/" 
-          crossorigin="anonymous">
-    
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome - Multiple CDN fallbacks -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" 
+          integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" 
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Fallback Font Awesome -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.6.0/css/all.css" 
+          integrity="sha384-XXX" crossorigin="anonymous" onerror="this.onerror=null;this.href='https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css';" />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="{{ url_for('main.index') }}">
-                <i class="fas fa-qrcode me-2"></i>ScanMe
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    {% if current_user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('main.dashboard') }}">
-                                <i class="fas fa-tachometer-alt me-1"></i>Dashboard
-                            </a>
-                        </li>
-                        
-                        {% if current_user.can_scan_attendance() %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('scanner_new.index') }}">
-                                <i class="fas fa-camera me-1"></i>Scanner
-                            </a>
-                        </li>
-                        {% endif %}
-                        
-                        {% if current_user.can_manage_students() %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('students.list_students') }}">
-                                <i class="fas fa-users me-1"></i>Students
-                            </a>
-                        </li>
-                        {% endif %}
-                        
-                        {% if current_user.can_view_reports() %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-chart-bar me-1"></i>Reports
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{{ url_for('attendance.reports') }}">
-                                    <i class="fas fa-list me-1"></i>Attendance Reports</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('attendance.analytics') }}">
-                                    <i class="fas fa-analytics me-1"></i>Analytics</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('attendance.manage_sessions') }}">
-                                    <i class="fas fa-calendar me-1"></i>Sessions</a></li>
-                            </ul>
-                        </li>
-                        {% endif %}
-                        
-                        {% if current_user.is_admin() %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-cog me-1"></i>Admin
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{{ url_for('admin.dashboard') }}">
-                                    <i class="fas fa-tachometer-alt me-1"></i>Admin Dashboard</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('admin.manage_users') }}">
-                                    <i class="fas fa-user-cog me-1"></i>Manage Users</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('admin.manage_rooms') }}">
-                                    <i class="fas fa-door-open me-1"></i>Manage Rooms</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('admin.system_settings') }}">
-                                    <i class="fas fa-sliders-h me-1"></i>Settings</a></li>
-                            </ul>
-                        </li>
-                        {% endif %}
-                    {% endif %}
-                </ul>
+    {% if current_user.is_authenticated %}
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <a href="{{ url_for('main.index') }}" class="sidebar-brand">
+            <i class="fas fa-qrcode"></i>
+            ScanMe
+        </a>
+        
+        <div class="nav-group">
+            <ul class="sidebar-nav">
+                <li class="nav-item">
+                    <a href="{{ url_for('main.dashboard') }}" class="nav-link {{ 'active' if request.endpoint == 'main.dashboard' }}">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                </li>
                 
-                <!-- Search -->
-                {% if current_user.is_authenticated %}
-                <form class="d-flex me-3" action="{{ url_for('main.search') }}" method="GET">
-                    <div class="input-group">
-                        <input class="form-control form-control-sm" type="search" name="q" 
-                               placeholder="Search students, rooms..." value="{{ request.args.get('q', '') }}">
-                        <button class="btn btn-outline-light btn-sm" type="submit">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                </form>
+                {% if current_user.is_authenticated and current_user.can_manage_students() %}
+                <li class="nav-item">
+                    <a href="{{ url_for('students.list_students') }}" class="nav-link {{ 'active' if 'students' in request.endpoint }}">
+                        <i class="fas fa-users"></i>
+                        Students
+                    </a>
+                </li>
                 {% endif %}
+            </ul>
+        </div>
+        
+        {% if current_user.is_authenticated and current_user.can_view_reports() %}
+        <div class="nav-group">
+            <div class="nav-group-title">Reports</div>
+            <ul class="sidebar-nav">
+                <li class="nav-item">
+                    <a href="{{ url_for('attendance.reports') }}" class="nav-link {{ 'active' if request.endpoint == 'attendance.reports' }}">
+                        <i class="fas fa-chart-line"></i>
+                        Attendance Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('attendance.analytics') }}" class="nav-link {{ 'active' if request.endpoint == 'attendance.analytics' }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('attendance.manage_sessions') }}" class="nav-link {{ 'active' if request.endpoint == 'attendance.manage_sessions' }}">
+                        <i class="fas fa-calendar"></i>
+                        Sessions
+                    </a>
+                </li>
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% if current_user.is_authenticated and (current_user.is_professor() or current_user.is_admin()) %}
+        <div class="nav-group">
+            <div class="nav-group-title">Professor</div>
+            <ul class="sidebar-nav">
+                <li class="nav-item">
+                    <a href="{{ url_for('professor.dashboard') }}" class="nav-link {{ 'active' if request.endpoint == 'professor.dashboard' }}">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        My Classes
+                    </a>
+                </li>
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% if current_user.is_authenticated and current_user.is_admin() %}
+        <div class="nav-group">
+            <div class="nav-group-title">Admin</div>
+            <ul class="sidebar-nav">
+                <li class="nav-item">
+                    <a href="{{ url_for('admin.dashboard') }}" class="nav-link {{ 'active' if request.endpoint == 'admin.dashboard' }}">
+                        <i class="fas fa-cog"></i>
+                        Admin Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin.manage_users') }}" class="nav-link {{ 'active' if request.endpoint == 'admin.manage_users' }}">
+                        <i class="fas fa-user-cog"></i>
+                        Manage Users
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin.manage_rooms') }}" class="nav-link {{ 'active' if request.endpoint == 'admin.manage_rooms' }}">
+                        <i class="fas fa-door-open"></i>
+                        Manage Rooms
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('schedule.manage_sessions') }}" class="nav-link {{ 'active' if 'schedule' in request.endpoint }}">
+                        <i class="fas fa-calendar-alt"></i>
+                        Schedule Sessions
+                    </a>
+                </li>
+            </ul>
+        </div>
+        {% endif %}
+        
+        <div class="nav-group" style="margin-top: auto; padding-top: 2rem;">
+            <ul class="sidebar-nav">
+                <li class="nav-item">
+                    <a href="{{ url_for('main.profile') }}" class="nav-link {{ 'active' if request.endpoint == 'main.profile' }}">
+                        <i class="fas fa-user"></i>
+                        Profile
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('auth.change_password') }}" class="nav-link {{ 'active' if request.endpoint == 'auth.change_password' }}">
+                        <i class="fas fa-key"></i>
+                        Change Password
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('main.generate_my_qr') }}" class="nav-link {% if request.endpoint == 'main.generate_my_qr' %}active{% endif %}">
+                        <i class="fas fa-qrcode"></i>
+                        My QR Code
+                    </a>
+                </li>
                 
-                <!-- User menu -->
-                <ul class="navbar-nav">
-                    {% if current_user.is_authenticated %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-user me-1"></i>{{ current_user.get_display_name() }}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ url_for('main.profile') }}">
-                                    <i class="fas fa-user me-1"></i>Profile</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('auth.change_password') }}">
-                                    <i class="fas fa-key me-1"></i>Change Password</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">
-                                    <i class="fas fa-sign-out-alt me-1"></i>Logout</a></li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('auth.login') }}">
-                                <i class="fas fa-sign-in-alt me-1"></i>Login
-                            </a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </div>
+                <li class="nav-item">
+                    <button onclick="confirmLogout()" class="nav-link" style="border: none; background: none; width: 100%; text-align: left;">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </button>
+                </li>
+            </ul>
         </div>
     </nav>
-
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="container mt-3">
-                {% for category, message in messages %}
-                    <div class="alert alert-{% if category == 'error' %}danger{% elif category == 'info' %}info{% elif category == 'warning' %}warning{% else %}success{% endif %} alert-dismissible fade show" role="alert">
-                        <i class="fas fa-{% if category == 'error' %}exclamation-triangle{% elif category == 'info' %}info-circle{% elif category == 'warning' %}exclamation-circle{% else %}check-circle{% endif %} me-2"></i>
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-
+    {% endif %}
+    
     <!-- Main Content -->
-    <main class="container-fluid">
-        {% block content %}{% endblock %}
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-light text-center text-muted py-3 mt-5">
-        <div class="container">
-            <p class="mb-0">
-                &copy; 2025 ScanMe Attendance System. 
-                <small>Built with Flask, Bootstrap & ❤️</small>
-            </p>
+    <main class="main-content">
+        {% if current_user.is_authenticated %}
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="d-flex align-items-center">
+                <button class="sidebar-toggle me-3" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+            </div>
+            
+            <div class="topbar-actions">
+                {% if current_user.is_authenticated %}
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search students, rooms..." id="globalSearch">
+                </div>
+                
+                <div class="user-dropdown dropdown">
+                    <div class="user-avatar" data-bs-toggle="dropdown" aria-expanded="false">
+                        {{ current_user.username[0].upper() }}
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><span class="dropdown-header">{{ current_user.get_display_name() }}</span></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('main.profile') }}">
+                            <i class="fas fa-user me-2"></i>Profile</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('admin.system_settings') }}">
+                            <i class="fas fa-cog me-2"></i>Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="confirmLogout()">
+                            <i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </header>
+        {% endif %}
+        
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{% if category == 'error' %}danger{% elif category == 'info' %}info{% elif category == 'warning' %}warning{% else %}success{% endif %} alert-dismissible fade show mb-3" role="alert">
+                            <i class="fas fa-{% if category == 'error' %}exclamation-triangle{% elif category == 'info' %}info-circle{% elif category == 'warning' %}exclamation-circle{% else %}check-circle{% endif %} me-2"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            {% block content %}{% endblock %}
         </div>
-    </footer>
-
+    </main>
+    
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" 
-            integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" 
-            crossorigin="anonymous"></script>
-    
-    <!-- jQuery (for AJAX) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <!-- Icon Fallback System -->
+    <script src="{{ url_for('static', filename='js/icon-fallback.js') }}"></script>
     
-    <!-- Custom JavaScript -->
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('show');
+        }
+        
+        function confirmLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                window.location.href = '{{ url_for("auth.logout") }}';
+            }
+        }
+        
+        // Check if Font Awesome loaded and provide fallbacks
+        function checkFontAwesome() {
+            // This is now handled by the icon-fallback.js script
+            // Keep for backwards compatibility
+            if (window.iconManager) {
+                return window.iconManager.getStatus();
+            }
+            return { fontAwesomeLoaded: false };
+        }
+        
+        // Global search functionality
+        document.getElementById('globalSearch').addEventListener('input', function(e) {
+            const query = e.target.value;
+            if (query.length > 2) {
+                // Implement search functionality
+                console.log('Searching for:', query);
+            }
+        });
+        
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(e) {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.querySelector('.sidebar-toggle');
+            
+            if (window.innerWidth <= 768) {
+                if (!sidebar.contains(e.target) && !toggle.contains(e.target)) {
+                    sidebar.classList.remove('show');
+                }
+            }
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('show');
+            }
+        });
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Icon checking is now handled by icon-fallback.js
+            // Add any additional initialization here
+            console.log('Dashboard initialized');
+        });
+    </script>
     
     {% block extra_js %}{% endblock %}
 </body>
