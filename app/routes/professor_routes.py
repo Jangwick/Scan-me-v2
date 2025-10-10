@@ -579,16 +579,25 @@ def get_session_stats(session_id):
             
             return jsonify({
                 'success': True,
+                'session_stats': {
+                    'total_scans': attendance_summary.get('total_students', 0),
+                    'unique_students': len(unique_students),
+                    'late_arrivals': attendance_summary.get('late_arrivals', 0),
+                    'attendance_rate': attendance_summary.get('attendance_rate', 0)
+                },
                 'total_scans': len(attendance_records),
                 'unique_students': list(unique_students),
                 'students_in_room': list(students_in_room),
-                'time_in_count': attendance_summary.get('complete_records', 0) + len(students_in_room),
-                'time_out_count': attendance_summary.get('complete_records', 0),
+                'time_in_count': attendance_summary.get('completed_attendance', 0) + len(students_in_room),
+                'time_out_count': attendance_summary.get('completed_attendance', 0),
                 'recent_scans': recent_scans
             })
         else:
             # Fallback to AttendanceSession (legacy)
             session = AttendanceSession.query.get_or_404(session_id)
+            
+            # Get attendance summary from the session model
+            attendance_summary = session.get_attendance_summary()
             
             # Get all attendance records for this session
             attendance_records = AttendanceRecord.query.filter_by(session_id=session_id).all()
@@ -639,6 +648,7 @@ def get_session_stats(session_id):
             
             return jsonify({
                 'success': True,
+                'session_stats': attendance_summary,
                 'total_scans': total_scans,
                 'unique_students': list(unique_students),
                 'students_in_room': list(students_in_room),

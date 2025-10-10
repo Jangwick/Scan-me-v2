@@ -400,12 +400,8 @@
                 <p class="chart-subtitle">Daily attendance over the last 30 days</p>
             </div>
         </div>
-        <div class="chart-container">
-            <i class="fas fa-chart-line fa-3x"></i>
-            <div class="ms-3">
-                <p class="mb-0"><strong>Chart Coming Soon</strong></p>
-                <p class="text-muted mb-0">Interactive attendance trends will be displayed here</p>
-            </div>
+        <div class="chart-container" style="height: 300px;">
+            <canvas id="attendanceTrendsChart"></canvas>
         </div>
     </div>
     
@@ -416,12 +412,8 @@
                 <p class="chart-subtitle">Attendance by department</p>
             </div>
         </div>
-        <div class="chart-container">
-            <i class="fas fa-chart-pie fa-3x"></i>
-            <div class="ms-3">
-                <p class="mb-0"><strong>Chart Coming Soon</strong></p>
-                <p class="text-muted mb-0">Department attendance distribution</p>
-            </div>
+        <div class="chart-container" style="height: 300px;">
+            <canvas id="departmentBreakdownChart"></canvas>
         </div>
     </div>
 </div>
@@ -435,22 +427,10 @@
             </div>
             <h4 class="insight-title">Top Performing Classes</h4>
         </div>
-        <ul class="insight-list">
+        <ul class="insight-list" id="topClassesList">
             <li class="insight-item">
-                <span class="insight-metric">Computer Science 101</span>
-                <span class="insight-value">95% attendance</span>
-            </li>
-            <li class="insight-item">
-                <span class="insight-metric">Mathematics 201</span>
-                <span class="insight-value">92% attendance</span>
-            </li>
-            <li class="insight-item">
-                <span class="insight-metric">Physics Lab</span>
-                <span class="insight-value">89% attendance</span>
-            </li>
-            <li class="insight-item">
-                <span class="insight-metric">English Literature</span>
-                <span class="insight-value">87% attendance</span>
+                <span class="insight-metric">Loading...</span>
+                <span class="insight-value">--</span>
             </li>
         </ul>
     </div>
@@ -462,22 +442,10 @@
             </div>
             <h4 class="insight-title">Peak Hours</h4>
         </div>
-        <ul class="insight-list">
+        <ul class="insight-list" id="peakHoursList">
             <li class="insight-item">
-                <span class="insight-metric">9:00 AM - 10:00 AM</span>
-                <span class="insight-value">High activity</span>
-            </li>
-            <li class="insight-item">
-                <span class="insight-metric">1:00 PM - 2:00 PM</span>
-                <span class="insight-value">Medium activity</span>
-            </li>
-            <li class="insight-item">
-                <span class="insight-metric">3:00 PM - 4:00 PM</span>
-                <span class="insight-value">High activity</span>
-            </li>
-            <li class="insight-item">
-                <span class="insight-metric">7:00 PM - 8:00 PM</span>
-                <span class="insight-value">Low activity</span>
+                <span class="insight-metric">Loading...</span>
+                <span class="insight-value">--</span>
             </li>
         </ul>
     </div>
@@ -489,22 +457,10 @@
             </div>
             <h4 class="insight-title">Areas for Improvement</h4>
         </div>
-        <ul class="insight-list">
+        <ul class="insight-list" id="improvementsList">
             <li class="insight-item">
-                <span class="insight-metric">Late arrivals</span>
-                <span class="insight-value">8% of records</span>
-            </li>
-            <li class="insight-item">
-                <span class="insight-metric">Friday classes</span>
-                <span class="insight-value">Lower attendance</span>
-            </li>
-            <li class="insight-item">
-                <span class="insight-metric">Room B-205</span>
-                <span class="insight-value">Technical issues</span>
-            </li>
-            <li class="insight-item">
-                <span class="insight-metric">Duplicate scans</span>
-                <span class="insight-value">2% of records</span>
+                <span class="insight-metric">Loading...</span>
+                <span class="insight-value">--</span>
             </li>
         </ul>
     </div>
@@ -578,7 +534,13 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <script>
+let attendanceTrendsChart = null;
+let departmentBreakdownChart = null;
+
 document.addEventListener('DOMContentLoaded', function() {
     // Animate stat counters
     const statValues = document.querySelectorAll('.stat-value');
@@ -607,11 +569,314 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 20);
     }
     
+    // Load chart data
+    loadAttendanceTrends();
+    loadDepartmentBreakdown();
+    loadInsights();
+    
     // Auto-refresh data every 5 minutes
     setInterval(function() {
-        // In a real implementation, this would fetch updated stats
         console.log('Auto-refreshing analytics data...');
+        loadAttendanceTrends();
+        loadDepartmentBreakdown();
+        loadInsights();
     }, 5 * 60 * 1000);
 });
+
+// Load Attendance Trends Chart
+async function loadAttendanceTrends() {
+    try {
+        console.log('Loading attendance trends...');
+        const response = await fetch('{{ url_for("attendance.get_attendance_trends") }}');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Attendance trends data:', data);
+        
+        if (data.success) {
+            const ctx = document.getElementById('attendanceTrendsChart');
+            if (!ctx) {
+                console.error('Canvas element not found!');
+                return;
+            }
+            
+            console.log('Creating chart with data:', {
+                dates: data.dates.length,
+                scans: data.total_scans.length,
+                students: data.unique_students.length
+            });
+            
+            // Destroy existing chart if it exists
+            if (attendanceTrendsChart) {
+                attendanceTrendsChart.destroy();
+            }
+            
+            attendanceTrendsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.dates,
+                    datasets: [
+                        {
+                            label: 'Total Scans',
+                            data: data.total_scans,
+                            borderColor: '#06b6d4',
+                            backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'Unique Students',
+                            data: data.unique_students,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15,
+                                font: {
+                                    size: 12,
+                                    family: "'Inter', sans-serif"
+                                }
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#1f2937',
+                            bodyColor: '#1f2937',
+                            borderColor: '#e5e7eb',
+                            borderWidth: 1,
+                            padding: 12,
+                            boxPadding: 6,
+                            usePointStyle: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#f3f4f6'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+            
+            console.log('Attendance trends chart created successfully!');
+        } else {
+            console.error('Failed to load attendance trends:', data.error);
+        }
+    } catch (error) {
+        console.error('Error loading attendance trends:', error);
+    }
+}
+
+// Load Department Breakdown Chart
+async function loadDepartmentBreakdown() {
+    try {
+        console.log('Loading department breakdown...');
+        const response = await fetch('{{ url_for("attendance.get_department_breakdown") }}');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Department breakdown data:', data);
+        
+        if (data.success) {
+            const ctx = document.getElementById('departmentBreakdownChart');
+            if (!ctx) {
+                console.error('Canvas element not found!');
+                return;
+            }
+            
+            // Destroy existing chart if it exists
+            if (departmentBreakdownChart) {
+                departmentBreakdownChart.destroy();
+            }
+            
+            // Generate colors for each department
+            const colors = [
+                '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444',
+                '#ec4899', '#6366f1', '#14b8a6', '#f97316', '#84cc16'
+            ];
+            
+            console.log('Creating department chart with', data.departments.length, 'departments');
+            
+            departmentBreakdownChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.departments,
+                    datasets: [{
+                        data: data.attendance_counts,
+                        backgroundColor: colors.slice(0, data.departments.length),
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15,
+                                font: {
+                                    size: 12,
+                                    family: "'Inter', sans-serif"
+                                },
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    if (data.labels.length && data.datasets.length) {
+                                        return data.labels.map((label, i) => {
+                                            const value = data.datasets[0].data[i];
+                                            const studentCount = data.datasets[0].studentCounts ? 
+                                                data.datasets[0].studentCounts[i] : '';
+                                            return {
+                                                text: `${label} (${value})`,
+                                                fillStyle: data.datasets[0].backgroundColor[i],
+                                                hidden: false,
+                                                index: i
+                                            };
+                                        });
+                                    }
+                                    return [];
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#1f2937',
+                            bodyColor: '#1f2937',
+                            borderColor: '#e5e7eb',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Store student counts for custom legend
+            departmentBreakdownChart.data.datasets[0].studentCounts = data.student_counts;
+            console.log('Department breakdown chart created successfully!');
+        } else {
+            console.error('Failed to load department breakdown:', data.error);
+        }
+    } catch (error) {
+        console.error('Error loading department breakdown:', error);
+    }
+}
+
+// Load Insights Data
+async function loadInsights() {
+    try {
+        console.log('Loading insights...');
+        const response = await fetch('{{ url_for("attendance.get_analytics_insights") }}');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Insights data:', data);
+        
+        if (data.success) {
+            // Update Top Performing Classes
+            const topClassesList = document.getElementById('topClassesList');
+            if (topClassesList && data.top_classes.length > 0) {
+                topClassesList.innerHTML = data.top_classes.map(cls => `
+                    <li class="insight-item">
+                        <span class="insight-metric">${cls.name}</span>
+                        <span class="insight-value">${cls.attendance_rate}% attendance</span>
+                    </li>
+                `).join('');
+            }
+            
+            // Update Peak Hours
+            const peakHoursList = document.getElementById('peakHoursList');
+            if (peakHoursList && data.peak_hours.length > 0) {
+                peakHoursList.innerHTML = data.peak_hours.map(hour => `
+                    <li class="insight-item">
+                        <span class="insight-metric">${hour.time_range}</span>
+                        <span class="insight-value">${hour.activity}</span>
+                    </li>
+                `).join('');
+            }
+            
+            // Update Areas for Improvement
+            const improvementsList = document.getElementById('improvementsList');
+            if (improvementsList && data.improvements.length > 0) {
+                improvementsList.innerHTML = data.improvements.map(item => `
+                    <li class="insight-item">
+                        <span class="insight-metric">${item.metric}</span>
+                        <span class="insight-value">${item.value}</span>
+                    </li>
+                `).join('');
+            }
+            
+            console.log('Insights loaded successfully!');
+        } else {
+            console.error('Failed to load insights:', data.error);
+        }
+    } catch (error) {
+        console.error('Error loading insights:', error);
+    }
+}
 </script>
 {% endblock %}

@@ -408,20 +408,20 @@
 
     <!-- Statistics -->
     <div class="stats-section">
-        <div class="stat-card">
-            <p class="stat-number">{{ attendance_summary.total_scans }}</p>
+        <div class="stat-card" id="stat-total-scans">
+            <p class="stat-number" id="total-scans-value">{{ attendance_summary.total_scans }}</p>
             <p class="stat-label">Total Scans</p>
         </div>
-        <div class="stat-card">
-            <p class="stat-number">{{ attendance_summary.unique_students }}</p>
+        <div class="stat-card" id="stat-unique-students">
+            <p class="stat-number" id="unique-students-value">{{ attendance_summary.unique_students }}</p>
             <p class="stat-label">Unique Students</p>
         </div>
-        <div class="stat-card">
-            <p class="stat-number">{{ attendance_summary.late_arrivals }}</p>
+        <div class="stat-card" id="stat-late-arrivals">
+            <p class="stat-number" id="late-arrivals-value">{{ attendance_summary.late_arrivals }}</p>
             <p class="stat-label">Late Arrivals</p>
         </div>
-        <div class="stat-card">
-            <p class="stat-number">{{ attendance_summary.attendance_rate }}%</p>
+        <div class="stat-card" id="stat-attendance-rate">
+            <p class="stat-number" id="attendance-rate-value">{{ attendance_summary.attendance_rate }}%</p>
             <p class="stat-label">Attendance Rate</p>
         </div>
     </div>
@@ -1266,26 +1266,52 @@ async function updateStudentsInRoom() {
 async function updateStatistics() {
     try {
         const statsResponse = await fetch('{{ url_for("professor.get_session_stats", session_id=session.id) }}');
-        const statsData = await statsResponse.json();
         
-        if (statsData && statsData.session_stats) {
+        if (!statsResponse.ok) {
+            throw new Error(`HTTP error! status: ${statsResponse.status}`);
+        }
+        
+        const statsData = await statsResponse.json();
+        console.log('Statistics data received:', statsData);
+        
+        if (statsData && statsData.success) {
+            // Access the session_stats from the response
             const stats = statsData.session_stats;
             
-            // Update Total Scans
-            const totalScansEl = document.querySelector('.stat-card:nth-child(1) .stat-number');
-            if (totalScansEl) totalScansEl.textContent = stats.total_scans || 0;
-            
-            // Update Unique Students
-            const uniqueStudentsEl = document.querySelector('.stat-card:nth-child(2) .stat-number');
-            if (uniqueStudentsEl) uniqueStudentsEl.textContent = stats.unique_students || 0;
-            
-            // Update Late Arrivals
-            const lateArrivalsEl = document.querySelector('.stat-card:nth-child(3) .stat-number');
-            if (lateArrivalsEl) lateArrivalsEl.textContent = stats.late_arrivals || 0;
-            
-            // Update Attendance Rate
-            const attendanceRateEl = document.querySelector('.stat-card:nth-child(4) .stat-number');
-            if (attendanceRateEl) attendanceRateEl.textContent = (stats.attendance_rate || 0) + '%';
+            if (stats) {
+                // Update Total Scans
+                const totalScansEl = document.getElementById('total-scans-value');
+                if (totalScansEl) {
+                    totalScansEl.textContent = stats.total_scans || 0;
+                    console.log('Updated Total Scans:', stats.total_scans);
+                }
+                
+                // Update Unique Students
+                const uniqueStudentsEl = document.getElementById('unique-students-value');
+                if (uniqueStudentsEl) {
+                    uniqueStudentsEl.textContent = stats.unique_students || 0;
+                    console.log('Updated Unique Students:', stats.unique_students);
+                }
+                
+                // Update Late Arrivals
+                const lateArrivalsEl = document.getElementById('late-arrivals-value');
+                if (lateArrivalsEl) {
+                    lateArrivalsEl.textContent = stats.late_arrivals || 0;
+                    console.log('Updated Late Arrivals:', stats.late_arrivals);
+                }
+                
+                // Update Attendance Rate
+                const attendanceRateEl = document.getElementById('attendance-rate-value');
+                if (attendanceRateEl) {
+                    const rate = stats.attendance_rate || 0;
+                    attendanceRateEl.textContent = rate + '%';
+                    console.log('Updated Attendance Rate:', rate);
+                }
+            } else {
+                console.warn('No session_stats found in response');
+            }
+        } else {
+            console.error('Statistics API returned error:', statsData.error || 'Unknown error');
         }
     } catch (error) {
         console.error('Error updating statistics:', error);

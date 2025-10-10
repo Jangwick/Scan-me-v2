@@ -395,3 +395,269 @@ def session_attendance(session_id):
     except Exception as e:
         flash(f'Error loading session attendance: {str(e)}', 'error')
         return redirect(url_for('attendance.manage_sessions'))
+
+@attendance_bp.route('/api/attendance-trends')
+@login_required
+@requires_professor_or_admin
+def get_attendance_trends():
+    """Get attendance trends for the last 30 days"""
+    try:
+        # Get date range (last 30 days)
+        from datetime import datetime as dt
+        end_date = date.today()
+        start_date = end_date - timedelta(days=29)
+        
+        # Convert to datetime for comparison
+        start_datetime = dt.combine(start_date, dt.min.time())
+        end_datetime = dt.combine(end_date, dt.max.time())
+        
+        # Query attendance records grouped by date
+        from sqlalchemy import func
+        
+        # Use func.date() to extract date from datetime
+        daily_stats = db.session.query(
+            func.date(AttendanceRecord.time_in).label('date'),
+            func.count(AttendanceRecord.id).label('total_scans'),
+            func.count(func.distinct(AttendanceRecord.student_id)).label('unique_students')
+        ).filter(
+            AttendanceRecord.time_in >= start_datetime,
+            AttendanceRecord.time_in <= end_datetime
+        ).group_by(
+            func.date(AttendanceRecord.time_in)
+        ).order_by(
+            func.date(AttendanceRecord.time_in)
+        ).all()
+        
+        # Format data for chart
+        dates = []
+        total_scans = []
+        unique_students = []
+        
+        # Create a complete date range
+        current_date = start_date
+        date_map = {}
+        
+        # Convert string dates from query to date objects
+        for stat in daily_stats:
+            if stat.date:
+                # Parse the date string
+                if isinstance(stat.date, str):
+                    date_obj = dt.strptime(stat.date, '%Y-%m-%d').date()
+                else:
+                    date_obj = stat.date
+                date_map[date_obj] = stat
+        
+        # Build complete date range with all days
+        while current_date <= end_date:
+            dates.append(current_date.strftime('%b %d'))
+            
+            if current_date in date_map:
+                stat = date_map[current_date]
+                total_scans.append(stat.total_scans)
+                unique_students.append(stat.unique_students)
+            else:
+                total_scans.append(0)
+                unique_students.append(0)
+            
+            current_date += timedelta(days=1)
+        
+        return jsonify({
+            'success': True,
+            'dates': dates,
+            'total_scans': total_scans,
+            'unique_students': unique_students
+        })
+        
+    except Exception as e:
+        import traceback
+        print(f"Error in get_attendance_trends: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@attendance_bp.route('/api/department-breakdown')
+@login_required
+@requires_professor_or_admin
+def get_department_breakdown():
+    """Get attendance breakdown by department"""
+    try:
+        from sqlalchemy import func
+        
+        # Query attendance records with student department info
+        department_stats = db.session.query(
+            Student.department,
+            func.count(AttendanceRecord.id).label('total_records'),
+            func.count(func.distinct(AttendanceRecord.student_id)).label('unique_students')
+        ).join(
+            AttendanceRecord, Student.id == AttendanceRecord.student_id
+        ).group_by(
+            Student.department
+        ).order_by(
+            func.count(AttendanceRecord.id).desc()
+        ).all()
+        
+        # Format data for chart
+        departments = []
+        attendance_counts = []
+        student_counts = []
+        
+        for stat in department_stats:
+            if stat.department:  # Skip null departments
+                departments.append(stat.department)
+                attendance_counts.append(stat.total_records)
+                student_counts.append(stat.unique_students)
+        
+        return jsonify({
+            'success': True,
+            'departments': departments,
+            'attendance_counts': attendance_counts,
+            'student_counts': student_counts
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@attendance_bp.route('/api/analytics-insights')
+@login_required
+@requires_professor_or_admin
+def get_analytics_insights():
+    """Get analytics insights for top classes, peak hours, and areas for improvement"""
+    try:
+        from sqlalchemy import func, extract
+        
+        # Top performing classes (by session)
+        top_sessions = db.session.query(
+            AttendanceSession.session_name,
+            AttendanceSession.subject,
+            func.count(func.distinct(AttendanceRecord.student_id)).label('unique_students'),
+            func.count(AttendanceRecord.id).label('total_scans'),
+            AttendanceSession.expected_students
+        ).join(
+            AttendanceRecord, AttendanceSession.id == AttendanceRecord.session_id
+        ).group_by(
+            AttendanceSession.id
+        ).order_by(
+            func.count(func.distinct(AttendanceRecord.student_id)).desc()
+        ).limit(4).all()
+        
+        top_classes = []
+        for session in top_sessions:
+            attendance_rate = 0
+            if session.expected_students and session.expected_students > 0:
+                attendance_rate = round((session.unique_students / session.expected_students) * 100, 1)
+            
+            top_classes.append({
+                'name': f"{session.subject or session.session_name}",
+                'attendance_rate': attendance_rate,
+                'students': session.unique_students
+            })
+        
+        # Peak hours (attendance by hour)
+        peak_hours_data = db.session.query(
+            extract('hour', AttendanceRecord.time_in).label('hour'),
+            func.count(AttendanceRecord.id).label('count')
+        ).group_by(
+            extract('hour', AttendanceRecord.time_in)
+        ).order_by(
+            func.count(AttendanceRecord.id).desc()
+        ).limit(4).all()
+        
+        peak_hours = []
+        for hour_stat in peak_hours_data:
+            hour = int(hour_stat.hour)
+            count = hour_stat.count
+            
+            # Format hour
+            start_hour = hour % 12 if hour % 12 != 0 else 12
+            end_hour = (hour + 1) % 12 if (hour + 1) % 12 != 0 else 12
+            start_period = 'AM' if hour < 12 else 'PM'
+            end_period = 'AM' if hour + 1 < 12 else 'PM'
+            
+            # Determine activity level
+            if count > 50:
+                activity = 'High activity'
+            elif count > 20:
+                activity = 'Medium activity'
+            else:
+                activity = 'Low activity'
+            
+            peak_hours.append({
+                'time_range': f"{start_hour}:00 {start_period} - {end_hour}:00 {end_period}",
+                'activity': activity,
+                'count': count
+            })
+        
+        # Areas for improvement
+        # 1. Late arrivals percentage
+        total_records = AttendanceRecord.query.count()
+        late_arrivals = AttendanceRecord.query.filter_by(is_late=True).count()
+        late_percentage = round((late_arrivals / total_records * 100), 1) if total_records > 0 else 0
+        
+        # 2. Friday attendance (typically lower)
+        friday_records = db.session.query(
+            func.count(AttendanceRecord.id)
+        ).filter(
+            extract('dow', AttendanceRecord.time_in) == 5  # Friday
+        ).scalar() or 0
+        
+        # 3. Room with issues (duplicate scans)
+        problem_rooms = db.session.query(
+            Room.room_name,
+            func.count(AttendanceRecord.id).label('issues')
+        ).join(
+            AttendanceRecord, Room.id == AttendanceRecord.room_id
+        ).filter(
+            AttendanceRecord.is_duplicate == True
+        ).group_by(
+            Room.id
+        ).order_by(
+            func.count(AttendanceRecord.id).desc()
+        ).first()
+        
+        # 4. Duplicate scans
+        duplicate_scans = AttendanceRecord.query.filter_by(is_duplicate=True).count()
+        duplicate_percentage = round((duplicate_scans / total_records * 100), 1) if total_records > 0 else 0
+        
+        improvements = [
+            {
+                'metric': 'Late arrivals',
+                'value': f"{late_percentage}% of records",
+                'count': late_arrivals
+            },
+            {
+                'metric': 'Friday classes',
+                'value': 'Lower attendance',
+                'count': friday_records
+            }
+        ]
+        
+        if problem_rooms:
+            improvements.append({
+                'metric': f"Room {problem_rooms.room_name}",
+                'value': 'Technical issues',
+                'count': problem_rooms.issues
+            })
+        
+        improvements.append({
+            'metric': 'Duplicate scans',
+            'value': f"{duplicate_percentage}% of records",
+            'count': duplicate_scans
+        })
+        
+        return jsonify({
+            'success': True,
+            'top_classes': top_classes,
+            'peak_hours': peak_hours,
+            'improvements': improvements
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
