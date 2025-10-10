@@ -55,9 +55,48 @@ def export_attendance_to_excel(attendance_data, filename=None):
         header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
         header_font = Font(color="FFFFFF", bold=True)
         
+        # Define styles for different attendance statuses
+        absent_fill = PatternFill(start_color="FEE2E2", end_color="FEE2E2", fill_type="solid")  # Light red
+        absent_font = Font(color="991B1B", bold=True)  # Dark red
+        
+        late_fill = PatternFill(start_color="FEF3C7", end_color="FEF3C7", fill_type="solid")  # Light yellow
+        late_font = Font(color="92400E")  # Dark yellow
+        
+        present_fill = PatternFill(start_color="D1FAE5", end_color="D1FAE5", fill_type="solid")  # Light green
+        present_font = Font(color="065F46")  # Dark green
+        
         # Write data
-        for r in dataframe_to_rows(df, index=False, header=True):
+        for r_idx, r in enumerate(dataframe_to_rows(df, index=False, header=True), 1):
             ws.append(r)
+            
+            # Apply conditional formatting based on attendance status
+            if r_idx > 1:  # Skip header row
+                # Find the Attendance Status column
+                try:
+                    status_col_idx = list(df.columns).index('Attendance Status') + 1 if 'Attendance Status' in df.columns else None
+                    
+                    if status_col_idx:
+                        status_cell = ws.cell(row=r_idx, column=status_col_idx)
+                        status_value = str(status_cell.value) if status_cell.value else ""
+                        
+                        # Apply formatting to entire row based on status
+                        for col_idx in range(1, len(df.columns) + 1):
+                            cell = ws.cell(row=r_idx, column=col_idx)
+                            
+                            if 'Absent' in status_value:
+                                cell.fill = absent_fill
+                                if col_idx == status_col_idx:
+                                    cell.font = absent_font
+                            elif 'Late' in status_value:
+                                cell.fill = late_fill
+                                if col_idx == status_col_idx:
+                                    cell.font = late_font
+                            elif 'Present' in status_value and 'On-Time' in status_value:
+                                cell.fill = present_fill
+                                if col_idx == status_col_idx:
+                                    cell.font = present_font
+                except (ValueError, IndexError):
+                    pass  # Column not found, skip formatting
         
         # Format header
         for cell in ws[1]:
@@ -175,9 +214,23 @@ def export_attendance_to_pdf(attendance_data, title="Attendance Report", filenam
         elements.append(date_para)
         
         if attendance_data:
+            # Calculate statistics
+            total_records = len(attendance_data)
+            absent_count = len([r for r in attendance_data if 'Absent' in str(r.get('Attendance Status', ''))])
+            present_count = total_records - absent_count
+            
+            # Add summary
+            summary_text = f"<b>Summary:</b> Total Records: {total_records} | Present: {present_count} | Absent (No Time-Out): {absent_count}"
+            summary_para = Paragraph(summary_text, styles['Normal'])
+            elements.append(summary_para)
+            elements.append(Spacer(1, 20))
+            
             # Prepare table data
             headers = list(attendance_data[0].keys())
             table_data = [headers]
+            
+            # Find Attendance Status column index
+            status_col_idx = headers.index('Attendance Status') if 'Attendance Status' in headers else None
             
             for record in attendance_data:
                 row = [str(record.get(header, '')) for header in headers]
@@ -186,19 +239,36 @@ def export_attendance_to_pdf(attendance_data, title="Attendance Report", filenam
             # Create table
             table = Table(table_data)
             
-            # Style table
-            table.setStyle(TableStyle([
+            # Base table style
+            table_style = [
                 ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
                 ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
                 ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 10),
+                ('FONTSIZE', (0, 1), (-1, -1), 8),
                 ('GRID', (0, 0), (-1, -1), 1, colors.black)
-            ]))
+            ]
+            
+            # Add conditional row coloring based on attendance status
+            if status_col_idx is not None:
+                for i, record in enumerate(attendance_data, start=1):
+                    status = str(record.get('Attendance Status', ''))
+                    
+                    if 'Absent' in status:
+                        # Light red background for absent students
+                        table_style.append(('BACKGROUND', (0, i), (-1, i), colors.Color(1, 0.89, 0.89)))
+                        table_style.append(('TEXTCOLOR', (status_col_idx, i), (status_col_idx, i), colors.Color(0.6, 0.1, 0.1)))
+                    elif 'Late' in status:
+                        # Light yellow background for late students
+                        table_style.append(('BACKGROUND', (0, i), (-1, i), colors.Color(1, 0.95, 0.78)))
+                    elif 'On-Time' in status:
+                        # Light green background for on-time students
+                        table_style.append(('BACKGROUND', (0, i), (-1, i), colors.Color(0.82, 0.98, 0.9)))
+            
+            table.setStyle(TableStyle(table_style))
             
             elements.append(table)
         else:
@@ -238,6 +308,8 @@ def generate_student_report(student, attendance_records, start_date=None, end_da
         total_days = len(set(r.scan_time.date() for r in attendance_records))
         total_scans = len(attendance_records)
         late_arrivals = len([r for r in attendance_records if r.is_late])
+        absent_records = len([r for r in attendance_records if r.time_out is None])
+        complete_attendance = total_scans - absent_records
         rooms_visited = len(set(r.room_id for r in attendance_records))
         
         # Group by date
@@ -263,8 +335,11 @@ def generate_student_report(student, attendance_records, start_date=None, end_da
             'summary': {
                 'total_days_attended': total_days,
                 'total_scans': total_scans,
+                'complete_attendance': complete_attendance,
+                'incomplete_attendance': absent_records,
                 'late_arrivals': late_arrivals,
                 'on_time_percentage': round(((total_scans - late_arrivals) / total_scans * 100), 2) if total_scans > 0 else 0,
+                'completion_rate': round((complete_attendance / total_scans * 100), 2) if total_scans > 0 else 0,
                 'rooms_visited': rooms_visited
             },
             'daily_breakdown': {
@@ -272,16 +347,20 @@ def generate_student_report(student, attendance_records, start_date=None, end_da
                     'scans': len(records),
                     'rooms': [r.room.get_full_name() for r in records],
                     'times': [r.scan_time.strftime('%H:%M:%S') for r in records],
-                    'late_count': len([r for r in records if r.is_late])
+                    'late_count': len([r for r in records if r.is_late]),
+                    'incomplete_count': len([r for r in records if r.time_out is None])
                 }
                 for date, records in daily_attendance.items()
             },
             'records': [
                 {
                     'date': r.scan_time.date().isoformat(),
-                    'time': r.scan_time.time().isoformat(),
+                    'time_in': r.time_in.time().isoformat() if r.time_in else 'N/A',
+                    'time_out': r.time_out.time().isoformat() if r.time_out else 'No Time-Out',
+                    'duration': r.get_duration() if r.time_out else 0,
                     'room': r.room.get_full_name() if r.room else 'Unknown',
                     'is_late': r.is_late,
+                    'status': 'Absent (No Time-Out)' if r.time_out is None else ('Present (Late)' if r.is_late else 'Present (On-Time)'),
                     'scanner': r.scanned_by_user.username if r.scanned_by_user else 'System'
                 }
                 for r in sorted(attendance_records, key=lambda x: x.scan_time, reverse=True)
@@ -317,6 +396,8 @@ def generate_room_report(room, attendance_records, start_date=None, end_date=Non
         unique_students = len(set(r.student_id for r in attendance_records))
         unique_days = len(set(r.scan_time.date() for r in attendance_records))
         late_arrivals = len([r for r in attendance_records if r.is_late])
+        incomplete_attendance = len([r for r in attendance_records if r.time_out is None])
+        complete_attendance = total_scans - incomplete_attendance
         
         # Group by date
         daily_stats = {}
@@ -326,13 +407,16 @@ def generate_room_report(room, attendance_records, start_date=None, end_date=Non
                 daily_stats[date_key] = {
                     'students': set(),
                     'total_scans': 0,
-                    'late_count': 0
+                    'late_count': 0,
+                    'incomplete_count': 0
                 }
             
             daily_stats[date_key]['students'].add(record.student_id)
             daily_stats[date_key]['total_scans'] += 1
             if record.is_late:
                 daily_stats[date_key]['late_count'] += 1
+            if record.time_out is None:
+                daily_stats[date_key]['incomplete_count'] += 1
         
         # Convert sets to counts
         for date, stats in daily_stats.items():
@@ -356,6 +440,9 @@ def generate_room_report(room, attendance_records, start_date=None, end_date=Non
                 'unique_students': unique_students,
                 'unique_days': unique_days,
                 'late_arrivals': late_arrivals,
+                'complete_attendance': complete_attendance,
+                'incomplete_attendance': incomplete_attendance,
+                'completion_rate': round((complete_attendance / total_scans * 100), 2) if total_scans > 0 else 0,
                 'average_daily_attendance': round(unique_students / unique_days, 2) if unique_days > 0 else 0,
                 'capacity_utilization': round((unique_students / room.capacity * 100), 2) if room.capacity > 0 else 0
             },
@@ -365,10 +452,13 @@ def generate_room_report(room, attendance_records, start_date=None, end_date=Non
             'records': [
                 {
                     'date': r.scan_time.date().isoformat(),
-                    'time': r.scan_time.time().isoformat(),
+                    'time_in': r.time_in.time().isoformat() if r.time_in else 'N/A',
+                    'time_out': r.time_out.time().isoformat() if r.time_out else 'No Time-Out',
+                    'duration': r.get_duration() if r.time_out else 0,
                     'student': r.student.get_full_name() if r.student else 'Unknown',
                     'student_no': r.student.student_no if r.student else 'N/A',
                     'is_late': r.is_late,
+                    'status': 'Absent (No Time-Out)' if r.time_out is None else ('Present (Late)' if r.is_late else 'Present (On-Time)'),
                     'scanner': r.scanned_by_user.username if r.scanned_by_user else 'System'
                 }
                 for r in sorted(attendance_records, key=lambda x: x.scan_time, reverse=True)

@@ -51,10 +51,27 @@
     .form-control, .form-select {
         border: 2px solid #e5e7eb;
         border-radius: 8px;
-        padding: 0.75rem;
+        padding: 0.75rem 0.75rem 0.75rem 2.75rem;
         font-size: 1rem;
         transition: all 0.2s ease;
         background-color: #fff;
+    }
+
+    /* Remove extra padding for selects and textareas */
+    .form-select {
+        padding-left: 0.75rem;
+    }
+
+    textarea.form-control {
+        padding-left: 0.75rem;
+    }
+
+    /* Remove extra padding for date and time inputs */
+    input[type="date"].form-control,
+    input[type="time"].form-control,
+    input[type="datetime-local"].form-control,
+    input[type="number"].form-control {
+        padding-left: 0.75rem;
     }
 
     .form-control:focus, .form-select:focus {

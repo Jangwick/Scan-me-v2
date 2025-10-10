@@ -152,21 +152,33 @@ def export_records(format):
         records = query.order_by(AttendanceRecord.scan_time.desc()).all()
         
         # Convert to export format
-        export_data = [
-            {
+        export_data = []
+        for record in records:
+            # Determine attendance status
+            if record.time_out is None:
+                attendance_status = 'Absent (No Time-Out)'
+            elif record.is_duplicate:
+                attendance_status = 'Present (Duplicate)'
+            elif record.is_late:
+                attendance_status = 'Present (Late)'
+            else:
+                attendance_status = 'Present (On-Time)'
+            
+            export_data.append({
                 'Date': record.scan_time.strftime('%Y-%m-%d'),
-                'Time': record.scan_time.strftime('%H:%M:%S'),
+                'Time In': record.time_in.strftime('%H:%M:%S') if record.time_in else 'N/A',
+                'Time Out': record.time_out.strftime('%H:%M:%S') if record.time_out else 'No Time-Out',
+                'Duration (min)': record.get_duration() if record.time_out else 0,
                 'Student Name': record.student.get_full_name() if record.student else 'Unknown',
                 'Student No': record.student.student_no if record.student else 'N/A',
                 'Department': record.student.department if record.student else 'N/A',
                 'Room': record.room.get_full_name() if record.room else 'Unknown',
                 'Building': record.room.building if record.room else 'N/A',
+                'Attendance Status': attendance_status,
                 'Is Late': 'Yes' if record.is_late else 'No',
                 'Is Duplicate': 'Yes' if record.is_duplicate else 'No',
                 'Scanner': record.scanned_by_user.username if record.scanned_by_user else 'System'
-            }
-            for record in records
-        ]
+            })
         
         # Export based on format
         if format == 'excel':
