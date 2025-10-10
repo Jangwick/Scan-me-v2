@@ -548,13 +548,41 @@ def get_session_stats(session_id):
                 if record.time_in and not record.time_out:
                     students_in_room.add(record.student_id)
             
+            # Get recent scans (last 10)
+            recent_scans = []
+            sorted_records = sorted(attendance_records, key=lambda x: x.scan_time or x.time_in, reverse=True)[:10]
+            for record in sorted_records:
+                from app.models.student_model import Student
+                student = Student.query.get(record.student_id)
+                if student:
+                    # Determine if this is a time_in or time_out scan
+                    # Most recent action is the one we show
+                    if record.time_out and record.scan_time:
+                        # Has time_out, so most recent was time_out
+                        scan_time = record.time_out
+                        scan_type = 'time_out'
+                    elif record.time_in:
+                        # Only has time_in
+                        scan_time = record.time_in
+                        scan_type = 'time_in'
+                    else:
+                        continue
+                    
+                    recent_scans.append({
+                        'student_id': student.id,
+                        'name': f"{student.first_name} {student.last_name}",
+                        'type': scan_type,
+                        'time': scan_time.isoformat() if scan_time else None
+                    })
+            
             return jsonify({
                 'success': True,
                 'total_scans': len(attendance_records),
                 'unique_students': list(unique_students),
                 'students_in_room': list(students_in_room),
                 'time_in_count': attendance_summary.get('complete_records', 0) + len(students_in_room),
-                'time_out_count': attendance_summary.get('complete_records', 0)
+                'time_out_count': attendance_summary.get('complete_records', 0),
+                'recent_scans': recent_scans
             })
         else:
             # Fallback to AttendanceSession (legacy)
@@ -569,15 +597,51 @@ def get_session_stats(session_id):
             
             # Get students currently in room (is_active = True)
             students_in_room = set()
+            time_in_count = 0
+            time_out_count = 0
+            
             for record in attendance_records:
                 if record.is_active:  # Student is currently in room
                     students_in_room.add(record.student_id)
+                # Count time-in scans (all records have time_in)
+                if record.time_in:
+                    time_in_count += 1
+                # Count time-out scans
+                if record.time_out:
+                    time_out_count += 1
+            
+            # Get recent scans (last 10)
+            recent_scans = []
+            sorted_records = sorted(attendance_records, key=lambda x: x.scan_time or x.time_in, reverse=True)[:10]
+            for record in sorted_records:
+                from app.models.student_model import Student
+                student = Student.query.get(record.student_id)
+                if student:
+                    # Determine if this is a time_in or time_out scan
+                    if record.time_out and record.scan_time:
+                        scan_time = record.time_out
+                        scan_type = 'time_out'
+                    elif record.time_in:
+                        scan_time = record.time_in
+                        scan_type = 'time_in'
+                    else:
+                        continue
+                    
+                    recent_scans.append({
+                        'student_id': student.id,
+                        'name': f"{student.first_name} {student.last_name}",
+                        'type': scan_type,
+                        'time': scan_time.isoformat() if scan_time else None
+                    })
             
             return jsonify({
                 'success': True,
                 'total_scans': total_scans,
                 'unique_students': list(unique_students),
-                'students_in_room': list(students_in_room)
+                'students_in_room': list(students_in_room),
+                'time_in_count': time_in_count,
+                'time_out_count': time_out_count,
+                'recent_scans': recent_scans
             })
         
     except Exception as e:

@@ -1322,6 +1322,9 @@
         setInterval(updateStatisticsDisplay, 1000);
         setInterval(updateSessionTimer, 1000); // Update timer every second
         
+        // Auto-refresh statistics from server every 10 seconds to keep data in sync
+        setInterval(loadSessionStatistics, 10000);
+        
         // Test immediate statistics update
         console.log('Testing immediate statistics update...');
         updateStatisticsDisplay();
@@ -1816,8 +1819,23 @@
                 sessionStats.totalScans = stats.total_scans || 0;
                 sessionStats.uniqueStudents = new Set(stats.unique_students || []);
                 sessionStats.studentsInRoom = new Set(stats.students_in_room || []);
+                // Load time in/out counts from server
+                sessionStats.timeInCount = stats.time_in_count || 0;
+                sessionStats.timeOutCount = stats.time_out_count || 0;
+                
+                // Load recent scans from server
+                if (stats.recent_scans && stats.recent_scans.length > 0) {
+                    sessionStats.scans = stats.recent_scans.map(scan => ({
+                        student_id: scan.student_id,
+                        name: scan.name,
+                        type: scan.type,
+                        time: new Date(scan.time)
+                    }));
+                }
+                
                 console.log('Updated sessionStats:', sessionStats);
                 updateStatisticsDisplay();
+                updateRecentScansDisplay();
             } else {
                 console.error('Stats request failed:', stats.error);
                 showMessage(`Failed to load statistics: ${stats.error}`, 'error');
