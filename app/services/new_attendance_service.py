@@ -92,7 +92,8 @@ class NewAttendanceService:
                     }
                 elif current_time <= session_end:
                     # Can time in (grace period or active session)
-                    is_late = in_time_in_grace  # Late if arrived during grace period (before session start)
+                    # LATE if arrived AFTER session started (not during grace period)
+                    is_late = current_time >= session_start  # Late if arrived after session start
                     
                     # Create attendance record (constructor doesn't accept time_in)
                     new_record = AttendanceRecord(
@@ -113,11 +114,17 @@ class NewAttendanceService:
                     db.session.add(new_record)
                     db.session.commit()
                     
-                    grace_indicator = " (GRACE PERIOD - MARKED AS LATE)" if is_late else ""
+                    # Update success message based on timing
+                    if in_time_in_grace:
+                        status_msg = " (GRACE PERIOD - ON TIME)"
+                    elif is_late:
+                        status_msg = " (MARKED AS LATE)"
+                    else:
+                        status_msg = ""
                     
                     return {
                         'success': True,
-                        'message': f'Time in successful{grace_indicator}! Welcome {student.get_full_name()}',
+                        'message': f'Time in successful{status_msg}! Welcome {student.get_full_name()}',
                         'action': 'time_in',
                         'is_late': is_late,
                         'in_grace_period': in_time_in_grace,
@@ -262,7 +269,8 @@ class NewAttendanceService:
                     }
                 elif current_time <= session_end:
                     # Can time in (grace period or active session)
-                    is_late = in_time_in_grace  # Late if arrived during grace period (before session start)
+                    # LATE if arrived AFTER session started (not during grace period)
+                    is_late = current_time >= session_start  # Late if arrived after session start
                     
                     # Create attendance record (constructor doesn't accept time_in)
                     new_record = AttendanceRecord(
@@ -280,11 +288,17 @@ class NewAttendanceService:
                     db.session.add(new_record)
                     db.session.commit()
                     
-                    grace_indicator = " (GRACE PERIOD - MARKED AS LATE)" if is_late else ""
+                    # Update success message based on timing
+                    if in_time_in_grace:
+                        status_msg = " (GRACE PERIOD - ON TIME)"
+                    elif is_late:
+                        status_msg = " (MARKED AS LATE)"
+                    else:
+                        status_msg = ""
                     
                     return {
                         'success': True,
-                        'message': f'Time in successful{grace_indicator}! Welcome {student.get_full_name()}',
+                        'message': f'Time in successful{status_msg}! Welcome {student.get_full_name()}',
                         'action': 'time_in',
                         'is_late': is_late,
                         'in_grace_period': in_time_in_grace,

@@ -841,6 +841,38 @@
         display: inline-block;
     }
 
+    /* Late Badge for Recent Scans */
+    .late-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border: 1px solid #fbbf24;
+        border-radius: 6px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #78350f;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 4px -1px rgba(251, 191, 36, 0.2);
+        animation: latePulse 2s infinite;
+    }
+
+    .late-badge i {
+        font-size: 0.7rem;
+        color: #d97706;
+    }
+
+    @keyframes latePulse {
+        0%, 100% {
+            box-shadow: 0 2px 4px -1px rgba(251, 191, 36, 0.2);
+        }
+        50% {
+            box-shadow: 0 3px 8px -1px rgba(251, 191, 36, 0.4);
+        }
+    }
+
     .empty-state {
         text-align: center;
         color: #94a3b8;
@@ -1541,10 +1573,12 @@
             });
             
             const result = await response.json();
+            console.log('Backend response:', result);
+            console.log('is_late value:', result.is_late);
             
             if (result.success) {
                 showMessage(result.message, 'success');
-                addRecentScan(result.student.name, result.action);
+                addRecentScan(result.student.name, result.action, result.is_late || false);
                 updateSessionStats(result.student.id, result.action);
             } else {
                 showMessage(result.error, 'error');
@@ -1571,13 +1605,16 @@
         updateStatisticsDisplay();
     }
 
-    function addRecentScan(studentName, scanType) {
+    function addRecentScan(studentName, scanType, isLate = false) {
+        console.log('addRecentScan called:', { studentName, scanType, isLate });
         const scanItem = {
             name: studentName,
             type: scanType,
-            time: new Date()
+            time: new Date(),
+            is_late: isLate
         };
         
+        console.log('Created scanItem:', scanItem);
         sessionStats.scans.unshift(scanItem);
         
         // Keep only last 10 scans
@@ -1585,6 +1622,7 @@
             sessionStats.scans = sessionStats.scans.slice(0, 10);
         }
         
+        console.log('All scans after adding:', sessionStats.scans);
         updateRecentScansDisplay();
     }
 
@@ -1655,7 +1693,7 @@
             stateNotice.classList.add('grace-timein');
             stateIcon.className = 'fas fa-clock';
             stateTitle.textContent = 'Grace Period - Time In';
-            stateDescription.textContent = `Students can scan early for attendance. Session starts in ${graceMinutesRemaining} minute${graceMinutesRemaining !== 1 ? 's' : ''}. Early scans will be marked as late.`;
+            stateDescription.textContent = `Students can scan early for attendance. Session starts in ${graceMinutesRemaining} minute${graceMinutesRemaining !== 1 ? 's' : ''}. Early scans will be logged as ON TIME.`;
             stateBadge.textContent = `${graceMinutesRemaining} MIN LEFT`;
             
         } else if (isActiveSession) {
@@ -1667,7 +1705,7 @@
             stateNotice.classList.add('session-active');
             stateIcon.className = 'fas fa-play-circle';
             stateTitle.textContent = 'Session Active';
-            stateDescription.textContent = `Accepting time-in and time-out attendance. Session ends in ${minutesRemaining} minute${minutesRemaining !== 1 ? 's' : ''}.`;
+            stateDescription.textContent = `Accepting time-in and time-out attendance. Session ends in ${minutesRemaining} minute${minutesRemaining !== 1 ? 's' : ''}. Late arrivals will be marked.`;
             stateBadge.textContent = `${minutesRemaining} MIN LEFT`;
             
             if (minutesRemaining >= 60) {
@@ -1763,6 +1801,8 @@
     function updateRecentScansDisplay() {
         const container = document.getElementById('recentScansList');
         
+        console.log('updateRecentScansDisplay called, scans:', sessionStats.scans);
+        
         if (sessionStats.scans.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
@@ -1773,19 +1813,27 @@
             return;
         }
         
-        container.innerHTML = sessionStats.scans.map(scan => `
+        container.innerHTML = sessionStats.scans.map(scan => {
+            const lateBadgeHTML = scan.is_late && scan.type === 'time_in' ? '<span class="late-badge"><i class="fas fa-exclamation-circle"></i> LATE</span>' : '';
+            console.log(`Scan: ${scan.name}, Type: ${scan.type}, is_late: ${scan.is_late}, Badge HTML: ${lateBadgeHTML}`);
+            
+            return `
             <div class="scan-item" data-scan-type="${scan.type === 'time_in' ? 'entry' : 'exit'}">
                 <div class="scan-avatar">
                     ${scan.name.charAt(0).toUpperCase()}
                 </div>
                 <div class="scan-details">
-                    <div class="scan-name">${scan.name}</div>
+                    <div class="scan-name">
+                        ${scan.name}
+                        ${lateBadgeHTML}
+                    </div>
                     <div class="scan-time">
                         ${scan.type === 'time_in' ? 'Entered' : 'Exited'} at ${scan.time.toLocaleTimeString()}
                     </div>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
     }
 
     async function loadSessionStatistics() {
@@ -1829,7 +1877,8 @@
                         student_id: scan.student_id,
                         name: scan.name,
                         type: scan.type,
-                        time: new Date(scan.time)
+                        time: new Date(scan.time),
+                        is_late: scan.is_late || false  // Include late status
                     }));
                 }
                 

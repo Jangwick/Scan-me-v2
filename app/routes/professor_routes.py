@@ -255,6 +255,7 @@ def process_session_scan(session_id):
                     'success': True,
                     'message': result['message'],
                     'action': result['action'],
+                    'is_late': result.get('is_late', False),  # Include late status
                     'student': {
                         'id': student.id,
                         'name': student.get_full_name(),
@@ -572,7 +573,8 @@ def get_session_stats(session_id):
                         'student_id': student.id,
                         'name': f"{student.first_name} {student.last_name}",
                         'type': scan_type,
-                        'time': scan_time.isoformat() if scan_time else None
+                        'time': scan_time.isoformat() if scan_time else None,
+                        'is_late': record.is_late  # Include late status
                     })
             
             return jsonify({
@@ -631,7 +633,8 @@ def get_session_stats(session_id):
                         'student_id': student.id,
                         'name': f"{student.first_name} {student.last_name}",
                         'type': scan_type,
-                        'time': scan_time.isoformat() if scan_time else None
+                        'time': scan_time.isoformat() if scan_time else None,
+                        'is_late': record.is_late  # Include late status
                     })
             
             return jsonify({
