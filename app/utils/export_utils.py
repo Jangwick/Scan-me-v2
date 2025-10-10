@@ -17,6 +17,14 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils.dataframe import dataframe_to_rows
 
+# Get the base directory for exports
+def get_export_dir():
+    """Get the absolute path to the exports directory"""
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    export_dir = os.path.join(base_dir, 'exports')
+    os.makedirs(export_dir, exist_ok=True)
+    return export_dir
+
 def export_attendance_to_excel(attendance_data, filename=None):
     """
     Export attendance data to Excel file
@@ -30,6 +38,10 @@ def export_attendance_to_excel(attendance_data, filename=None):
         if not filename:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"attendance_report_{timestamp}.xlsx"
+        
+        # Ensure export directory exists
+        export_dir = get_export_dir()
+        output_path = os.path.join(export_dir, filename)
         
         # Convert to DataFrame
         df = pd.DataFrame(attendance_data)
@@ -67,14 +79,14 @@ def export_attendance_to_excel(attendance_data, filename=None):
             ws.column_dimensions[column_letter].width = adjusted_width
         
         # Save file
-        output_path = os.path.join('exports', filename)
-        os.makedirs('exports', exist_ok=True)
         wb.save(output_path)
         
         return output_path
         
     except Exception as e:
         print(f"Error exporting to Excel: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 def export_attendance_to_csv(attendance_data, filename=None):
@@ -91,8 +103,9 @@ def export_attendance_to_csv(attendance_data, filename=None):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"attendance_report_{timestamp}.csv"
         
-        output_path = os.path.join('exports', filename)
-        os.makedirs('exports', exist_ok=True)
+        # Ensure export directory exists
+        export_dir = get_export_dir()
+        output_path = os.path.join(export_dir, filename)
         
         if not attendance_data:
             return None
@@ -109,6 +122,8 @@ def export_attendance_to_csv(attendance_data, filename=None):
         
     except Exception as e:
         print(f"Error exporting to CSV: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 def export_attendance_to_pdf(attendance_data, title="Attendance Report", filename=None):
@@ -126,8 +141,9 @@ def export_attendance_to_pdf(attendance_data, title="Attendance Report", filenam
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"attendance_report_{timestamp}.pdf"
         
-        output_path = os.path.join('exports', filename)
-        os.makedirs('exports', exist_ok=True)
+        # Ensure export directory exists
+        export_dir = get_export_dir()
+        output_path = os.path.join(export_dir, filename)
         
         # Create PDF document
         doc = SimpleDocTemplate(output_path, pagesize=A4)
@@ -196,6 +212,8 @@ def export_attendance_to_pdf(attendance_data, title="Attendance Report", filenam
         
     except Exception as e:
         print(f"Error exporting to PDF: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 def generate_student_report(student, attendance_records, start_date=None, end_date=None):
