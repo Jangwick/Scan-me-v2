@@ -157,6 +157,18 @@
         color: #3730a3;
     }
 
+    .status-late {
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
     .record-details {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -422,7 +434,7 @@
 </div>
 
 <!-- Session Actions -->
-<div class="d-flex justify-content-between align-items-center">
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
     <div>
         <a href="{{ url_for('attendance.manage_sessions') }}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left"></i>
@@ -430,7 +442,7 @@
         </a>
     </div>
     
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
         {% if session.get_status() == 'active' %}
         <a href="{{ url_for('scanner.session', session_id=session.id) }}" class="btn btn-primary">
             <i class="fas fa-qrcode"></i>
@@ -438,34 +450,431 @@
         </a>
         {% endif %}
         
-        <button class="btn btn-primary" onclick="exportSession({{ session.id }})">
-            <i class="fas fa-download"></i>
-            Export Data
-        </button>
+        <!-- Export Dropdown Button -->
+        <div class="btn-group">
+            <button type="button" class="btn btn-success" onclick="exportToCSV()">
+                <i class="fas fa-file-csv"></i>
+                Export CSV
+            </button>
+            <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="visually-hidden">Toggle Dropdown</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="#" onclick="exportToCSV(); return false;">
+                    <i class="fas fa-file-csv me-2"></i>Export as CSV
+                </a></li>
+                <li><a class="dropdown-item" href="#" onclick="exportToExcel(); return false;">
+                    <i class="fas fa-file-excel me-2"></i>Export as Excel
+                </a></li>
+                <li><a class="dropdown-item" href="#" onclick="exportToPDF(); return false;">
+                    <i class="fas fa-file-pdf me-2"></i>Export as PDF
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#" onclick="printAttendance(); return false;">
+                    <i class="fas fa-print me-2"></i>Print Attendance
+                </a></li>
+            </ul>
+        </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function exportSession(sessionId) {
-    // Simple CSV export functionality
+// Enhanced CSV Export with Time In, Time Out, and Late Status
+function exportToCSV() {
+    showExportProgress('Generating CSV...');
+    
+    const sessionName = '{{ session.session_name }}';
+    const sessionDate = '{{ session.start_time.strftime("%Y-%m-%d") }}';
+    
+    // Build CSV header
+    let csv = 'Student Name,Student Number,Time In,Time Out,Duration (min),Status,Late,Scanned By,Notes\n';
+    
+    // Get all attendance records
     const records = [];
     document.querySelectorAll('.record-item').forEach(item => {
-        const name = item.querySelector('.student-name').textContent.trim();
-        const details = Array.from(item.querySelectorAll('.record-details div')).map(d => d.textContent.trim());
-        records.push([name, ...details].join(','));
+        const studentName = item.querySelector('.student-name')?.textContent.trim() || 'Unknown';
+        
+        // Extract details from record
+        const detailsDiv = item.querySelector('.record-details');
+        const studentNo = extractValue(detailsDiv, 'Student No:') || 'N/A';
+        const timeIn = extractValue(detailsDiv, 'Time In:') || 'N/A';
+        const timeOut = extractValue(detailsDiv, 'Time Out:') || 'Not yet';
+        const duration = extractValue(detailsDiv, 'Duration:')?.replace(' minutes', '') || '0';
+        const scannedBy = extractValue(detailsDiv, 'Scanned By:') || 'N/A';
+        const notes = extractValue(detailsDiv, 'Notes:') || '';
+        
+        // Get status
+        const statusBadge = item.querySelector('.record-status');
+        const status = statusBadge?.textContent.trim() || 'Unknown';
+        
+        // Check if late
+        const lateBadge = item.querySelector('.status-late');
+        const isLate = lateBadge ? 'Yes' : 'No';
+        
+        // Escape commas and quotes in text fields
+        const escapeCSV = (text) => {
+            if (text.includes(',') || text.includes('"') || text.includes('\n')) {
+                return '"' + text.replace(/"/g, '""') + '"';
+            }
+            return text;
+        };
+        
+        // Add row to CSV
+        csv += [
+            escapeCSV(studentName),
+            escapeCSV(studentNo),
+            escapeCSV(timeIn),
+            escapeCSV(timeOut),
+            duration,
+            escapeCSV(status),
+            isLate,
+            escapeCSV(scannedBy),
+            escapeCSV(notes)
+        ].join(',') + '\n';
     });
     
-    const csv = 'Student Name,Student No,Time In,Time Out,Duration,Scanned By,Notes\n' + records.join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `session_${sessionId}_attendance.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+    // Create and download file
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${sessionName}_${sessionDate}_attendance.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    hideExportProgress();
+    showToast('CSV exported successfully!', 'success');
 }
+
+// Export as Excel-compatible format
+function exportToExcel() {
+    showExportProgress('Generating Excel file...');
+    
+    const sessionName = '{{ session.session_name }}';
+    const sessionDate = '{{ session.start_time.strftime("%Y-%m-%d") }}';
+    
+    // Excel format uses tab-separated values with BOM for UTF-8
+    const BOM = '\uFEFF';
+    let content = BOM;
+    
+    // Add header with session info
+    content += `Session: ${sessionName}\n`;
+    content += `Date: ${sessionDate}\n`;
+    content += `Time: {{ session.start_time.strftime("%I:%M %p") }} - {{ session.end_time.strftime("%I:%M %p") }}\n`;
+    content += `Instructor: {{ session.instructor or 'N/A' }}\n\n`;
+    
+    // Add table header
+    content += 'Student Name\tStudent Number\tTime In\tTime Out\tDuration (min)\tStatus\tLate\tScanned By\tNotes\n';
+    
+    // Add records
+    document.querySelectorAll('.record-item').forEach(item => {
+        const studentName = item.querySelector('.student-name')?.textContent.trim() || 'Unknown';
+        const detailsDiv = item.querySelector('.record-details');
+        
+        const studentNo = extractValue(detailsDiv, 'Student No:') || 'N/A';
+        const timeIn = extractValue(detailsDiv, 'Time In:') || 'N/A';
+        const timeOut = extractValue(detailsDiv, 'Time Out:') || 'Not yet';
+        const duration = extractValue(detailsDiv, 'Duration:')?.replace(' minutes', '') || '0';
+        const scannedBy = extractValue(detailsDiv, 'Scanned By:') || 'N/A';
+        const notes = extractValue(detailsDiv, 'Notes:') || '';
+        
+        const statusBadge = item.querySelector('.record-status');
+        const status = statusBadge?.textContent.trim() || 'Unknown';
+        
+        const lateBadge = item.querySelector('.status-late');
+        const isLate = lateBadge ? 'Yes' : 'No';
+        
+        content += `${studentName}\t${studentNo}\t${timeIn}\t${timeOut}\t${duration}\t${status}\t${isLate}\t${scannedBy}\t${notes}\n`;
+    });
+    
+    // Create and download file
+    const blob = new Blob([content], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${sessionName}_${sessionDate}_attendance.xls`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    hideExportProgress();
+    showToast('Excel file exported successfully!', 'success');
+}
+
+// Export as PDF (basic HTML to PDF)
+function exportToPDF() {
+    showToast('Opening print dialog for PDF export...', 'info');
+    
+    // Create a printable version
+    const printWindow = window.open('', '_blank');
+    const sessionName = '{{ session.session_name }}';
+    const sessionDate = '{{ session.start_time.strftime("%B %d, %Y") }}';
+    const sessionTime = '{{ session.start_time.strftime("%I:%M %p") }} - {{ session.end_time.strftime("%I:%M %p") }}';
+    
+    let htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>${sessionName} - Attendance Report</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    padding: 20px;
+                    color: #333;
+                }
+                .header {
+                    text-align: center;
+                    margin-bottom: 30px;
+                    border-bottom: 3px solid #667eea;
+                    padding-bottom: 20px;
+                }
+                .header h1 {
+                    color: #667eea;
+                    margin: 0;
+                }
+                .header p {
+                    margin: 5px 0;
+                    color: #666;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                }
+                th {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 12px;
+                    text-align: left;
+                    font-weight: 600;
+                }
+                td {
+                    padding: 10px 12px;
+                    border-bottom: 1px solid #e5e7eb;
+                }
+                tr:nth-child(even) {
+                    background-color: #f9fafb;
+                }
+                .late-badge {
+                    background: #fee2e2;
+                    color: #991b1b;
+                    padding: 3px 8px;
+                    border-radius: 4px;
+                    font-size: 11px;
+                    font-weight: 600;
+                }
+                .status-badge {
+                    padding: 3px 8px;
+                    border-radius: 4px;
+                    font-size: 11px;
+                    font-weight: 600;
+                }
+                .status-in_room {
+                    background: #dcfce7;
+                    color: #166534;
+                }
+                .status-timed_out {
+                    background: #e0e7ff;
+                    color: #3730a3;
+                }
+                .footer {
+                    margin-top: 30px;
+                    padding-top: 20px;
+                    border-top: 2px solid #e5e7eb;
+                    text-align: center;
+                    color: #6b7280;
+                    font-size: 12px;
+                }
+                @media print {
+                    body { padding: 0; }
+                    .no-print { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>${sessionName}</h1>
+                <p><strong>Date:</strong> ${sessionDate}</p>
+                <p><strong>Time:</strong> ${sessionTime}</p>
+                <p><strong>Instructor:</strong> {{ session.instructor or 'N/A' }}</p>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Student No</th>
+                        <th>Time In</th>
+                        <th>Time Out</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Late</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    // Add rows
+    document.querySelectorAll('.record-item').forEach(item => {
+        const studentName = item.querySelector('.student-name')?.textContent.trim() || 'Unknown';
+        const detailsDiv = item.querySelector('.record-details');
+        
+        const studentNo = extractValue(detailsDiv, 'Student No:') || 'N/A';
+        const timeIn = extractValue(detailsDiv, 'Time In:') || 'N/A';
+        const timeOut = extractValue(detailsDiv, 'Time Out:') || 'Not yet';
+        const duration = extractValue(detailsDiv, 'Duration:') || '0';
+        
+        const statusBadge = item.querySelector('.record-status');
+        const status = statusBadge?.textContent.trim() || 'Unknown';
+        const statusClass = statusBadge?.className.match(/status-\w+/)?.[0] || '';
+        
+        const lateBadge = item.querySelector('.status-late');
+        const isLate = lateBadge ? '<span class="late-badge">YES</span>' : 'No';
+        
+        htmlContent += `
+            <tr>
+                <td>${studentName}</td>
+                <td>${studentNo}</td>
+                <td>${timeIn}</td>
+                <td>${timeOut}</td>
+                <td>${duration}</td>
+                <td><span class="status-badge ${statusClass}">${status}</span></td>
+                <td>${isLate}</td>
+            </tr>
+        `;
+    });
+    
+    htmlContent += `
+                </tbody>
+            </table>
+            
+            <div class="footer">
+                <p>Generated on ${new Date().toLocaleString()}</p>
+                <p>ScanMe Attendance System</p>
+            </div>
+            
+            <div class="no-print" style="text-align: center; margin-top: 20px;">
+                <button onclick="window.print()" style="padding: 10px 30px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
+                    <i class="fas fa-print"></i> Print / Save as PDF
+                </button>
+                <button onclick="window.close()" style="padding: 10px 30px; background: #6b7280; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin-left: 10px;">
+                    Close
+                </button>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+}
+
+// Print Attendance
+function printAttendance() {
+    exportToPDF();
+}
+
+// Helper function to extract values from record details
+function extractValue(container, label) {
+    if (!container) return null;
+    
+    const divs = Array.from(container.querySelectorAll('div'));
+    for (const div of divs) {
+        const text = div.textContent.trim();
+        if (text.startsWith(label)) {
+            return text.replace(label, '').trim();
+        }
+    }
+    return null;
+}
+
+// Show export progress
+function showExportProgress(message) {
+    const toast = document.createElement('div');
+    toast.id = 'exportProgress';
+    toast.innerHTML = `
+        <div style="position: fixed; top: 20px; right: 20px; background: #667eea; color: white; padding: 1rem 1.5rem; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); z-index: 10000; display: flex; align-items: center; gap: 12px;">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    document.body.appendChild(toast);
+}
+
+// Hide export progress
+function hideExportProgress() {
+    const progress = document.getElementById('exportProgress');
+    if (progress) {
+        progress.remove();
+    }
+}
+
+// Show toast notification
+function showToast(message, type = 'info') {
+    const colors = {
+        success: 'linear-gradient(135deg, #10b981, #059669)',
+        error: 'linear-gradient(135deg, #ef4444, #dc2626)',
+        info: 'linear-gradient(135deg, #3b82f6, #1d4ed8)'
+    };
+    
+    const icons = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle',
+        info: 'fa-info-circle'
+    };
+    
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        background: ${colors[type] || colors.info};
+        color: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 600;
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+    `;
+    toast.innerHTML = `
+        <i class="fas ${icons[type] || icons.info}"></i>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Add animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(400px); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
 
 // Auto-refresh active students every 30 seconds
 setInterval(() => {

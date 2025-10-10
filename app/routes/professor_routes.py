@@ -649,3 +649,109 @@ def get_session_stats(session_id):
         
     except Exception as e:
         return jsonify({'success': False, 'error': f'Failed to load session stats: {str(e)}'}), 500
+
+
+@professor_bp.route('/api/session/<int:session_id>/attendance-records')
+@login_required
+@requires_professor_access
+def get_session_attendance_records(session_id):
+    """Get all attendance records for export"""
+    try:
+        # First try SessionSchedule (new system)
+        from app.models.session_schedule_model import SessionSchedule
+        from app.models.student_model import Student
+        
+        session = SessionSchedule.query.get(session_id)
+        is_schedule_session = session is not None
+        
+        records_data = []
+        
+        if is_schedule_session:
+            # Get all attendance records for this SessionSchedule
+            attendance_records = AttendanceRecord.query.filter_by(schedule_session_id=session_id).all()
+            
+            for record in attendance_records:
+                student = Student.query.get(record.student_id)
+                if student:
+                    # Calculate duration
+                    duration = 0
+                    if record.time_in and record.time_out:
+                        time_diff = record.time_out - record.time_in
+                        duration = int(time_diff.total_seconds() / 60)
+                    elif record.time_in:
+                        # Still in room
+                        from datetime import datetime
+                        time_diff = datetime.now() - record.time_in
+                        duration = int(time_diff.total_seconds() / 60)
+                    
+                    # Determine status
+                    if record.time_in and record.time_out:
+                        status = 'Completed'
+                    elif record.time_in:
+                        status = 'In Room'
+                    else:
+                        status = 'Unknown'
+                    
+                    records_data.append({
+                        'student_name': student.get_full_name(),
+                        'student_no': student.student_no,
+                        'time_in': record.time_in.strftime('%I:%M %p') if record.time_in else None,
+                        'time_out': record.time_out.strftime('%I:%M %p') if record.time_out else None,
+                        'duration': duration,
+                        'status': status,
+                        'is_late': record.is_late if hasattr(record, 'is_late') else False
+                    })
+        else:
+            # Fallback to AttendanceSession (legacy)
+            session = AttendanceSession.query.get_or_404(session_id)
+            
+            # Verify professor has access
+            professor_name = current_user.username
+            if not (session.instructor == professor_name or 
+                    session.created_by == current_user.id or 
+                    current_user.is_admin()):
+                return jsonify({'success': False, 'error': 'Access denied'}), 403
+            
+            # Get all attendance records for this session
+            attendance_records = AttendanceRecord.query.filter_by(session_id=session_id).all()
+            
+            for record in attendance_records:
+                student = Student.query.get(record.student_id)
+                if student:
+                    # Calculate duration
+                    duration = 0
+                    if record.time_in and record.time_out:
+                        time_diff = record.time_out - record.time_in
+                        duration = int(time_diff.total_seconds() / 60)
+                    elif record.time_in:
+                        # Still in room
+                        from datetime import datetime
+                        time_diff = datetime.now() - record.time_in
+                        duration = int(time_diff.total_seconds() / 60)
+                    
+                    # Determine status
+                    if record.time_in and record.time_out:
+                        status = 'Completed'
+                    elif record.time_in:
+                        status = 'In Room'
+                    else:
+                        status = 'Unknown'
+                    
+                    records_data.append({
+                        'student_name': student.get_full_name(),
+                        'student_no': student.student_no,
+                        'time_in': record.time_in.strftime('%I:%M %p') if record.time_in else None,
+                        'time_out': record.time_out.strftime('%I:%M %p') if record.time_out else None,
+                        'duration': duration,
+                        'status': status,
+                        'is_late': record.is_late if hasattr(record, 'is_late') else False
+                    })
+        
+        return jsonify({
+            'success': True,
+            'records': records_data,
+            'total_records': len(records_data)
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Failed to load attendance records: {str(e)}'}), 500

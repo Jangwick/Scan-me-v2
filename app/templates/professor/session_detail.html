@@ -1,4 +1,4 @@
-{% extends "dashboard_base.html" %}
+﻿{% extends "dashboard_base.html" %}
 
 {% block page_title %}{{ session.session_name }} - Details{% endblock %}
 
@@ -58,6 +58,58 @@
         background: #3c5aa6;
         color: white;
         text-decoration: none;
+    }
+
+    .btn-export {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-export:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
+
+    .dropdown-toggle::after {
+        margin-left: 0.5rem;
+    }
+
+    .dropdown-menu {
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        border: 1px solid #e2e8f0;
+        padding: 0.5rem;
+    }
+
+    .dropdown-item {
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .dropdown-item:hover {
+        background: #f1f5f9;
+        color: #10b981;
+    }
+
+    .dropdown-divider {
+        margin: 0.5rem 0;
     }
 
     .stats-section {
@@ -321,6 +373,33 @@
             <a href="{{ url_for('professor.session_scanner', session_id=session.id) }}" class="btn-scanner">
                 <i class="fas fa-qrcode"></i>Open Scanner
             </a>
+            
+            <!-- Export Dropdown Button -->
+            <div class="btn-group">
+                <button type="button" class="btn-export" onclick="exportToCSV()">
+                    <i class="fas fa-file-csv"></i>Export CSV
+                </button>
+                <button type="button" class="btn-export dropdown-toggle dropdown-toggle-split" 
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="visually-hidden">Toggle Dropdown</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" onclick="exportToCSV(); return false;">
+                        <i class="fas fa-file-csv"></i>Export as CSV
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportToExcel(); return false;">
+                        <i class="fas fa-file-excel"></i>Export as Excel
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportToPDF(); return false;">
+                        <i class="fas fa-file-pdf"></i>Export as PDF
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" onclick="printAttendance(); return false;">
+                        <i class="fas fa-print"></i>Print Attendance
+                    </a></li>
+                </ul>
+            </div>
+            
             <span class="badge bg-{{ 'success' if session.get_session_status() == 'active' else 'secondary' }} fs-6 px-3 py-2">
                 {{ session.get_session_status().title() }}
             </span>
@@ -367,10 +446,10 @@
                         <div class="event-info">
                             <div class="event-name">{{ event.student.get_full_name() }}</div>
                             <div class="event-meta">
-                                {{ event.student.student_no }} • 
+                                {{ event.student.student_no }} â€¢ 
                                 {{ event.event_time.strftime('%H:%M:%S') }}
                                 {% if event.duration_minutes %}
-                                • {{ event.duration_minutes }}min
+                                â€¢ {{ event.duration_minutes }}min
                                 {% endif %}
                             </div>
                         </div>
@@ -406,7 +485,7 @@
                         <div class="student-info">
                             <div class="student-name">{{ student.get_full_name() }}</div>
                             <div class="student-meta">
-                                {{ student.student_no }} • 
+                                {{ student.student_no }} â€¢ 
                                 Entered at {{ record.time_in.strftime('%H:%M') }}
                             </div>
                         </div>
@@ -429,18 +508,448 @@
 
 {% block extra_js %}
 <script>
-    // Add avatar color filter
-    function getAvatarColor(index) {
-        const colors = [
-            '#3b82f6', '#ef4444', '#10b981', '#f59e0b', 
-            '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'
-        ];
-        return colors[index % colors.length];
-    }
+// Enhanced Export Functions for Professor Session Detail
 
-    // Auto-refresh every 30 seconds
-    setInterval(function() {
-        location.reload();
-    }, 30000);
+// Fetch attendance data from backend
+async function fetchAttendanceData() {
+    try {
+        const response = await fetch('{{ url_for("professor.get_session_stats", session_id=session.id) }}');
+        if (!response.ok) {
+            throw new Error('Failed to fetch attendance data');
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error fetching attendance data:', error);
+        return null;
+    }
+}
+
+// Export to CSV with Time In, Time Out, and Late Status
+async function exportToCSV() {
+    showExportProgress('Fetching attendance data...');
+    
+    const sessionName = '{{ session.session_name }}';
+    const sessionDate = '{{ session.start_time.strftime("%Y-%m-%d") }}';
+    
+    // Fetch data from backend
+    const statsData = await fetchAttendanceData();
+    
+    if (!statsData || !statsData.success) {
+        hideExportProgress();
+        showToast('Failed to fetch attendance data', 'error');
+        return;
+    }
+    
+    showExportProgress('Generating CSV...');
+    
+    // Build CSV header
+    let csv = 'Student Name,Student Number,Time In,Time Out,Duration (min),Status,Late\n';
+    
+    // Get attendance records
+    const records = [];
+    
+    // Get all attendance records from the session
+    const response = await fetch('{{ url_for("professor.get_session_attendance_records", session_id=session.id) }}');
+    const attendanceData = await response.json();
+    
+    if (attendanceData.success && attendanceData.records) {
+        attendanceData.records.forEach(record => {
+            csv += `${escapeCSV(record.student_name)},${escapeCSV(record.student_no)},${record.time_in || 'N/A'},${record.time_out || 'Not yet'},${record.duration || '0'},${record.status},${record.is_late ? 'Yes' : 'No'}\n`;
+        });
+    } else {
+        csv += 'No attendance records available\n';
+    }
+    
+    // Create and download file
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${sessionName.replace(/[^a-z0-9]/gi, '_')}_${sessionDate}_attendance.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    hideExportProgress();
+    showToast('CSV exported successfully!', 'success');
+}
+
+// Export as Excel
+async function exportToExcel() {
+    showExportProgress('Fetching attendance data...');
+    
+    const sessionName = '{{ session.session_name }}';
+    const sessionDate = '{{ session.start_time.strftime("%Y-%m-%d") }}';
+    
+    // Fetch data from backend
+    const response = await fetch('{{ url_for("professor.get_session_attendance_records", session_id=session.id) }}');
+    const attendanceData = await response.json();
+    
+    if (!attendanceData.success) {
+        hideExportProgress();
+        showToast('Failed to fetch attendance data', 'error');
+        return;
+    }
+    
+    showExportProgress('Generating Excel file...');
+    
+    // Excel format uses tab-separated values with BOM for UTF-8
+    const BOM = '\uFEFF';
+    let content = BOM;
+    
+    // Add header with session info
+    content += `Session: ${sessionName}\n`;
+    content += `Date: ${sessionDate}\n`;
+    content += `Time: {{ session.start_time.strftime("%I:%M %p") }} - {{ session.end_time.strftime("%I:%M %p") }}\n`;
+    content += `Instructor: {{ session.instructor or current_user.username }}\n`;
+    content += `Room: {{ session.room.room_name or session.room.room_number }}\n\n`;
+    
+    // Add statistics
+    content += `Total Scans: {{ attendance_summary.total_scans }}\n`;
+    content += `Unique Students: {{ attendance_summary.unique_students }}\n`;
+    content += `Late Arrivals: {{ attendance_summary.late_arrivals }}\n`;
+    content += `Attendance Rate: {{ attendance_summary.attendance_rate }}%\n\n`;
+    
+    // Add table header
+    content += 'Student Name\tStudent Number\tTime In\tTime Out\tDuration (min)\tStatus\tLate\n';
+    
+    // Add records
+    if (attendanceData.records && attendanceData.records.length > 0) {
+        attendanceData.records.forEach(record => {
+            content += `${record.student_name}\t${record.student_no}\t${record.time_in || 'N/A'}\t${record.time_out || 'Not yet'}\t${record.duration || '0'}\t${record.status}\t${record.is_late ? 'Yes' : 'No'}\n`;
+        });
+    }
+    
+    // Create and download file
+    const blob = new Blob([content], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${sessionName.replace(/[^a-z0-9]/gi, '_')}_${sessionDate}_attendance.xls`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    hideExportProgress();
+    showToast('Excel file exported successfully!', 'success');
+}
+
+// Export as PDF
+async function exportToPDF() {
+    showExportProgress('Fetching attendance data...');
+    
+    // Fetch data from backend
+    const response = await fetch('{{ url_for("professor.get_session_attendance_records", session_id=session.id) }}');
+    const attendanceData = await response.json();
+    
+    if (!attendanceData.success) {
+        hideExportProgress();
+        showToast('Failed to fetch attendance data', 'error');
+        return;
+    }
+    
+    hideExportProgress();
+    showToast('Opening print dialog for PDF export...', 'info');
+    
+    const printWindow = window.open('', '_blank');
+    const sessionName = '{{ session.session_name }}';
+    const sessionDate = '{{ session.start_time.strftime("%B %d, %Y") }}';
+    const sessionTime = '{{ session.start_time.strftime("%I:%M %p") }} - {{ session.end_time.strftime("%I:%M %p") }}';
+    
+    let htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>${sessionName} - Attendance Report</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    padding: 20px;
+                    color: #333;
+                }
+                .header {
+                    text-align: center;
+                    margin-bottom: 30px;
+                    border-bottom: 3px solid #4c6ef5;
+                    padding-bottom: 20px;
+                }
+                .header h1 {
+                    color: #4c6ef5;
+                    margin: 0 0 10px 0;
+                }
+                .header p {
+                    margin: 5px 0;
+                    color: #666;
+                }
+                .stats-box {
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 15px;
+                    margin: 20px 0;
+                    padding: 20px;
+                    background: #f8fafc;
+                    border-radius: 8px;
+                }
+                .stat-item {
+                    text-align: center;
+                }
+                .stat-number {
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #4c6ef5;
+                }
+                .stat-label {
+                    font-size: 12px;
+                    color: #666;
+                    margin-top: 5px;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                }
+                th {
+                    background: #4c6ef5;
+                    color: white;
+                    padding: 12px;
+                    text-align: left;
+                    font-weight: 600;
+                }
+                td {
+                    padding: 10px 12px;
+                    border-bottom: 1px solid #e5e7eb;
+                }
+                tr:nth-child(even) {
+                    background-color: #f9fafb;
+                }
+                .late-badge {
+                    background: #fee2e2;
+                    color: #991b1b;
+                    padding: 3px 8px;
+                    border-radius: 4px;
+                    font-size: 11px;
+                    font-weight: 600;
+                }
+                .footer {
+                    margin-top: 30px;
+                    padding-top: 20px;
+                    border-top: 2px solid #e5e7eb;
+                    text-align: center;
+                    color: #6b7280;
+                    font-size: 12px;
+                }
+                @media print {
+                    body { padding: 0; }
+                    .no-print { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>${sessionName}</h1>
+                <p><strong>Date:</strong> ${sessionDate}</p>
+                <p><strong>Time:</strong> ${sessionTime}</p>
+                <p><strong>Room:</strong> {{ session.room.room_name or session.room.room_number }}</p>
+                <p><strong>Instructor:</strong> {{ session.instructor or current_user.username }}</p>
+            </div>
+            
+            <div class="stats-box">
+                <div class="stat-item">
+                    <div class="stat-number">{{ attendance_summary.total_scans }}</div>
+                    <div class="stat-label">Total Scans</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ attendance_summary.unique_students }}</div>
+                    <div class="stat-label">Unique Students</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ attendance_summary.late_arrivals }}</div>
+                    <div class="stat-label">Late Arrivals</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ attendance_summary.attendance_rate }}%</div>
+                    <div class="stat-label">Attendance Rate</div>
+                </div>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Student No</th>
+                        <th>Time In</th>
+                        <th>Time Out</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Late</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    if (attendanceData.records && attendanceData.records.length > 0) {
+        attendanceData.records.forEach(record => {
+            htmlContent += `
+                <tr>
+                    <td>${record.student_name}</td>
+                    <td>${record.student_no}</td>
+                    <td>${record.time_in || 'N/A'}</td>
+                    <td>${record.time_out || 'Not yet'}</td>
+                    <td>${record.duration || '0'} min</td>
+                    <td>${record.status}</td>
+                    <td>${record.is_late ? '<span class="late-badge">YES</span>' : 'No'}</td>
+                </tr>
+            `;
+        });
+    } else {
+        htmlContent += `
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 30px; color: #6b7280;">No attendance records available</td>
+            </tr>
+        `;
+    }
+    
+    htmlContent += `
+                </tbody>
+            </table>
+            
+            <div class="footer">
+                <p>Generated on ${new Date().toLocaleString()}</p>
+                <p>ScanMe Attendance System</p>
+            </div>
+            
+            <div class="no-print" style="text-align: center; margin-top: 20px;">
+                <button onclick="window.print()" style="padding: 10px 30px; background: #4c6ef5; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600;">
+                    Print / Save as PDF
+                </button>
+                <button onclick="window.close()" style="padding: 10px 30px; background: #6b7280; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin-left: 10px; font-weight: 600;">
+                    Close
+                </button>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+}
+
+// Print Attendance
+function printAttendance() {
+    exportToPDF();
+}
+
+// Helper function to escape CSV values
+function escapeCSV(text) {
+    if (!text) return '';
+    text = String(text);
+    if (text.includes(',') || text.includes('"') || text.includes('\n')) {
+        return '"' + text.replace(/"/g, '""') + '"';
+    }
+    return text;
+}
+
+// Show export progress
+function showExportProgress(message) {
+    const existing = document.getElementById('exportProgress');
+    if (existing) existing.remove();
+    
+    const toast = document.createElement('div');
+    toast.id = 'exportProgress';
+    toast.innerHTML = `
+        <div style="position: fixed; top: 20px; right: 20px; background: #4c6ef5; color: white; padding: 1rem 1.5rem; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); z-index: 10000; display: flex; align-items: center; gap: 12px;">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    document.body.appendChild(toast);
+}
+
+// Hide export progress
+function hideExportProgress() {
+    const progress = document.getElementById('exportProgress');
+    if (progress) {
+        progress.remove();
+    }
+}
+
+// Show toast notification
+function showToast(message, type = 'info') {
+    const colors = {
+        success: 'linear-gradient(135deg, #10b981, #059669)',
+        error: 'linear-gradient(135deg, #ef4444, #dc2626)',
+        info: 'linear-gradient(135deg, #3b82f6, #1d4ed8)'
+    };
+    
+    const icons = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle',
+        info: 'fa-info-circle'
+    };
+    
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        background: ${colors[type] || colors.info};
+        color: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 600;
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+    `;
+    toast.innerHTML = `
+        <i class="fas ${icons[type] || icons.info}"></i>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Add animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(400px); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+
+// Add avatar color filter
+function getAvatarColor(index) {
+    const colors = [
+        '#3b82f6', '#ef4444', '#10b981', '#f59e0b', 
+        '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'
+    ];
+    return colors[index % colors.length];
+}
+
+// Auto-refresh every 30 seconds
+setInterval(function() {
+    location.reload();
+}, 30000);
 </script>
 {% endblock %}
