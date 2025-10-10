@@ -143,8 +143,105 @@ def search():
 @main_bp.route('/profile')
 @login_required
 def profile():
-    """User profile page"""
-    return render_template('profile.html', user=current_user)
+    """User profile page with statistics"""
+    stats = {}
+    
+    if current_user.role == 'student':
+        # Get student's attendance statistics
+        student = Student.query.filter(
+            db.or_(
+                Student.email == current_user.email,
+                Student.student_no == current_user.username
+            )
+        ).first()
+        
+        if student:
+            # Total scans
+            total_scans = AttendanceRecord.query.filter_by(student_id=student.id).count()
+            
+            # Late arrivals
+            late_arrivals = AttendanceRecord.query.filter_by(
+                student_id=student.id,
+                is_late=True
+            ).count()
+            
+            # Unique rooms visited
+            rooms_visited = db.session.query(AttendanceRecord.room_id).filter_by(
+                student_id=student.id
+            ).distinct().count()
+            
+            # Attendance rate (assuming attendance in sessions)
+            total_sessions = AttendanceSession.query.filter(
+                AttendanceSession.start_time <= datetime.utcnow()
+            ).count()
+            
+            attended_sessions = db.session.query(AttendanceRecord.session_id).filter(
+                AttendanceRecord.student_id == student.id,
+                AttendanceRecord.session_id.isnot(None)
+            ).distinct().count()
+            
+            attendance_rate = (attended_sessions / total_sessions * 100) if total_sessions > 0 else 0
+            
+            stats = {
+                'total_scans': total_scans,
+                'late_arrivals': late_arrivals,
+                'rooms_visited': rooms_visited,
+                'attendance_rate': round(attendance_rate, 1)
+            }
+    
+    elif current_user.role == 'professor':
+        # Get professor's statistics
+        # Sessions created
+        sessions_created = AttendanceSession.query.filter_by(created_by=current_user.id).count()
+        
+        # Active sessions
+        active_sessions = AttendanceSession.query.filter_by(
+            created_by=current_user.id,
+            is_active=True
+        ).filter(
+            AttendanceSession.start_time <= datetime.utcnow(),
+            AttendanceSession.end_time >= datetime.utcnow()
+        ).count()
+        
+        # Total scans performed by this professor
+        total_scans = AttendanceRecord.query.filter_by(scanned_by=current_user.id).count()
+        
+        # Unique students scanned
+        students_managed = db.session.query(AttendanceRecord.student_id).filter_by(
+            scanned_by=current_user.id
+        ).distinct().count()
+        
+        stats = {
+            'sessions_created': sessions_created,
+            'active_sessions': active_sessions,
+            'total_scans': total_scans,
+            'students_managed': students_managed
+        }
+    
+    elif current_user.role == 'admin':
+        # Get admin statistics
+        # Total users managed
+        total_users = User.query.count()
+        
+        # Total logins (using attendance records as proxy for activity)
+        total_actions = AttendanceRecord.query.count()
+        
+        # Days active (days with any attendance records)
+        days_active = db.session.query(
+            func.date(AttendanceRecord.scan_time)
+        ).distinct().count()
+        
+        # Total system scans
+        system_scans = AttendanceRecord.query.filter_by(scanned_by=current_user.id).count()
+        
+        stats = {
+            'total_users': total_users,
+            'system_actions': total_actions,
+            'days_active': days_active,
+            'total_scans': system_scans
+        }
+    
+    return render_template('profile.html', user=current_user, stats=stats)
 
 @main_bp.route('/settings')
 @login_required

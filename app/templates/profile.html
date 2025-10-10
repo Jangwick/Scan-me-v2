@@ -390,57 +390,57 @@
         {% if user.role == 'student' %}
         <div class="stats-grid">
             <div class="stat-box">
-                <div class="stat-number">{{ user.attendance_records|length }}</div>
+                <div class="stat-number">{{ stats.total_scans if stats.total_scans is defined else 0 }}</div>
                 <div class="stat-label">Total Scans</div>
             </div>
             <div class="stat-box">
-                <div class="stat-number">--</div>
+                <div class="stat-number">{{ stats.attendance_rate if stats.attendance_rate is defined else 0 }}%</div>
                 <div class="stat-label">Attendance Rate</div>
             </div>
             <div class="stat-box">
-                <div class="stat-number">--</div>
+                <div class="stat-number">{{ stats.late_arrivals if stats.late_arrivals is defined else 0 }}</div>
                 <div class="stat-label">Late Arrivals</div>
             </div>
             <div class="stat-box">
-                <div class="stat-number">--</div>
+                <div class="stat-number">{{ stats.rooms_visited if stats.rooms_visited is defined else 0 }}</div>
                 <div class="stat-label">Rooms Visited</div>
             </div>
         </div>
         {% elif user.role == 'professor' %}
         <div class="stats-grid">
             <div class="stat-box">
-                <div class="stat-number">--</div>
+                <div class="stat-number">{{ stats.sessions_created if stats.sessions_created is defined else 0 }}</div>
                 <div class="stat-label">Sessions Created</div>
             </div>
             <div class="stat-box">
-                <div class="stat-number">--</div>
+                <div class="stat-number">{{ stats.students_managed if stats.students_managed is defined else 0 }}</div>
                 <div class="stat-label">Students Managed</div>
             </div>
             <div class="stat-box">
-                <div class="stat-number">{{ user.attendance_records|length }}</div>
+                <div class="stat-number">{{ stats.total_scans if stats.total_scans is defined else 0 }}</div>
                 <div class="stat-label">Total Scans</div>
             </div>
             <div class="stat-box">
-                <div class="stat-number">--</div>
+                <div class="stat-number">{{ stats.active_sessions if stats.active_sessions is defined else 0 }}</div>
                 <div class="stat-label">Active Sessions</div>
             </div>
         </div>
         {% else %}
         <div class="stats-grid">
             <div class="stat-box">
-                <div class="stat-number">--</div>
+                <div class="stat-number">{{ stats.system_actions if stats.system_actions is defined else 0 }}</div>
                 <div class="stat-label">System Actions</div>
             </div>
             <div class="stat-box">
-                <div class="stat-number">--</div>
+                <div class="stat-number">{{ stats.total_users if stats.total_users is defined else 0 }}</div>
                 <div class="stat-label">Users Managed</div>
             </div>
             <div class="stat-box">
-                <div class="stat-number">{{ user.attendance_records|length }}</div>
-                <div class="stat-label">Total Logins</div>
+                <div class="stat-number">{{ stats.total_scans if stats.total_scans is defined else 0 }}</div>
+                <div class="stat-label">Total Scans</div>
             </div>
             <div class="stat-box">
-                <div class="stat-number">--</div>
+                <div class="stat-number">{{ stats.days_active if stats.days_active is defined else 0 }}</div>
                 <div class="stat-label">Days Active</div>
             </div>
         </div>

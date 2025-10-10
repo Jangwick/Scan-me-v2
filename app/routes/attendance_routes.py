@@ -51,10 +51,18 @@ def api_records():
         room_id = request.args.get('room_id', type=int)
         student_id = request.args.get('student_id', type=int)
         session_id = request.args.get('session_id', type=int)  # SESSION ISOLATION
+        department = request.args.get('department')
+        status_filter = request.args.get('status_filter')
         limit = request.args.get('limit', 100, type=int)
         
-        # Build query
+        # Build query with joins for student data (needed for department filter)
         query = AttendanceRecord.query
+        
+        # Join with Student table if department filter is provided
+        if department:
+            from app.models.student_model import Student
+            query = query.join(Student, AttendanceRecord.student_id == Student.id)
+            query = query.filter(Student.department == department)
         
         if start_date:
             start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
@@ -73,6 +81,15 @@ def api_records():
         # SESSION ISOLATION: Filter by session if provided
         if session_id:
             query = query.filter(AttendanceRecord.session_id == session_id)
+        
+        # Status filter
+        if status_filter:
+            if status_filter == 'on_time':
+                query = query.filter(AttendanceRecord.is_late == False)
+            elif status_filter == 'late':
+                query = query.filter(AttendanceRecord.is_late == True)
+            elif status_filter == 'duplicate':
+                query = query.filter(AttendanceRecord.is_duplicate == True)
         
         records = query.order_by(AttendanceRecord.scan_time.desc()).limit(limit).all()
         
@@ -93,9 +110,17 @@ def export_records(format):
         room_id = request.args.get('room_id', type=int)
         student_id = request.args.get('student_id', type=int)
         session_id = request.args.get('session_id', type=int)  # SESSION ISOLATION
+        department = request.args.get('department')
+        status_filter = request.args.get('status_filter')
         
-        # Build query
+        # Build query with joins for student data (needed for department filter)
         query = AttendanceRecord.query
+        
+        # Join with Student table if department filter is provided
+        if department:
+            from app.models.student_model import Student
+            query = query.join(Student, AttendanceRecord.student_id == Student.id)
+            query = query.filter(Student.department == department)
         
         if start_date:
             start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
@@ -114,6 +139,15 @@ def export_records(format):
         # SESSION ISOLATION: Filter by session if provided
         if session_id:
             query = query.filter(AttendanceRecord.session_id == session_id)
+        
+        # Status filter
+        if status_filter:
+            if status_filter == 'on_time':
+                query = query.filter(AttendanceRecord.is_late == False)
+            elif status_filter == 'late':
+                query = query.filter(AttendanceRecord.is_late == True)
+            elif status_filter == 'duplicate':
+                query = query.filter(AttendanceRecord.is_duplicate == True)
         
         records = query.order_by(AttendanceRecord.scan_time.desc()).all()
         

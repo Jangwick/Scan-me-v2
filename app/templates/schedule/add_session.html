@@ -367,7 +367,7 @@
                            id="session_date" 
                            name="session_date" 
                            value="{{ session_data.session_date.strftime('%Y-%m-%d') if session_data and session_data.session_date else '' }}"
-                           min="{{ date.today().strftime('%Y-%m-%d') }}"
+                           min="{{ today.strftime('%Y-%m-%d') if today else '' }}"
                            required
                            onchange="checkAvailability()">
                     <div class="invalid-feedback" id="dateError"></div>
@@ -540,7 +540,7 @@
                                class="form-control" 
                                id="recurrence_end_date" 
                                name="recurrence_end_date" 
-                               min="{{ date.today().strftime('%Y-%m-%d') }}">
+                               min="{{ today.strftime('%Y-%m-%d') if today else '' }}">
                         <small class="text-muted">When to stop creating recurring sessions</small>
                     </div>
                 </div>

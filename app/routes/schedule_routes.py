@@ -146,7 +146,8 @@ def add_session():
                 return render_template('schedule/add_session.html',
                                      rooms=get_active_rooms(),
                                      instructors=get_instructors(),
-                                     session_data=session_data)
+                                     session_data=session_data,
+                                     today=date.today())
             
             # Create main session
             session = SessionSchedule(**session_data)
@@ -174,7 +175,8 @@ def add_session():
     return render_template('schedule/add_session.html',
                          rooms=get_active_rooms(),
                          instructors=get_instructors(),
-                         session_data={})
+                         session_data={},
+                         today=date.today())
 
 @schedule_bp.route('/sessions/<int:id>/view')
 @login_required
@@ -229,7 +231,8 @@ def edit_session(id):
     return render_template('schedule/edit_session.html',
                          session=session,
                          rooms=get_active_rooms(),
-                         instructors=get_instructors())
+                         instructors=get_instructors(),
+                         today=date.today())
 
 @schedule_bp.route('/sessions/<int:id>/cancel', methods=['POST'])
 @login_required
