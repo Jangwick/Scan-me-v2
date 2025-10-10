@@ -528,7 +528,7 @@ async function fetchAttendanceData() {
     }
 }
 
-// View CSV data in browser (like current PDF view)
+// View CSV data in browser as formatted table
 async function exportToCSV() {
     showExportProgress('Fetching attendance data...');
     
@@ -549,251 +549,148 @@ async function exportToCSV() {
     }
     
     hideExportProgress();
-    showToast('Opening attendance report...', 'info');
+    showToast('Opening CSV view...', 'info');
+    
+    // Fetch statistics for the view
+    const statsResponse = await fetch('{{ url_for("professor.get_session_stats", session_id=session.id) }}');
+    const statsData = await statsResponse.json();
+    
+    // Get statistics values (with fallbacks)
+    const totalScans = statsData?.session_stats?.total_scans || attendanceData.records?.length || 0;
+    const uniqueStudents = statsData?.session_stats?.unique_students || attendanceData.records?.length || 0;
+    const lateArrivals = statsData?.session_stats?.late_arrivals || 
+                        (attendanceData.records ? attendanceData.records.filter(r => r.is_late).length : 0);
+    const attendanceRate = statsData?.session_stats?.attendance_rate || '0';
     
     // Open in new window
     const viewWindow = window.open('', '_blank');
     
-    let htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>${sessionName} - Attendance Report</title>
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-            <style>
-                body {
-                    font-family: 'Segoe UI', Arial, sans-serif;
-                    padding: 20px;
-                    color: #333;
-                    background: #f8f9fa;
-                    margin: 0;
-                }
-                .container {
-                    max-width: 1200px;
-                    margin: 0 auto;
-                    background: white;
-                    padding: 40px;
-                    border-radius: 12px;
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                }
-                .header {
-                    text-align: center;
-                    margin-bottom: 30px;
-                    border-bottom: 3px solid #4c6ef5;
-                    padding-bottom: 20px;
-                }
-                .header h1 {
-                    color: #4c6ef5;
-                    margin: 0 0 15px 0;
-                    font-size: 2rem;
-                }
-                .header p {
-                    margin: 8px 0;
-                    color: #666;
-                    font-size: 1rem;
-                }
-                .header .info-label {
-                    font-weight: 600;
-                    color: #333;
-                }
-                .stats-box {
-                    display: grid;
-                    grid-template-columns: repeat(4, 1fr);
-                    gap: 20px;
-                    margin: 30px 0;
-                }
-                .stat-item {
-                    text-align: center;
-                    padding: 20px;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    border-radius: 12px;
-                    color: white;
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                }
-                .stat-number {
-                    font-size: 2.5rem;
-                    font-weight: bold;
-                    margin-bottom: 8px;
-                }
-                .stat-label {
-                    font-size: 0.9rem;
-                    opacity: 0.95;
-                }
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-top: 30px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                }
-                th {
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
-                    padding: 15px 12px;
-                    text-align: left;
-                    font-weight: 600;
-                    font-size: 0.95rem;
-                }
-                td {
-                    padding: 12px;
-                    border-bottom: 1px solid #e5e7eb;
-                }
-                tr:nth-child(even) {
-                    background-color: #f9fafb;
-                }
-                tr:hover {
-                    background-color: #f3f4f6;
-                }
-                .late-badge {
-                    background: #fee2e2;
-                    color: #991b1b;
-                    padding: 4px 12px;
-                    border-radius: 12px;
-                    font-size: 0.85rem;
-                    font-weight: 600;
-                }
-                .ontime-badge {
-                    background: #d1fae5;
-                    color: #065f46;
-                    padding: 4px 12px;
-                    border-radius: 12px;
-                    font-size: 0.85rem;
-                    font-weight: 600;
-                }
-                .footer {
-                    margin-top: 40px;
-                    padding-top: 20px;
-                    border-top: 2px solid #e5e7eb;
-                    text-align: center;
-                    color: #6b7280;
-                    font-size: 0.9rem;
-                }
-                .action-buttons {
-                    text-align: center;
-                    margin: 30px 0 20px 0;
-                    display: flex;
-                    gap: 15px;
-                    justify-content: center;
-                }
-                button {
-                    padding: 12px 30px;
-                    border: none;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    font-size: 1rem;
-                    transition: all 0.3s;
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-                .print-btn {
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
-                }
-                .close-btn {
-                    background: #6c757d;
-                    color: white;
-                }
-                button:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                }
-                @media print {
-                    body { padding: 0; background: white; }
-                    .action-buttons { display: none; }
-                    .container { box-shadow: none; }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="action-buttons">
-                    <button class="print-btn" onclick="window.print()">
-                        <i class="fas fa-print"></i> Print / Save as PDF
-                    </button>
-                    <button class="close-btn" onclick="window.close()">
-                        <i class="fas fa-times"></i> Close
-                    </button>
-                </div>
-                
-                <div class="header">
-                    <h1><i class="fas fa-clipboard-check"></i> ${sessionName}</h1>
-                    <p><span class="info-label">Date:</span> ${sessionDate}</p>
-                    <p><span class="info-label">Time:</span> ${sessionTime}</p>
-                    <p><span class="info-label">Room:</span> ${roomInfo}</p>
-                    <p><span class="info-label">Instructor:</span> ${instructorInfo}</p>
-                </div>
-                
-                <div class="stats-box">
-                    <div class="stat-item">
-                        <div class="stat-number">{{ attendance_summary.total_scans }}</div>
-                        <div class="stat-label"><i class="fas fa-qrcode"></i> Total Scans</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number">{{ attendance_summary.unique_students }}</div>
-                        <div class="stat-label"><i class="fas fa-users"></i> Unique Students</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number">{{ attendance_summary.late_arrivals }}</div>
-                        <div class="stat-label"><i class="fas fa-clock"></i> Late Arrivals</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number">{{ attendance_summary.attendance_rate }}%</div>
-                        <div class="stat-label"><i class="fas fa-chart-line"></i> Attendance Rate</div>
-                    </div>
-                </div>
-                
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Student Name</th>
-                            <th>Student No</th>
-                            <th>Time In</th>
-                            <th>Time Out</th>
-                            <th>Duration</th>
-                            <th>Status</th>
-                            <th>Late</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-    `;
+    // Build HTML content with proper string interpolation
+    let htmlContent = '<!DOCTYPE html><html><head>';
+    htmlContent += '<title>' + sessionName + ' - Attendance Report</title>';
+    htmlContent += '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">';
+    htmlContent += '<style>';
+    htmlContent += 'body { font-family: "Segoe UI", Arial, sans-serif; padding: 20px; color: #333; background: #f8f9fa; margin: 0; }';
+    htmlContent += '.container { max-width: 1200px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }';
+    htmlContent += '.header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #4c6ef5; padding-bottom: 20px; }';
+    htmlContent += '.header h1 { color: #4c6ef5; margin: 0 0 15px 0; font-size: 2rem; }';
+    htmlContent += '.header p { margin: 8px 0; color: #666; font-size: 1rem; }';
+    htmlContent += '.header .info-label { font-weight: 600; color: #333; }';
+    htmlContent += '.stats-box { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 30px 0; }';
+    htmlContent += '.stat-item { text-align: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }';
+    htmlContent += '.stat-number { font-size: 2.5rem; font-weight: bold; margin-bottom: 8px; }';
+    htmlContent += '.stat-label { font-size: 0.9rem; opacity: 0.95; }';
+    htmlContent += 'table { width: 100%; border-collapse: collapse; margin-top: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }';
+    htmlContent += 'th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 12px; text-align: left; font-weight: 600; font-size: 0.95rem; }';
+    htmlContent += 'td { padding: 12px; border-bottom: 1px solid #e5e7eb; }';
+    htmlContent += 'tr:nth-child(even) { background-color: #f9fafb; }';
+    htmlContent += 'tr:hover { background-color: #f3f4f6; }';
+    htmlContent += '.late-badge { background: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; }';
+    htmlContent += '.ontime-badge { background: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; }';
+    htmlContent += '.footer { margin-top: 40px; padding-top: 20px; border-top: 2px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 0.9rem; }';
+    htmlContent += '.action-buttons { text-align: center; margin: 30px 0 20px 0; display: flex; gap: 15px; justify-content: center; }';
+    htmlContent += 'button { padding: 12px 30px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }';
+    htmlContent += '.print-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }';
+    htmlContent += '.download-btn { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }';
+    htmlContent += '.close-btn { background: #6c757d; color: white; }';
+    htmlContent += 'button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }';
+    htmlContent += '@media print { body { padding: 0; background: white; } .action-buttons { display: none; } .container { box-shadow: none; } }';
+    htmlContent += '</style></head><body><div class="container">';
+    
+    // Action buttons
+    htmlContent += '<div class="action-buttons">';
+    htmlContent += '<button class="print-btn" onclick="window.print()"><i class="fas fa-print"></i> Print / Save as PDF</button>';
+    htmlContent += '<button class="download-btn" onclick="downloadCSV()"><i class="fas fa-download"></i> Download CSV File</button>';
+    htmlContent += '<button class="close-btn" onclick="window.close()"><i class="fas fa-times"></i> Close</button>';
+    htmlContent += '</div>';
+    
+    // Header
+    htmlContent += '<div class="header">';
+    htmlContent += '<h1><i class="fas fa-clipboard-check"></i> ' + sessionName + '</h1>';
+    htmlContent += '<p><span class="info-label">Date:</span> ' + sessionDate + '</p>';
+    htmlContent += '<p><span class="info-label">Time:</span> ' + sessionTime + '</p>';
+    htmlContent += '<p><span class="info-label">Room:</span> ' + roomInfo + '</p>';
+    htmlContent += '<p><span class="info-label">Instructor:</span> ' + instructorInfo + '</p>';
+    htmlContent += '</div>';
+    
+    // Statistics
+    htmlContent += '<div class="stats-box">';
+    htmlContent += '<div class="stat-item"><div class="stat-number">' + totalScans + '</div><div class="stat-label"><i class="fas fa-qrcode"></i> Total Scans</div></div>';
+    htmlContent += '<div class="stat-item"><div class="stat-number">' + uniqueStudents + '</div><div class="stat-label"><i class="fas fa-users"></i> Unique Students</div></div>';
+    htmlContent += '<div class="stat-item"><div class="stat-number">' + lateArrivals + '</div><div class="stat-label"><i class="fas fa-clock"></i> Late Arrivals</div></div>';
+    htmlContent += '<div class="stat-item"><div class="stat-number">' + attendanceRate + '%</div><div class="stat-label"><i class="fas fa-chart-line"></i> Attendance Rate</div></div>';
+    htmlContent += '</div>';
+    
+    // Table
+    htmlContent += '<table><thead><tr>';
+    htmlContent += '<th>Student Name</th><th>Student No</th><th>Time In</th><th>Time Out</th><th>Duration</th><th>Status</th><th>Late</th>';
+    htmlContent += '</tr></thead><tbody>';
     
     if (attendanceData.records && attendanceData.records.length > 0) {
         attendanceData.records.forEach(record => {
-            htmlContent += `
-                <tr>
-                    <td>${record.student_name}</td>
-                    <td>${record.student_no}</td>
-                    <td>${record.time_in || 'N/A'}</td>
-                    <td>${record.time_out || 'Not yet'}</td>
-                    <td>${record.duration || '0'} min</td>
-                    <td>${record.status}</td>
-                    <td>${record.is_late ? '<span class="late-badge">YES</span>' : '<span class="ontime-badge">NO</span>'}</td>
-                </tr>
-            `;
+            htmlContent += '<tr>';
+            htmlContent += '<td>' + (record.student_name || 'N/A') + '</td>';
+            htmlContent += '<td>' + (record.student_no || 'N/A') + '</td>';
+            htmlContent += '<td>' + (record.time_in || 'N/A') + '</td>';
+            htmlContent += '<td>' + (record.time_out || 'Not yet') + '</td>';
+            htmlContent += '<td>' + (record.duration || '0') + ' min</td>';
+            htmlContent += '<td>' + (record.status || 'Unknown') + '</td>';
+            htmlContent += '<td>' + (record.is_late ? '<span class="late-badge">YES</span>' : '<span class="ontime-badge">NO</span>') + '</td>';
+            htmlContent += '</tr>';
         });
     } else {
-        htmlContent += `
-            <tr>
-                <td colspan="7" style="text-align: center; padding: 30px; color: #6b7280;">
-                    <i class="fas fa-inbox"></i> No attendance records available
-                </td>
-            </tr>
-        `;
+        htmlContent += '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #6b7280;"><i class="fas fa-inbox"></i> No attendance records available</td></tr>';
     }
     
-    htmlContent += `
-                    </tbody>
-                </table>
-                
-                <div class="footer">
-                    <p><strong>Generated on:</strong> ${new Date().toLocaleString()}</p>
-                    <p>ScanMe Attendance System</p>
-                </div>
-            </div>
-        </body>
-        </html>
-    `;
+    htmlContent += '</tbody></table>';
+    
+    // Footer
+    htmlContent += '<div class="footer">';
+    htmlContent += '<p><strong>Generated on:</strong> ' + new Date().toLocaleString() + '</p>';
+    htmlContent += '<p>ScanMe Attendance System</p>';
+    htmlContent += '</div></div>';
+    
+    // Add download CSV script
+    htmlContent += '<script>';
+    htmlContent += 'function downloadCSV() {';
+    htmlContent += '  var csvContent = "";';
+    htmlContent += '  csvContent += "Session Name,' + sessionName.replace(/'/g, "\\'") + '\\n";';
+    htmlContent += '  csvContent += "Date,' + sessionDate.replace(/'/g, "\\'") + '\\n";';
+    htmlContent += '  csvContent += "Time,' + sessionTime.replace(/'/g, "\\'") + '\\n";';
+    htmlContent += '  csvContent += "Room,' + roomInfo.replace(/'/g, "\\'") + '\\n";';
+    htmlContent += '  csvContent += "Instructor,' + instructorInfo.replace(/'/g, "\\'") + '\\n\\n";';
+    htmlContent += '  csvContent += "Statistics\\n";';
+    htmlContent += '  csvContent += "Total Scans,' + totalScans + '\\n";';
+    htmlContent += '  csvContent += "Unique Students,' + uniqueStudents + '\\n";';
+    htmlContent += '  csvContent += "Late Arrivals,' + lateArrivals + '\\n";';
+    htmlContent += '  csvContent += "Attendance Rate,' + attendanceRate + '%\\n\\n";';
+    htmlContent += '  csvContent += "Student Name,Student Number,Time In,Time Out,Duration (min),Status,Late\\n";';
+    
+    if (attendanceData.records && attendanceData.records.length > 0) {
+        attendanceData.records.forEach(record => {
+            htmlContent += '  csvContent += "' + (record.student_name || 'N/A').replace(/"/g, '""') + ',' + 
+                          (record.student_no || 'N/A') + ',' + 
+                          (record.time_in || 'N/A') + ',' + 
+                          (record.time_out || 'Not yet') + ',' + 
+                          (record.duration || '0') + ',' + 
+                          (record.status || 'Unknown') + ',' + 
+                          (record.is_late ? 'Yes' : 'No') + '\\n";';
+        });
+    }
+    
+    htmlContent += '  var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });';
+    htmlContent += '  var link = document.createElement("a");';
+    htmlContent += '  var url = URL.createObjectURL(blob);';
+    htmlContent += '  link.setAttribute("href", url);';
+    htmlContent += '  link.setAttribute("download", "' + sessionName.replace(/[^a-z0-9]/gi, '_') + '_' + sessionDate.replace(/[^a-z0-9]/gi, '_') + '_attendance.csv");';
+    htmlContent += '  link.style.visibility = "hidden";';
+    htmlContent += '  document.body.appendChild(link);';
+    htmlContent += '  link.click();';
+    htmlContent += '  document.body.removeChild(link);';
+    htmlContent += '}';
+    htmlContent += '<\/script>';  // Escaped to prevent breaking parent script tag
+    
+    htmlContent += '</body></html>';
     
     viewWindow.document.write(htmlContent);
     viewWindow.document.close();
