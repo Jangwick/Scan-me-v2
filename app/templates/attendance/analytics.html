@@ -351,8 +351,9 @@
         </div>
         <p class="stat-value">{{ stats.total_records or 0 }}</p>
         <p class="stat-label">Total Records</p>
-        <p class="stat-change change-positive">
-            <i class="fas fa-arrow-up"></i> +12% from last month
+        <p class="stat-change {{ 'change-positive' if stats.total_change >= 0 else 'change-negative' }}">
+            <i class="fas fa-arrow-{{ 'up' if stats.total_change >= 0 else 'down' }}"></i>
+            {{ '+' if stats.total_change >= 0 else '' }}{{ stats.total_change }}% from last month
         </p>
     </div>
     
@@ -362,8 +363,9 @@
         </div>
         <p class="stat-value">{{ stats.unique_students or 0 }}</p>
         <p class="stat-label">Active Students</p>
-        <p class="stat-change change-positive">
-            <i class="fas fa-arrow-up"></i> +5% from last month
+        <p class="stat-change {{ 'change-positive' if stats.unique_change >= 0 else 'change-negative' }}">
+            <i class="fas fa-arrow-{{ 'up' if stats.unique_change >= 0 else 'down' }}"></i>
+            {{ '+' if stats.unique_change >= 0 else '' }}{{ stats.unique_change }}% from last month
         </p>
     </div>
     
@@ -373,8 +375,9 @@
         </div>
         <p class="stat-value">{{ stats.weekly_records or 0 }}</p>
         <p class="stat-label">This Week</p>
-        <p class="stat-change change-negative">
-            <i class="fas fa-arrow-down"></i> -3% from last week
+        <p class="stat-change {{ 'change-positive' if stats.weekly_change >= 0 else 'change-negative' }}">
+            <i class="fas fa-arrow-{{ 'up' if stats.weekly_change >= 0 else 'down' }}"></i>
+            {{ '+' if stats.weekly_change >= 0 else '' }}{{ stats.weekly_change }}% from last week
         </p>
     </div>
     
@@ -382,10 +385,11 @@
         <div class="stat-icon rate">
             <i class="fas fa-percentage"></i>
         </div>
-        <p class="stat-value">92%</p>
+        <p class="stat-value">{{ stats.attendance_rate or 0 }}%</p>
         <p class="stat-label">Attendance Rate</p>
-        <p class="stat-change change-positive">
-            <i class="fas fa-arrow-up"></i> +2% from last month
+        <p class="stat-change {{ 'change-positive' if stats.rate_change >= 0 else 'change-negative' }}">
+            <i class="fas fa-arrow-{{ 'up' if stats.rate_change >= 0 else 'down' }}"></i>
+            {{ '+' if stats.rate_change >= 0 else '' }}{{ stats.rate_change }}% from last month
         </p>
     </div>
 </div>
@@ -474,42 +478,23 @@
     </div>
     
     <ul class="activity-list">
+        {% for activity in stats.recent_activity %}
         <li class="activity-item">
             <div class="activity-icon">
-                <i class="fas fa-qrcode"></i>
+                <i class="fas {{ activity.icon }}"></i>
             </div>
             <div class="activity-content">
-                <p class="activity-text">High attendance recorded for CS 101 morning session</p>
-                <p class="activity-time">2 hours ago</p>
+                <p class="activity-text">{{ activity.text }}</p>
+                <p class="activity-time">{{ activity.time }}</p>
             </div>
         </li>
+        {% else %}
         <li class="activity-item">
-            <div class="activity-icon">
-                <i class="fas fa-user-plus"></i>
-            </div>
             <div class="activity-content">
-                <p class="activity-text">New session created for Mathematics Lab</p>
-                <p class="activity-time">4 hours ago</p>
+                <p class="activity-text">No recent attendance activity.</p>
             </div>
         </li>
-        <li class="activity-item">
-            <div class="activity-icon">
-                <i class="fas fa-chart-line"></i>
-            </div>
-            <div class="activity-content">
-                <p class="activity-text">Weekly attendance report generated</p>
-                <p class="activity-time">1 day ago</p>
-            </div>
-        </li>
-        <li class="activity-item">
-            <div class="activity-icon">
-                <i class="fas fa-exclamation-circle"></i>
-            </div>
-            <div class="activity-content">
-                <p class="activity-text">Low attendance alert for History 201</p>
-                <p class="activity-time">2 days ago</p>
-            </div>
-        </li>
+        {% endfor %}
     </ul>
 </div>
 

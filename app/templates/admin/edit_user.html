@@ -1,0 +1,50 @@
+{% extends parent_template|default("dashboard_base.html") %}
+
+{% block page_title %}Edit User{% endblock %}
+
+{% block content %}
+<form method="POST" action="{{ url_for('admin.edit_user', id=user.id, modal=1) if modal else url_for('admin.edit_user', id=user.id) }}" id="editUserForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <div class="tw-space-y-4">
+        <div>
+            <label class="tw-block tw-text-sm tw-font-semibold tw-text-gray-700 tw-mb-1">Username <span class="tw-text-red-500">*</span></label>
+            <input type="text" name="username" value="{{ user.username }}" required class="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-blue-500">
+        </div>
+
+        <div>
+            <label class="tw-block tw-text-sm tw-font-semibold tw-text-gray-700 tw-mb-1">Email <span class="tw-text-red-500">*</span></label>
+            <input type="email" name="email" value="{{ user.email }}" required class="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-blue-500">
+        </div>
+
+        <div>
+            <label class="tw-block tw-text-sm tw-font-semibold tw-text-gray-700 tw-mb-1">Role</label>
+            <select name="role" class="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-blue-500">
+                <option value="student" {% if user.role == 'student' %}selected{% endif %}>Student</option>
+                <option value="professor" {% if user.role == 'professor' %}selected{% endif %}>Professor</option>
+                <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+            </select>
+        </div>
+
+        <div class="tw-flex tw-items-center tw-gap-2">
+            <input type="checkbox" name="is_active" id="is_active" {% if user.is_active %}checked{% endif %} class="tw-w-4 tw-h-4 tw-text-blue-600 tw-border-gray-300 tw-rounded focus:tw-ring-blue-500">
+            <label for="is_active" class="tw-text-sm tw-font-semibold tw-text-gray-700">Active account</label>
+        </div>
+    </div>
+
+    <div class="tw-flex tw-gap-2 tw-mt-6">
+        <button type="submit" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-bg-blue-600 tw-text-white tw-rounded-lg tw-font-semibold hover:tw-bg-blue-700 tw-transition">
+            <i class="fas fa-save"></i>Save Changes
+        </button>
+        {% if modal %}
+        <button type="button" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-border tw-border-gray-300 tw-text-gray-700 tw-rounded-lg tw-font-semibold hover:tw-bg-gray-50 tw-transition" data-bs-dismiss="modal">
+            <i class="fas fa-times"></i>Cancel
+        </button>
+        {% else %}
+        <a href="{{ url_for('admin.manage_users') }}" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-border tw-border-gray-300 tw-text-gray-700 tw-rounded-lg tw-font-semibold hover:tw-bg-gray-50 tw-transition">
+            <i class="fas fa-times"></i>Cancel
+        </a>
+        {% endif %}
+    </div>
+</form>
+{% endblock %}

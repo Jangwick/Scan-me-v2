@@ -27,7 +27,7 @@ def reports():
         
         # Get date range
         end_date = request.args.get('end_date', date.today().isoformat())
-        start_date = request.args.get('start_date', (date.today() - timedelta(days=7)).isoformat())
+        start_date = request.args.get('start_date', (date.today() - timedelta(days=365)).isoformat())
         
         return render_template('attendance/reports.html',
                              rooms=rooms,
@@ -307,24 +307,97 @@ def add_session():
 def analytics():
     """Attendance analytics dashboard"""
     try:
-        # Get basic stats
+        today = date.today()
+        week_start = today - timedelta(days=today.weekday())
+        last_week_start = week_start - timedelta(days=7)
+        last_week_end = week_start - timedelta(days=1)
+        month_start = today - timedelta(days=30)
+        last_month_start = today - timedelta(days=60)
+
+        # Current totals
         total_records = AttendanceRecord.query.count()
         unique_students = db.session.query(AttendanceRecord.student_id).distinct().count()
-        
-        # Weekly stats
-        week_start = date.today() - timedelta(days=date.today().weekday())
         weekly_records = AttendanceRecord.query.filter(
             AttendanceRecord.scan_time >= week_start
         ).count()
-        
+
+        # Previous period totals for change calculations
+        total_last_month = AttendanceRecord.query.filter(
+            AttendanceRecord.scan_time >= last_month_start,
+            AttendanceRecord.scan_time < month_start
+        ).count()
+
+        unique_last_month = db.session.query(AttendanceRecord.student_id).filter(
+            AttendanceRecord.scan_time >= last_month_start,
+            AttendanceRecord.scan_time < month_start
+        ).distinct().count()
+
+        last_week_records = AttendanceRecord.query.filter(
+            AttendanceRecord.scan_time >= last_week_start,
+            AttendanceRecord.scan_time <= last_week_end
+        ).count()
+
+        # Attendance rate (non-late records)
+        late_records = AttendanceRecord.query.filter_by(is_late=True).count()
+        attendance_rate = round(((total_records - late_records) / total_records) * 100, 1) if total_records > 0 else 0
+
+        last_month_total = AttendanceRecord.query.filter(
+            AttendanceRecord.scan_time >= last_month_start,
+            AttendanceRecord.scan_time < month_start
+        ).count()
+        last_month_late = AttendanceRecord.query.filter(
+            AttendanceRecord.is_late == True,
+            AttendanceRecord.scan_time >= last_month_start,
+            AttendanceRecord.scan_time < month_start
+        ).count()
+        last_month_rate = round(((last_month_total - last_month_late) / last_month_total) * 100, 1) if last_month_total > 0 else 0
+
+        def pct_change(current, previous):
+            if previous == 0:
+                return 0 if current == 0 else 100
+            return round(((current - previous) / previous) * 100, 1)
+
+        total_change = pct_change(total_records, total_last_month)
+        unique_change = pct_change(unique_students, unique_last_month)
+        weekly_change = pct_change(weekly_records, last_week_records)
+        rate_change = round(attendance_rate - last_month_rate, 1)
+
+        # Recent activity from real records
+        recent_records = AttendanceRecord.query.order_by(AttendanceRecord.scan_time.desc()).limit(6).all()
+        recent_activity = []
+        now = datetime.utcnow()
+        for record in recent_records:
+            student = record.student.get_full_name() if record.student else 'Unknown'
+            session = record.session.session_name if record.session else 'Unknown session'
+            delta = now - record.scan_time
+            if delta.days > 0:
+                time_text = f"{delta.days} day{'s' if delta.days > 1 else ''} ago"
+            elif delta.seconds >= 3600:
+                hours = delta.seconds // 3600
+                time_text = f"{hours} hour{'s' if hours > 1 else ''} ago"
+            else:
+                minutes = max(delta.seconds // 60, 0)
+                time_text = 'Just now' if minutes < 1 else f"{minutes} minute{'s' if minutes != 1 else ''} ago"
+            recent_activity.append({
+                'text': f"{student} checked in for {session}",
+                'time': time_text,
+                'icon': 'fa-qrcode'
+            })
+
         stats = {
             'total_records': total_records,
             'unique_students': unique_students,
-            'weekly_records': weekly_records
+            'weekly_records': weekly_records,
+            'attendance_rate': attendance_rate,
+            'total_change': total_change,
+            'unique_change': unique_change,
+            'weekly_change': weekly_change,
+            'rate_change': rate_change,
+            'recent_activity': recent_activity
         }
-        
+
         return render_template('attendance/analytics.html', stats=stats)
-    
+
     except Exception as e:
         flash(f'Error loading analytics: {str(e)}', 'error')
         return render_template('attendance/analytics.html', stats={})
@@ -336,6 +409,8 @@ def view_session(session_id):
     """View individual session details"""
     try:
         session = AttendanceSession.query.get_or_404(session_id)
+        modal = request.args.get('modal') == '1'
+        parent_template = 'modal_base.html' if modal else 'dashboard_base.html'
         
         # Get attendance records for this session
         attendance_records = AttendanceRecord.query.filter_by(session_id=session_id)\
@@ -354,7 +429,9 @@ def view_session(session_id):
                              session=session,
                              attendance_records=attendance_records,
                              session_stats=session_stats,
-                             active_students=active_students)
+                             active_students=active_students,
+                             modal=modal,
+                             parent_template=parent_template)
     
     except Exception as e:
         flash(f'Error loading session: {str(e)}', 'error')
@@ -367,6 +444,8 @@ def edit_session(id):
     """Edit an existing attendance session"""
     try:
         session = AttendanceSession.query.get_or_404(id)
+        modal = request.args.get('modal') == '1' or request.form.get('modal') == '1'
+        parent_template = 'modal_base.html' if modal else 'dashboard_base.html'
         
         if request.method == 'POST':
             # Update session details
@@ -394,6 +473,10 @@ def edit_session(id):
                 session.room_id = int(room_id)
             
             db.session.commit()
+            
+            if modal:
+                return jsonify({'success': True, 'message': 'Session updated successfully!', 'redirect': url_for('attendance.manage_sessions')})
+            
             flash('Session updated successfully!', 'success')
             return redirect(url_for('attendance.view_session', session_id=session.id))
         
@@ -402,10 +485,14 @@ def edit_session(id):
         
         return render_template('attendance/edit_session.html', 
                              session=session,
-                             rooms=rooms)
+                             rooms=rooms,
+                             modal=modal,
+                             parent_template=parent_template)
     
     except Exception as e:
         db.session.rollback()
+        if modal:
+            return jsonify({'success': False, 'message': f'Error updating session: {str(e)}'}), 400
         flash(f'Error updating session: {str(e)}', 'error')
         return redirect(url_for('attendance.manage_sessions'))
 

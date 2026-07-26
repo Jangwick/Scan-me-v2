@@ -2,9 +2,9 @@
 # This script creates all database tables and sets up initial data
 
 from app import create_app, db
-from app.models import User, Room, AttendanceSession
+from app.models import User, Room, AttendanceSession, Student, AttendanceRecord
 from werkzeug.security import generate_password_hash
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 import sys
 import os
 
@@ -138,6 +138,119 @@ def init_database():
                     print("⚠ Skipping session creation - no rooms or users found")
             else:
                 print(f"✓ Found {AttendanceSession.query.count()} existing attendance sessions")
+            
+            # Create sample students if none exist
+            if Student.query.count() == 0:
+                print("Creating sample students...")
+                
+                sample_students = [
+                    {
+                        'student_no': 'Std-001',
+                        'first_name': 'John',
+                        'last_name': 'Doe',
+                        'email': 'john.doe@student.scanme',
+                        'department': 'Information Technology',
+                        'section': 'BSIT-101',
+                        'year_level': 2
+                    },
+                    {
+                        'student_no': 'Std-002',
+                        'first_name': 'Jane',
+                        'last_name': 'Smith',
+                        'email': 'jane.smith@student.scanme',
+                        'department': 'Computer Science',
+                        'section': 'BSCS-201',
+                        'year_level': 3
+                    },
+                    {
+                        'student_no': 'Std-003',
+                        'first_name': 'Michael',
+                        'last_name': 'Johnson',
+                        'email': 'michael.johnson@student.scanme',
+                        'department': 'Engineering',
+                        'section': 'BSENG-301',
+                        'year_level': 4
+                    },
+                    {
+                        'student_no': 'Std-004',
+                        'first_name': 'Emily',
+                        'last_name': 'Williams',
+                        'email': 'emily.williams@student.scanme',
+                        'department': 'Business',
+                        'section': 'BSBA-101',
+                        'year_level': 1
+                    },
+                    {
+                        'student_no': 'Std-005',
+                        'first_name': 'Daniel',
+                        'last_name': 'Brown',
+                        'email': 'daniel.brown@student.scanme',
+                        'department': 'Information Technology',
+                        'section': 'BSIT-101',
+                        'year_level': 2
+                    }
+                ]
+                
+                for student_data in sample_students:
+                    student = Student(**student_data)
+                    db.session.add(student)
+                
+                print(f"✓ Created {len(sample_students)} sample students")
+            else:
+                print(f"✓ Found {Student.query.count()} existing students")
+            
+            # Create sample attendance records if none exist
+            if AttendanceRecord.query.count() == 0:
+                print("Creating sample attendance records...")
+                
+                sample_room = Room.query.first()
+                sample_session = AttendanceSession.query.first()
+                sample_user = User.query.first()
+                sample_students = Student.query.all()
+                
+                if sample_room and sample_session and sample_user and sample_students:
+                    now = datetime.utcnow()
+                    base_offsets = [
+                        (0, 8, False),   # today, 8 hours ago, on time
+                        (0, 9, False),
+                        (1, 10, True),   # yesterday, late
+                        (1, 11, False),
+                        (2, 8, False),
+                        (3, 9, True),
+                        (5, 8, False),
+                        (7, 10, False),
+                        (10, 9, False),
+                        (14, 8, True),
+                        (30, 9, False),
+                        (60, 10, False),
+                    ]
+                    
+                    created_count = 0
+                    for i, (days_back, hours_back, is_late) in enumerate(base_offsets):
+                        student = sample_students[i % len(sample_students)]
+                        scan_time = now - timedelta(days=days_back, hours=hours_back)
+                        
+                        record = AttendanceRecord(
+                            student_id=student.id,
+                            room_id=sample_room.id,
+                            scanned_by=sample_user.id,
+                            session_id=sample_session.id,
+                            is_late=is_late
+                        )
+                        record.time_in = scan_time
+                        record.scan_time = scan_time
+                        record.time_out = scan_time + timedelta(hours=1)
+                        record.time_out_scanned_by = sample_user.id
+                        record.is_active = False
+                        record.is_duplicate = False
+                        db.session.add(record)
+                        created_count += 1
+                    
+                    print(f"✓ Created {created_count} sample attendance records")
+                else:
+                    print("⚠ Skipping attendance record creation - missing room, session, user or students")
+            else:
+                print(f"✓ Found {AttendanceRecord.query.count()} existing attendance records")
             
             # Commit all changes
             db.session.commit()

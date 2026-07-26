@@ -3,7 +3,7 @@ Authentication Routes for ScanMe Attendance System
 Handles user login, logout, and registration
 """
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from app.models.user_model import User
@@ -143,23 +143,36 @@ def change_password():
 @login_required
 def edit_profile():
     """Edit user profile"""
+    modal = request.args.get('modal') == '1' or request.form.get('modal') == '1'
+    parent_template = 'modal_base.html' if modal else 'base.html'
     form = EditProfileForm(current_user)
     
     if form.validate_on_submit():
         try:
-            # Update profile
             current_user.update_profile(username=form.username.data, email=form.email.data)
+            if modal:
+                return jsonify({
+                    'success': True,
+                    'message': 'Profile updated successfully!',
+                    'redirect': url_for('main.profile')
+                })
             flash('Profile updated successfully!', 'success')
             return redirect(url_for('main.profile'))
-        
         except Exception as e:
-            flash(f'Error updating profile: {str(e)}', 'error')
+            error_msg = f'Error updating profile: {str(e)}'
+            if modal:
+                return jsonify({'success': False, 'message': error_msg}), 400
+            flash(error_msg, 'error')
+    elif request.method == 'POST' and modal:
+        errors = []
+        for field, msgs in form.errors.items():
+            errors.extend(msgs)
+        return jsonify({'success': False, 'message': errors[0] if errors else 'Invalid input.'}), 400
     elif request.method == 'GET':
-        # Populate form with current user data
         form.username.data = current_user.username
         form.email.data = current_user.email
     
-    return render_template('auth/edit_profile.html', form=form)
+    return render_template('auth/edit_profile.html', form=form, modal=modal, parent_template=parent_template)
 
 @auth_bp.route('/check-username')
 def check_username():

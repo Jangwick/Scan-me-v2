@@ -112,9 +112,11 @@ def manage_sessions():
 @requires_admin
 def add_session():
     """Add new session"""
+    modal = request.args.get('modal') == '1' or request.form.get('modal') == '1'
+    parent_template = 'modal_base.html' if modal else 'dashboard_base.html'
+    
     if request.method == 'POST':
         try:
-            # Get form data
             session_data = {
                 'title': request.form.get('title', '').strip(),
                 'description': request.form.get('description', '').strip(),
@@ -132,13 +134,11 @@ def add_session():
                 'recurrence_end_date': None
             }
             
-            # Parse recurrence end date if provided
             if request.form.get('recurrence_end_date'):
                 session_data['recurrence_end_date'] = datetime.strptime(
                     request.form.get('recurrence_end_date'), '%Y-%m-%d'
                 ).date()
             
-            # Validate session data
             validation_result = validate_session_data(session_data)
             if not validation_result['valid']:
                 for error in validation_result['errors']:
@@ -147,13 +147,13 @@ def add_session():
                                      rooms=get_active_rooms(),
                                      instructors=get_instructors(),
                                      session_data=session_data,
-                                     today=date.today())
+                                     today=date.today(),
+                                     modal=modal,
+                                     parent_template=parent_template)
             
-            # Create main session
             session = SessionSchedule(**session_data)
             db.session.add(session)
             
-            # Generate recurring sessions if needed
             if session_data['recurrence_type'] != RecurrenceType.NONE and session_data['recurrence_end_date']:
                 recurring_sessions = session.generate_recurring_sessions()
                 for recurring_data in recurring_sessions:
@@ -162,21 +162,35 @@ def add_session():
             
             db.session.commit()
             
+            if modal:
+                return jsonify({
+                    'success': True,
+                    'message': f'Session "{session.title}" created successfully!',
+                    'redirect': url_for('schedule.manage_sessions')
+                })
+            
             flash(f'Session "{session.title}" created successfully!', 'success')
             return redirect(url_for('schedule.manage_sessions'))
             
         except ValueError as e:
-            flash(f'Invalid date/time format: {str(e)}', 'error')
+            error_msg = f'Invalid date/time format: {str(e)}'
+            if modal:
+                return jsonify({'success': False, 'message': error_msg}), 400
+            flash(error_msg, 'error')
         except Exception as e:
             db.session.rollback()
-            flash(f'Error creating session: {str(e)}', 'error')
+            error_msg = f'Error creating session: {str(e)}'
+            if modal:
+                return jsonify({'success': False, 'message': error_msg}), 400
+            flash(error_msg, 'error')
     
-    # GET request - show form
     return render_template('schedule/add_session.html',
                          rooms=get_active_rooms(),
                          instructors=get_instructors(),
                          session_data={},
-                         today=date.today())
+                         today=date.today(),
+                         modal=modal,
+                         parent_template=parent_template)
 
 @schedule_bp.route('/sessions/<int:id>/view')
 @login_required

@@ -2,472 +2,160 @@
 
 {% block page_title %}My Profile{% endblock %}
 
-{% block extra_css %}
-<style>
-    .profile-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 16px;
-        margin-bottom: 2rem;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    }
-
-    .profile-avatar {
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: 700;
-        font-size: 3rem;
-        margin: 0 auto 1rem;
-        border: 4px solid rgba(255, 255, 255, 0.3);
-        background: {{ get_avatar_color(user.username or 'User') }};
-    }
-
-    .profile-info h1 {
-        text-align: center;
-        margin-bottom: 0.5rem;
-        font-weight: 700;
-    }
-
-    .profile-info p {
-        text-align: center;
-        opacity: 0.8;
-        font-size: 1.125rem;
-    }
-
-    .profile-container {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-        margin-bottom: 2rem;
-    }
-
-    .profile-card {
-        background: white;
-        border-radius: 16px;
-        padding: 2rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .profile-card h5 {
-        color: #1f2937;
-        margin-bottom: 1.5rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 2px solid #f3f4f6;
-    }
-
-    .info-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-
-    .info-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid #f3f4f6;
-    }
-
-    .info-item:last-child {
-        border-bottom: none;
-    }
-
-    .info-label {
-        font-weight: 600;
-        color: #6b7280;
-        font-size: 0.875rem;
-        text-transform: uppercase;
-        letter-spacing: 0.025em;
-    }
-
-    .info-value {
-        font-weight: 600;
-        color: #1f2937;
-        text-align: right;
-    }
-
-    .role-badge {
-        padding: 0.375rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.025em;
-    }
-
-    .role-admin {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        color: white;
-    }
-
-    .role-professor {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        color: white;
-    }
-
-    .role-student {
-        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-        color: white;
-    }
-
-    .status-badge {
-        padding: 0.375rem 0.75rem;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.025em;
-    }
-
-    .status-active {
-        background-color: #d1fae5;
-        color: #065f46;
-    }
-
-    .status-inactive {
-        background-color: #f3f4f6;
-        color: #6b7280;
-    }
-
-    .activity-feed {
-        max-height: 400px;
-        overflow-y: auto;
-    }
-
-    .activity-item {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 1rem;
-        background: #f9fafb;
-        border-radius: 8px;
-        margin-bottom: 0.75rem;
-    }
-
-    .activity-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 0.875rem;
-        flex-shrink: 0;
-    }
-
-    .activity-icon.login { background: #10b981; }
-    .activity-icon.scan { background: #3b82f6; }
-    .activity-icon.update { background: #f59e0b; }
-    .activity-icon.admin { background: #8b5cf6; }
-
-    .activity-content {
-        flex: 1;
-    }
-
-    .activity-title {
-        font-weight: 600;
-        color: #1f2937;
-        margin: 0 0 0.25rem;
-        font-size: 0.875rem;
-    }
-
-    .activity-time {
-        color: #6b7280;
-        font-size: 0.75rem;
-    }
-
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .stat-box {
-        text-align: center;
-        padding: 1rem;
-        background: #f9fafb;
-        border-radius: 8px;
-        border: 2px solid #e5e7eb;
-        transition: all 0.2s ease;
-    }
-
-    .stat-box:hover {
-        border-color: #667eea;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-    }
-
-    .stat-number {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1f2937;
-        margin-bottom: 0.25rem;
-    }
-
-    .stat-label {
-        color: #6b7280;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.025em;
-        font-weight: 600;
-    }
-
-    .btn {
-        padding: 0.875rem 2rem;
-        border-radius: 8px;
-        font-weight: 600;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        transition: all 0.2s ease;
-        cursor: pointer;
-        border: none;
-        font-size: 1rem;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-        color: white;
-        text-decoration: none;
-    }
-
-    .btn-outline-secondary {
-        background: transparent;
-        border: 2px solid #6b7280;
-        color: #6b7280;
-    }
-
-    .btn-outline-secondary:hover {
-        background: #6b7280;
-        color: white;
-        text-decoration: none;
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 2rem;
-        color: #6b7280;
-    }
-
-    .empty-state i {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        opacity: 0.5;
-    }
-
-    @media (max-width: 768px) {
-        .profile-header {
-            padding: 1.5rem;
-        }
-
-        .profile-container {
-            grid-template-columns: 1fr;
-            gap: 1rem;
-        }
-
-        .profile-card {
-            padding: 1.5rem;
-        }
-
-        .info-item {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.25rem;
-        }
-
-        .info-value {
-            text-align: left;
-        }
-
-        .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-</style>
-{% endblock %}
+{% block extra_css %}{% endblock %}
 
 {% block content %}
-<div class="profile-header">
-    <div class="profile-avatar">
+<!-- Profile Header -->
+<div class="tw-bg-gradient-to-r tw-from-indigo-500 tw-to-purple-600 tw-rounded-2xl tw-p-8 tw-mb-8 tw-text-white tw-shadow-lg tw-text-center">
+    <div class="tw-w-28 tw-h-28 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-text-4xl tw-font-bold tw-mx-auto tw-mb-4 tw-border-4 tw-border-white/30" style="background: {{ get_avatar_color(user.username or 'User') }};">
         {{ (user.username[0] if user.username else 'U').upper() }}
     </div>
-    <div class="profile-info">
-        <h1>{{ user.get_display_name() if user.get_display_name() else user.username or 'Unknown User' }}</h1>
-        <p>
-            <span class="role-badge role-{{ user.role or 'student' }}">
-                {% if user.role == 'admin' %}
-                    <i class="fas fa-shield-alt me-1"></i>
-                    System Administrator
-                {% elif user.role == 'professor' %}
-                    <i class="fas fa-chalkboard-teacher me-1"></i>
-                    Professor
-                {% else %}
-                    <i class="fas fa-user-graduate me-1"></i>
-                    Student
-                {% endif %}
-            </span>
-        </p>
-    </div>
+    <h1 class="tw-text-2xl tw-font-bold tw-mb-2">{{ user.get_display_name() if user.get_display_name() else user.username or 'Unknown User' }}</h1>
+    <p>
+        <span class="tw-inline-flex tw-items-center tw-px-3 tw-py-1 tw-rounded-full tw-text-xs tw-font-semibold tw-uppercase tw-tracking-wide
+            {% if user.role == 'admin' %}tw-bg-red-500
+            {% elif user.role == 'professor' %}tw-bg-amber-500
+            {% else %}tw-bg-blue-500
+            {% endif %}">
+            {% if user.role == 'admin' %}
+            <i class="fas fa-shield-alt tw-mr-1"></i>System Administrator
+            {% elif user.role == 'professor' %}
+            <i class="fas fa-chalkboard-teacher tw-mr-1"></i>Professor
+            {% else %}
+            <i class="fas fa-user-graduate tw-mr-1"></i>Student
+            {% endif %}
+        </span>
+    </p>
 </div>
 
-<div class="profile-container">
+<div class="tw-grid tw-grid-cols-1 lg:tw-grid-cols-2 tw-gap-6 tw-mb-8">
     <!-- Personal Information -->
-    <div class="profile-card">
-        <h5>
-            <i class="fas fa-user-circle"></i>
-            Personal Information
+    <div class="tw-bg-white tw-rounded-2xl tw-p-6 tw-shadow-md tw-border tw-border-gray-100">
+        <h5 class="tw-text-lg tw-font-bold tw-text-gray-900 tw-mb-5 tw-flex tw-items-center tw-gap-2 tw-border-b-2 tw-border-gray-100 tw-pb-3">
+            <i class="fas fa-user-circle tw-text-indigo-500"></i>Personal Information
         </h5>
-        <div class="info-grid">
-            <div class="info-item">
-                <span class="info-label">Username</span>
-                <span class="info-value">{{ user.username or 'Not set' }}</span>
+        <div class="tw-space-y-4">
+            <div class="tw-flex tw-justify-between tw-items-center tw-py-2 tw-border-b tw-border-gray-100">
+                <span class="tw-text-sm tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Username</span>
+                <span class="tw-font-semibold tw-text-gray-900">{{ user.username or 'Not set' }}</span>
             </div>
-            <div class="info-item">
-                <span class="info-label">Email Address</span>
-                <span class="info-value">{{ user.email or 'Not set' }}</span>
+            <div class="tw-flex tw-justify-between tw-items-center tw-py-2 tw-border-b tw-border-gray-100">
+                <span class="tw-text-sm tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Email Address</span>
+                <span class="tw-font-semibold tw-text-gray-900">{{ user.email or 'Not set' }}</span>
             </div>
-            <div class="info-item">
-                <span class="info-label">Role</span>
-                <span class="info-value">{{ user.get_role_display() }}</span>
+            <div class="tw-flex tw-justify-between tw-items-center tw-py-2 tw-border-b tw-border-gray-100">
+                <span class="tw-text-sm tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Role</span>
+                <span class="tw-font-semibold tw-text-gray-900">{{ user.get_role_display() }}</span>
             </div>
-            <div class="info-item">
-                <span class="info-label">Account Status</span>
-                <span class="info-value">
-                    <span class="status-badge {% if user.is_active %}status-active{% else %}status-inactive{% endif %}">
-                        {% if user.is_active %}Active{% else %}Inactive{% endif %}
-                    </span>
+            <div class="tw-flex tw-justify-between tw-items-center tw-py-2 tw-border-b tw-border-gray-100">
+                <span class="tw-text-sm tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Account Status</span>
+                <span class="tw-inline-flex tw-items-center tw-px-2.5 tw-py-1 tw-rounded-md tw-text-xs tw-font-semibold {% if user.is_active %}tw-bg-emerald-100 tw-text-emerald-700{% else %}tw-bg-gray-100 tw-text-gray-700{% endif %}">
+                    {% if user.is_active %}Active{% else %}Inactive{% endif %}
                 </span>
             </div>
-            <div class="info-item">
-                <span class="info-label">Member Since</span>
-                <span class="info-value">
-                    {{ user.created_at.strftime('%B %d, %Y') if user.created_at else 'Unknown' }}
-                </span>
+            <div class="tw-flex tw-justify-between tw-items-center tw-py-2 tw-border-b tw-border-gray-100">
+                <span class="tw-text-sm tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Member Since</span>
+                <span class="tw-font-semibold tw-text-gray-900">{{ user.created_at.strftime('%B %d, %Y') if user.created_at else 'Unknown' }}</span>
             </div>
-            <div class="info-item">
-                <span class="info-label">Last Login</span>
-                <span class="info-value">
-                    {{ user.last_login.strftime('%B %d, %Y at %I:%M %p') if user.last_login else 'Never' }}
-                </span>
+            <div class="tw-flex tw-justify-between tw-items-center tw-py-2">
+                <span class="tw-text-sm tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Last Login</span>
+                <span class="tw-font-semibold tw-text-gray-900">{{ user.last_login.strftime('%B %d, %Y at %I:%M %p') if user.last_login else 'Never' }}</span>
             </div>
         </div>
-        
-        <div class="text-center mt-3">
-            <a href="{{ url_for('main.settings') }}" class="btn btn-primary">
-                <i class="fas fa-edit"></i>
-                Edit Profile
-            </a>
+
+        <div class="tw-text-center tw-mt-6">
+            <button type="button" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-5 tw-py-2.5 tw-bg-indigo-600 tw-text-white tw-rounded-lg tw-font-semibold hover:tw-bg-indigo-700 tw-transition" data-modal-url="{{ url_for('auth.edit_profile', modal=1) }}">
+                <i class="fas fa-edit"></i>Edit Profile
+            </button>
         </div>
     </div>
 
     <!-- Account Activity -->
-    <div class="profile-card">
-        <h5>
-            <i class="fas fa-chart-line"></i>
-            Account Statistics
+    <div class="tw-bg-white tw-rounded-2xl tw-p-6 tw-shadow-md tw-border tw-border-gray-100">
+        <h5 class="tw-text-lg tw-font-bold tw-text-gray-900 tw-mb-5 tw-flex tw-items-center tw-gap-2 tw-border-b-2 tw-border-gray-100 tw-pb-3">
+            <i class="fas fa-chart-line tw-text-indigo-500"></i>Account Statistics
         </h5>
-        
+
         {% if user.role == 'student' %}
-        <div class="stats-grid">
-            <div class="stat-box">
-                <div class="stat-number">{{ stats.total_scans if stats.total_scans is defined else 0 }}</div>
-                <div class="stat-label">Total Scans</div>
+        <div class="tw-grid tw-grid-cols-2 tw-gap-4 tw-mb-6">
+            <div class="tw-bg-gray-50 tw-rounded-xl tw-p-4 tw-text-center tw-border tw-border-gray-100 hover:tw-border-indigo-300 tw-transition">
+                <div class="tw-text-2xl tw-font-bold tw-text-gray-900">{{ stats.total_scans if stats.total_scans is defined else 0 }}</div>
+                <div class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Total Scans</div>
             </div>
-            <div class="stat-box">
-                <div class="stat-number">{{ stats.attendance_rate if stats.attendance_rate is defined else 0 }}%</div>
-                <div class="stat-label">Attendance Rate</div>
+            <div class="tw-bg-gray-50 tw-rounded-xl tw-p-4 tw-text-center tw-border tw-border-gray-100 hover:tw-border-indigo-300 tw-transition">
+                <div class="tw-text-2xl tw-font-bold tw-text-gray-900">{{ stats.attendance_rate if stats.attendance_rate is defined else 0 }}%</div>
+                <div class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Attendance Rate</div>
             </div>
-            <div class="stat-box">
-                <div class="stat-number">{{ stats.late_arrivals if stats.late_arrivals is defined else 0 }}</div>
-                <div class="stat-label">Late Arrivals</div>
+            <div class="tw-bg-gray-50 tw-rounded-xl tw-p-4 tw-text-center tw-border tw-border-gray-100 hover:tw-border-indigo-300 tw-transition">
+                <div class="tw-text-2xl tw-font-bold tw-text-gray-900">{{ stats.late_arrivals if stats.late_arrivals is defined else 0 }}</div>
+                <div class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Late Arrivals</div>
             </div>
-            <div class="stat-box">
-                <div class="stat-number">{{ stats.rooms_visited if stats.rooms_visited is defined else 0 }}</div>
-                <div class="stat-label">Rooms Visited</div>
+            <div class="tw-bg-gray-50 tw-rounded-xl tw-p-4 tw-text-center tw-border tw-border-gray-100 hover:tw-border-indigo-300 tw-transition">
+                <div class="tw-text-2xl tw-font-bold tw-text-gray-900">{{ stats.rooms_visited if stats.rooms_visited is defined else 0 }}</div>
+                <div class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Rooms Visited</div>
             </div>
         </div>
         {% elif user.role == 'professor' %}
-        <div class="stats-grid">
-            <div class="stat-box">
-                <div class="stat-number">{{ stats.sessions_created if stats.sessions_created is defined else 0 }}</div>
-                <div class="stat-label">Sessions Created</div>
+        <div class="tw-grid tw-grid-cols-2 tw-gap-4 tw-mb-6">
+            <div class="tw-bg-gray-50 tw-rounded-xl tw-p-4 tw-text-center tw-border tw-border-gray-100 hover:tw-border-indigo-300 tw-transition">
+                <div class="tw-text-2xl tw-font-bold tw-text-gray-900">{{ stats.sessions_created if stats.sessions_created is defined else 0 }}</div>
+                <div class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Sessions Created</div>
             </div>
-            <div class="stat-box">
-                <div class="stat-number">{{ stats.students_managed if stats.students_managed is defined else 0 }}</div>
-                <div class="stat-label">Students Managed</div>
+            <div class="tw-bg-gray-50 tw-rounded-xl tw-p-4 tw-text-center tw-border tw-border-gray-100 hover:tw-border-indigo-300 tw-transition">
+                <div class="tw-text-2xl tw-font-bold tw-text-gray-900">{{ stats.students_managed if stats.students_managed is defined else 0 }}</div>
+                <div class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Students Managed</div>
             </div>
-            <div class="stat-box">
-                <div class="stat-number">{{ stats.total_scans if stats.total_scans is defined else 0 }}</div>
-                <div class="stat-label">Total Scans</div>
+            <div class="tw-bg-gray-50 tw-rounded-xl tw-p-4 tw-text-center tw-border tw-border-gray-100 hover:tw-border-indigo-300 tw-transition">
+                <div class="tw-text-2xl tw-font-bold tw-text-gray-900">{{ stats.total_scans if stats.total_scans is defined else 0 }}</div>
+                <div class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Total Scans</div>
             </div>
-            <div class="stat-box">
-                <div class="stat-number">{{ stats.active_sessions if stats.active_sessions is defined else 0 }}</div>
-                <div class="stat-label">Active Sessions</div>
+            <div class="tw-bg-gray-50 tw-rounded-xl tw-p-4 tw-text-center tw-border tw-border-gray-100 hover:tw-border-indigo-300 tw-transition">
+                <div class="tw-text-2xl tw-font-bold tw-text-gray-900">{{ stats.active_sessions if stats.active_sessions is defined else 0 }}</div>
+                <div class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Active Sessions</div>
             </div>
         </div>
         {% else %}
-        <div class="stats-grid">
-            <div class="stat-box">
-                <div class="stat-number">{{ stats.system_actions if stats.system_actions is defined else 0 }}</div>
-                <div class="stat-label">System Actions</div>
+        <div class="tw-grid tw-grid-cols-2 tw-gap-4 tw-mb-6">
+            <div class="tw-bg-gray-50 tw-rounded-xl tw-p-4 tw-text-center tw-border tw-border-gray-100 hover:tw-border-indigo-300 tw-transition">
+                <div class="tw-text-2xl tw-font-bold tw-text-gray-900">{{ stats.system_actions if stats.system_actions is defined else 0 }}</div>
+                <div class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">System Actions</div>
             </div>
-            <div class="stat-box">
-                <div class="stat-number">{{ stats.total_users if stats.total_users is defined else 0 }}</div>
-                <div class="stat-label">Users Managed</div>
+            <div class="tw-bg-gray-50 tw-rounded-xl tw-p-4 tw-text-center tw-border tw-border-gray-100 hover:tw-border-indigo-300 tw-transition">
+                <div class="tw-text-2xl tw-font-bold tw-text-gray-900">{{ stats.total_users if stats.total_users is defined else 0 }}</div>
+                <div class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Users Managed</div>
             </div>
-            <div class="stat-box">
-                <div class="stat-number">{{ stats.total_scans if stats.total_scans is defined else 0 }}</div>
-                <div class="stat-label">Total Scans</div>
+            <div class="tw-bg-gray-50 tw-rounded-xl tw-p-4 tw-text-center tw-border tw-border-gray-100 hover:tw-border-indigo-300 tw-transition">
+                <div class="tw-text-2xl tw-font-bold tw-text-gray-900">{{ stats.total_scans if stats.total_scans is defined else 0 }}</div>
+                <div class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Total Scans</div>
             </div>
-            <div class="stat-box">
-                <div class="stat-number">{{ stats.days_active if stats.days_active is defined else 0 }}</div>
-                <div class="stat-label">Days Active</div>
+            <div class="tw-bg-gray-50 tw-rounded-xl tw-p-4 tw-text-center tw-border tw-border-gray-100 hover:tw-border-indigo-300 tw-transition">
+                <div class="tw-text-2xl tw-font-bold tw-text-gray-900">{{ stats.days_active if stats.days_active is defined else 0 }}</div>
+                <div class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Days Active</div>
             </div>
         </div>
         {% endif %}
 
-        <h6 class="mt-4 mb-3">
-            <i class="fas fa-history me-2"></i>
-            Recent Activity
+        <h6 class="tw-text-base tw-font-bold tw-text-gray-900 tw-mb-3 tw-flex tw-items-center tw-gap-2">
+            <i class="fas fa-history tw-text-indigo-500"></i>Recent Activity
         </h6>
-        <div class="activity-feed">
+        <div class="tw-max-h-96 tw-overflow-y-auto tw-space-y-3">
             {% if user.attendance_records %}
                 {% for record in user.attendance_records[-10:] %}
-                <div class="activity-item">
-                    <div class="activity-icon scan">
+                <div class="tw-flex tw-items-center tw-gap-3 tw-p-3 tw-bg-gray-50 tw-rounded-lg">
+                    <div class="tw-w-10 tw-h-10 tw-rounded-full tw-bg-blue-500 tw-flex tw-items-center tw-justify-center tw-text-white tw-shrink-0">
                         <i class="fas fa-qrcode"></i>
                     </div>
-                    <div class="activity-content">
-                        <p class="activity-title">QR Code Scanned{% if record.room %} in {{ record.room.room_name }}{% endif %}</p>
-                        <p class="activity-time">{{ record.scan_time.strftime('%B %d, %Y at %I:%M %p') if record.scan_time else 'Unknown' }}</p>
+                    <div class="tw-flex-1 tw-min-w-0">
+                        <p class="tw-text-sm tw-font-semibold tw-text-gray-900 tw-mb-0">QR Code Scanned{% if record.room %} in {{ record.room.room_name }}{% endif %}</p>
+                        <p class="tw-text-xs tw-text-gray-500 tw-mb-0">{{ record.scan_time.strftime('%B %d, %Y at %I:%M %p') if record.scan_time else 'Unknown' }}</p>
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
-            <div class="empty-state">
-                <i class="fas fa-clock"></i>
-                <h6>No Recent Activity</h6>
-                <p>Your recent activities will appear here.</p>
+            <div class="tw-text-center tw-py-8 tw-text-gray-500">
+                <i class="fas fa-clock tw-text-3xl tw-mb-2 tw-text-gray-300"></i>
+                <h6 class="tw-text-base tw-font-bold tw-text-gray-900 tw-mb-1">No Recent Activity</h6>
+                <p class="tw-text-sm">Your recent activities will appear here.</p>
             </div>
             {% endif %}
         </div>
@@ -475,79 +163,133 @@
 </div>
 
 <!-- Quick Actions -->
-<div class="profile-card">
-    <h5>
-        <i class="fas fa-bolt"></i>
-        Quick Actions
+<div class="tw-bg-white tw-rounded-2xl tw-p-6 tw-shadow-md tw-border tw-border-gray-100">
+    <h5 class="tw-text-lg tw-font-bold tw-text-gray-900 tw-mb-4 tw-flex tw-items-center tw-gap-2">
+        <i class="fas fa-bolt tw-text-indigo-500"></i>Quick Actions
     </h5>
-    <div class="d-flex gap-2 flex-wrap">
-        <a href="{{ url_for('main.settings') }}" class="btn btn-primary">
-            <i class="fas fa-cogs"></i>
-            Account Settings
+    <div class="tw-flex tw-flex-wrap tw-gap-3">
+        <button type="button" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-bg-indigo-600 tw-text-white tw-rounded-lg tw-font-semibold hover:tw-bg-indigo-700 tw-transition" data-modal-url="{{ url_for('auth.edit_profile', modal=1) }}">
+            <i class="fas fa-cogs"></i>Account Settings
+        </button>
+
+        <a href="{{ url_for('main.generate_my_qr') }}" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-bg-emerald-500 tw-text-white tw-rounded-lg tw-font-semibold hover:tw-bg-emerald-600 tw-transition">
+            <i class="fas fa-qrcode"></i>Generate My QR Code
         </a>
-        
-        <!-- QR Code Generation Button - Available for all users -->
-        <a href="{{ url_for('main.generate_my_qr') }}" class="btn btn-success">
-            <i class="fas fa-qrcode"></i>
-            Generate My QR Code
-        </a>
-        
+
         {% if user.role == 'student' %}
-        <a href="{{ url_for('scanner.scan_page') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-qrcode"></i>
-            Scan QR Code
+        <a href="{{ url_for('scanner.scan_page') }}" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-rounded-lg tw-border-2 tw-border-gray-300 tw-text-gray-700 tw-font-semibold hover:tw-bg-gray-50 tw-transition">
+            <i class="fas fa-qrcode"></i>Scan QR Code
         </a>
-        <a href="{{ url_for('students.view_student', id=user.id) }}" class="btn btn-outline-secondary">
-            <i class="fas fa-chart-bar"></i>
-            View Attendance
+        <a href="{{ url_for('students.view_student', id=user.id) }}" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-rounded-lg tw-border-2 tw-border-gray-300 tw-text-gray-700 tw-font-semibold hover:tw-bg-gray-50 tw-transition">
+            <i class="fas fa-chart-bar"></i>View Attendance
         </a>
         {% elif user.role == 'professor' %}
-        <a href="{{ url_for('attendance.manage_sessions') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-clipboard-list"></i>
-            Manage Sessions
+        <a href="{{ url_for('attendance.manage_sessions') }}" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-rounded-lg tw-border-2 tw-border-gray-300 tw-text-gray-700 tw-font-semibold hover:tw-bg-gray-50 tw-transition">
+            <i class="fas fa-clipboard-list"></i>Manage Sessions
         </a>
-        <a href="{{ url_for('attendance.reports') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-chart-line"></i>
-            View Reports
+        <a href="{{ url_for('attendance.reports') }}" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-rounded-lg tw-border-2 tw-border-gray-300 tw-text-gray-700 tw-font-semibold hover:tw-bg-gray-50 tw-transition">
+            <i class="fas fa-chart-line"></i>View Reports
         </a>
         {% else %}
-        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-tachometer-alt"></i>
-            Admin Dashboard
+        <a href="{{ url_for('admin.dashboard') }}" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-rounded-lg tw-border-2 tw-border-gray-300 tw-text-gray-700 tw-font-semibold hover:tw-bg-gray-50 tw-transition">
+            <i class="fas fa-tachometer-alt"></i>Admin Dashboard
         </a>
-        <a href="{{ url_for('admin.manage_users') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-users"></i>
-            Manage Users
+        <a href="{{ url_for('admin.manage_users') }}" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-rounded-lg tw-border-2 tw-border-gray-300 tw-text-gray-700 tw-font-semibold hover:tw-bg-gray-50 tw-transition">
+            <i class="fas fa-users"></i>Manage Users
         </a>
         {% endif %}
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="profileModalLabel">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="profileModalBody">
+                <!-- Modal content loaded via fetch -->
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// Auto-refresh activity feed every 2 minutes
-setInterval(function() {
-    // Only refresh if the page is visible and no forms are being filled
-    if (!document.hidden && !document.querySelector('form:focus-within')) {
-        // Could implement AJAX refresh of activity feed here
-        console.log('Activity feed could be refreshed');
-    }
-}, 120000);
+function openProfileModal(url) {
+    const modalBody = document.getElementById('profileModalBody');
+    modalBody.innerHTML = '<div class="tw-text-center tw-py-8"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="tw-mt-2">Loading...</p></div>';
+    const modal = new bootstrap.Modal(document.getElementById('profileModal'));
+    modal.show();
+    fetch(url)
+        .then(response => {
+            if (!response.ok) throw new Error('Failed to load modal');
+            return response.text();
+        })
+        .then(html => {
+            modalBody.innerHTML = html;
+            bindProfileModalForm();
+        })
+        .catch(error => {
+            modalBody.innerHTML = '<div class="tw-text-center tw-py-8 tw-text-red-600"><i class="fas fa-exclamation-triangle fa-2x"></i><p class="tw-mt-2">' + error.message + '</p></div>';
+        });
+}
 
-// Add smooth scrolling to activity feed
-document.querySelector('.activity-feed').addEventListener('scroll', function() {
-    // Could implement infinite scroll for activity history
-});
+function bindProfileModalForm() {
+    const form = document.getElementById('profileModalBody').querySelector('form');
+    if (!form) return;
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        }
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form)
+            });
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const data = await response.json();
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('profileModal')).hide();
+                    window.location.reload();
+                } else {
+                    throw new Error(data.message || 'Error saving profile');
+                }
+            } else {
+                throw new Error('Unexpected response from server');
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+    });
+}
 
-// Add tooltips to stat boxes
 document.addEventListener('DOMContentLoaded', function() {
-    const statBoxes = document.querySelectorAll('.stat-box');
-    statBoxes.forEach(box => {
-        const label = box.querySelector('.stat-label').textContent;
-        const number = box.querySelector('.stat-number').textContent;
-        box.title = `${number} ${label}`;
+    document.querySelectorAll('[data-modal-url]').forEach(button => {
+        button.addEventListener('click', function() {
+            openProfileModal(this.dataset.modalUrl);
+        });
     });
 });
+
+// Auto-refresh activity feed every 2 minutes
+setInterval(function() {
+    if (!document.hidden && !document.querySelector('.modal.show') && !document.querySelector('form:focus-within')) {
+        location.reload();
+    }
+}, 120000);
 </script>
 {% endblock %}

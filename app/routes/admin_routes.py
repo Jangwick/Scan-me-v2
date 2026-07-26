@@ -4,11 +4,13 @@ Handles admin-only functions like user management and system settings
 """
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask_wtf.csrf import generate_csrf
 from flask_login import login_required, current_user
 from app import db
 from app.models.user_model import User
 from app.models.room_model import Room
 from app.models.session_schedule_model import SessionSchedule, RecurrenceType
+from app.models.attendance_model import AttendanceSession, AttendanceRecord
 from app.utils.auth_utils import requires_admin, validate_room_data, get_user_permissions
 from datetime import datetime, timedelta
 
@@ -25,7 +27,10 @@ def dashboard():
             'total_rooms': Room.query.filter_by(is_active=True).count(),
             'admin_count': User.query.filter_by(role='admin', is_active=True).count(),
             'professor_count': User.query.filter_by(role='professor', is_active=True).count(),
-            'student_count': User.query.filter_by(role='student', is_active=True).count()
+            'student_count': User.query.filter_by(role='student', is_active=True).count(),
+            'total_sessions': AttendanceSession.query.count(),
+            'active_sessions': AttendanceSession.query.filter_by(is_active=True).count(),
+            'total_attendance_records': AttendanceRecord.query.count()
         }
         
         recent_users = User.query.order_by(User.created_at.desc()).limit(5).all()
@@ -53,6 +58,9 @@ def manage_users():
 @requires_admin
 def add_user():
     """Add new user"""
+    modal = request.args.get('modal') == '1' or request.form.get('modal') == '1'
+    parent_template = 'modal_base.html' if modal else 'dashboard_base.html'
+    
     if request.method == 'POST':
         try:
             username = request.form.get('username', '').strip()
@@ -61,13 +69,90 @@ def add_user():
             role = request.form.get('role', 'student')
             
             user = User.create_user(username, email, password, role)
+            
+            if modal:
+                return jsonify({
+                    'success': True,
+                    'message': f'User {username} created successfully!',
+                    'redirect': url_for('admin.manage_users')
+                })
+            
             flash(f'User {username} created successfully!', 'success')
             return redirect(url_for('admin.manage_users'))
         
         except Exception as e:
+            if modal:
+                return jsonify({'success': False, 'message': f'Error creating user: {str(e)}'}), 400
             flash(f'Error creating user: {str(e)}', 'error')
     
-    return render_template('admin/add_user.html')
+    return render_template('admin/add_user.html', modal=modal, parent_template=parent_template)
+
+@admin_bp.route('/users/<int:id>/view')
+@login_required
+@requires_admin
+def view_user(id):
+    """View user details"""
+    try:
+        user = User.query.get_or_404(id)
+        modal = request.args.get('modal') == '1'
+        parent_template = 'modal_base.html' if modal else 'dashboard_base.html'
+        return render_template('admin/view_user.html', user=user, modal=modal, parent_template=parent_template)
+    except Exception as e:
+        flash(f'Error loading user details: {str(e)}', 'error')
+        return redirect(url_for('admin.manage_users'))
+
+@admin_bp.route('/users/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+@requires_admin
+def edit_user(id):
+    """Edit user details"""
+    user = User.query.get_or_404(id)
+    modal = request.args.get('modal') == '1' or request.form.get('modal') == '1'
+    parent_template = 'modal_base.html' if modal else 'dashboard_base.html'
+    
+    if request.method == 'POST':
+        try:
+            username = request.form.get('username', '').strip()
+            email = request.form.get('email', '').strip()
+            role = request.form.get('role', user.role)
+            is_active = request.form.get('is_active') == 'on'
+            
+            if not username:
+                raise ValueError('Username is required')
+            if not email:
+                raise ValueError('Email is required')
+            
+            if username != user.username:
+                existing = User.query.filter(User.username == username).first()
+                if existing:
+                    raise ValueError('Username already exists')
+            
+            if email != user.email:
+                existing_email = User.query.filter(User.email == email).first()
+                if existing_email:
+                    raise ValueError('Email already exists')
+            
+            user.username = username
+            user.email = email
+            user.role = role
+            user.is_active = is_active
+            db.session.commit()
+            
+            if modal:
+                return jsonify({
+                    'success': True,
+                    'message': f'User {username} updated successfully!',
+                    'redirect': url_for('admin.manage_users')
+                })
+            flash(f'User {username} updated successfully!', 'success')
+            return redirect(url_for('admin.manage_users'))
+        except Exception as e:
+            error_msg = f'Error updating user: {str(e)}'
+            if modal:
+                return jsonify({'success': False, 'message': error_msg}), 400
+            flash(error_msg, 'error')
+    
+    return render_template('admin/edit_user.html', user=user, modal=modal, parent_template=parent_template, csrf_token=generate_csrf())
 
 @admin_bp.route('/rooms')
 @login_required
@@ -86,39 +171,41 @@ def manage_rooms():
 @requires_admin
 def add_room():
     """Add new room with optional session scheduling"""
+    modal = request.args.get('modal') == '1' or request.form.get('modal') == '1'
+    parent_template = 'modal_base.html' if modal else 'dashboard_base.html'
+    
     if request.method == 'POST':
         room_data = {
-            'room_number': request.form.get('number', '').strip(),  # Fixed: 'number' not 'room_number'
-            'room_name': request.form.get('name', '').strip(),      # Fixed: 'name' not 'room_name'
+            'room_number': request.form.get('number', '').strip(),
+            'room_name': request.form.get('name', '').strip(),
             'building': request.form.get('building', '').strip(),
             'floor': request.form.get('floor', type=int),
             'capacity': request.form.get('capacity', type=int),
-            'room_type': request.form.get('type', 'classroom')      # Fixed: 'type' not 'room_type'
+            'room_type': request.form.get('type', 'classroom')
         }
         
-        # Check if user wants to schedule a session
         schedule_session = request.form.get('schedule_session') == 'on'
+        
+        def render_response():
+            return render_template('admin/add_room.html',
+                                   room_data=room_data,
+                                   instructors=get_instructors(),
+                                   schedule_session=schedule_session,
+                                   modal=modal,
+                                   parent_template=parent_template)
         
         validation = validate_room_data(room_data)
         if not validation['valid']:
             for error in validation['errors']:
                 flash(error, 'error')
-            return render_template('admin/add_room.html', 
-                                 room_data=room_data, 
-                                 instructors=get_instructors(),
-                                 schedule_session=schedule_session)
+            return render_response()
         
         try:
-            # Check if room number already exists
             existing_room = Room.query.filter_by(room_number=room_data['room_number']).first()
             if existing_room:
                 flash(f'Room number {room_data["room_number"]} already exists. Please use a different room number.', 'error')
-                return render_template('admin/add_room.html', 
-                                     room_data=room_data, 
-                                     instructors=get_instructors(),
-                                     schedule_session=schedule_session)
+                return render_response()
             
-            # Create the room
             room = Room(
                 room_number=room_data['room_number'],
                 building=room_data['building'],
@@ -128,9 +215,8 @@ def add_room():
                 room_name=room_data.get('room_name') if room_data.get('room_name') else None
             )
             db.session.add(room)
-            db.session.flush()  # Flush to get the room ID
+            db.session.flush()
             
-            # If user wants to schedule a session, create it
             session_created = False
             if schedule_session:
                 session_data = validate_and_create_session(request.form, room.id)
@@ -143,6 +229,13 @@ def add_room():
             
             db.session.commit()
             
+            if modal:
+                return jsonify({
+                    'success': True,
+                    'message': f'Room {room.get_full_name()} added successfully!',
+                    'redirect': url_for('admin.manage_rooms')
+                })
+            
             if not session_created:
                 flash(f'Room {room.get_full_name()} added successfully!', 'success')
             
@@ -150,19 +243,24 @@ def add_room():
         
         except Exception as e:
             db.session.rollback()
-            # Provide more specific error messages
             error_msg = str(e)
             if 'UNIQUE constraint failed: rooms.room_number' in error_msg:
-                flash(f'Room number {room_data["room_number"]} already exists. Please use a different room number.', 'error')
+                error_text = f'Room number {room_data["room_number"]} already exists. Please use a different room number.'
             elif 'UNIQUE constraint failed' in error_msg:
-                flash('A room with this information already exists. Please check your input.', 'error')
+                error_text = 'A room with this information already exists. Please check your input.'
             else:
-                flash(f'Error adding room: {error_msg}', 'error')
+                error_text = f'Error adding room: {error_msg}'
+            
+            if modal:
+                return jsonify({'success': False, 'message': error_text}), 400
+            flash(error_text, 'error')
     
-    return render_template('admin/add_room.html', 
-                         room_data={}, 
+    return render_template('admin/add_room.html',
+                         room_data={},
                          instructors=get_instructors(),
-                         schedule_session=False)
+                         schedule_session=False,
+                         modal=modal,
+                         parent_template=parent_template)
 
 @admin_bp.route('/check_room_number')
 @login_required
@@ -240,7 +338,9 @@ def view_room(id):
     """View room details"""
     try:
         room = Room.query.get_or_404(id)
-        return render_template('admin/view_room.html', room=room)
+        modal = request.args.get('modal') == '1'
+        parent_template = 'modal_base.html' if modal else 'dashboard_base.html'
+        return render_template('admin/view_room.html', room=room, modal=modal, parent_template=parent_template)
     except Exception as e:
         flash(f'Error loading room details: {str(e)}', 'error')
         return redirect(url_for('admin.manage_rooms'))
@@ -251,6 +351,8 @@ def view_room(id):
 def edit_room(id):
     """Edit room details"""
     room = Room.query.get_or_404(id)
+    modal = request.args.get('modal') == '1' or request.form.get('modal') == '1'
+    parent_template = 'modal_base.html' if modal else 'dashboard_base.html'
     
     if request.method == 'POST':
         room_data = {
@@ -264,17 +366,22 @@ def edit_room(id):
         
         validation = validate_room_data(room_data)
         if not validation['valid']:
+            if modal:
+                return jsonify({'success': False, 'message': '; '.join(validation['errors'])}), 400
             for error in validation['errors']:
                 flash(error, 'error')
-            return render_template('admin/edit_room.html', room=room, room_data=room_data)
+            return render_template('admin/edit_room.html', room=room, room_data=room_data, modal=modal, parent_template=parent_template, csrf_token=generate_csrf())
         
         try:
             # Check if room number already exists (excluding current room)
             if room_data['room_number'] != room.room_number:
                 existing_room = Room.query.filter_by(room_number=room_data['room_number']).first()
                 if existing_room:
-                    flash(f'Room number {room_data["room_number"]} already exists. Please use a different room number.', 'error')
-                    return render_template('admin/edit_room.html', room=room, room_data=room_data)
+                    error_text = f'Room number {room_data["room_number"]} already exists. Please use a different room number.'
+                    if modal:
+                        return jsonify({'success': False, 'message': error_text}), 400
+                    flash(error_text, 'error')
+                    return render_template('admin/edit_room.html', room=room, room_data=room_data, modal=modal, parent_template=parent_template, csrf_token=generate_csrf())
             
             # Update room details
             room.room_number = room_data['room_number']
@@ -285,6 +392,12 @@ def edit_room(id):
             room.room_type = room_data['room_type']
             
             db.session.commit()
+            if modal:
+                return jsonify({
+                    'success': True,
+                    'message': f'Room {room.get_full_name()} updated successfully!',
+                    'redirect': url_for('admin.manage_rooms')
+                })
             flash(f'Room {room.get_full_name()} updated successfully!', 'success')
             return redirect(url_for('admin.manage_rooms'))
             
@@ -292,9 +405,12 @@ def edit_room(id):
             db.session.rollback()
             error_msg = str(e)
             if 'UNIQUE constraint failed: rooms.room_number' in error_msg:
-                flash(f'Room number {room_data["room_number"]} already exists. Please use a different room number.', 'error')
+                error_text = f'Room number {room_data["room_number"]} already exists. Please use a different room number.'
             else:
-                flash(f'Error updating room: {error_msg}', 'error')
+                error_text = f'Error updating room: {error_msg}'
+            if modal:
+                return jsonify({'success': False, 'message': error_text}), 400
+            flash(error_text, 'error')
     
     # Convert room data for form display
     room_data = {
@@ -306,7 +422,7 @@ def edit_room(id):
         'room_type': room.room_type
     }
     
-    return render_template('admin/edit_room.html', room=room, room_data=room_data)
+    return render_template('admin/edit_room.html', room=room, room_data=room_data, modal=modal, parent_template=parent_template, csrf_token=generate_csrf())
 
 @admin_bp.route('/rooms/<int:id>/maintenance', methods=['POST'])
 @login_required

@@ -2,272 +2,228 @@
 
 {% block title %}Dashboard - ScanMe Attendance System{% endblock %}
 
-{% block extra_css %}
-<style>
-    .stat-card {
-        border-left: 4px solid;
-        transition: transform 0.2s;
-    }
-    .stat-card:hover {
-        transform: translateY(-2px);
-    }
-    .stat-card.stat-primary { border-left-color: #0d6efd; }
-    .stat-card.stat-success { border-left-color: #198754; }
-    .stat-card.stat-info { border-left-color: #0dcaf0; }
-    .stat-card.stat-warning { border-left-color: #ffc107; }
-    
-    .recent-activity {
-        max-height: 400px;
-        overflow-y: auto;
-    }
-    
-    .room-occupancy-bar {
-        height: 8px;
-        border-radius: 4px;
-        background-color: #e9ecef;
-        overflow: hidden;
-    }
-    
-    .occupancy-fill {
-        height: 100%;
-        transition: width 0.5s ease;
-    }
-</style>
-{% endblock %}
+{% block extra_css %}{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="tw-p-6 tw-bg-gray-50">
     <!-- Page Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 mb-0">
-                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                    </h1>
-                    <p class="text-muted">Welcome back, {{ current_user.get_display_name() }}!</p>
-                </div>
-                <div>
-                    <!-- Quick QR Code Button -->
-                    <a href="{{ url_for('main.generate_my_qr') }}" class="btn btn-primary">
-                        <i class="fas fa-qrcode me-2"></i>My QR Code
-                    </a>
-                </div>
-            </div>
+    <div class="tw-flex tw-flex-col sm:tw-flex-row tw-justify-between tw-items-start tw-gap-4 tw-mb-8">
+        <div>
+            <h1 class="tw-text-2xl tw-font-bold tw-text-gray-900 tw-mb-1">
+                <i class="bi bi-speedometer2 tw-mr-2 tw-text-cyan-600"></i>Dashboard
+            </h1>
+            <p class="tw-text-gray-500">Welcome back, {{ current_user.get_display_name() }}!</p>
         </div>
+        <button type="button" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-bg-cyan-600 tw-text-white tw-rounded-lg tw-font-semibold hover:tw-bg-cyan-700 tw-transition" data-modal-url="{{ url_for('main.generate_my_qr', modal=1) }}">
+            <i class="bi bi-qr-code"></i>My QR Code
+        </button>
     </div>
-    
+
     <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card stat-card stat-primary h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <div class="small text-muted mb-1">Today's Scans</div>
-                            <div class="h4 mb-0" id="today-scans">{{ stats.today_scans or 0 }}</div>
-                        </div>
-                        <div class="text-primary">
-                            <i class="fas fa-qrcode fa-2x"></i>
-                        </div>
-                    </div>
+    <div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 lg:tw-grid-cols-4 tw-gap-4 tw-mb-8">
+        <div class="tw-bg-white tw-rounded-2xl tw-p-5 tw-shadow-md tw-border-l-4 tw-border-cyan-500 hover:tw-shadow-lg tw-transition">
+            <div class="tw-flex tw-justify-between tw-items-center">
+                <div>
+                    <div class="tw-text-sm tw-text-gray-500 tw-mb-1">Today's Scans</div>
+                    <div class="tw-text-2xl tw-font-bold tw-text-gray-900" id="today-scans">{{ stats.today_scans or 0 }}</div>
+                </div>
+                <div class="tw-text-cyan-500">
+                    <i class="bi bi-qr-code-scan tw-text-4xl"></i>
                 </div>
             </div>
         </div>
-        
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card stat-card stat-success h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <div class="small text-muted mb-1">Active Students</div>
-                            <div class="h4 mb-0" id="unique-students">{{ stats.unique_students_today or 0 }}</div>
-                        </div>
-                        <div class="text-success">
-                            <i class="fas fa-users fa-2x"></i>
-                        </div>
-                    </div>
+
+        <div class="tw-bg-white tw-rounded-2xl tw-p-5 tw-shadow-md tw-border-l-4 tw-border-emerald-500 hover:tw-shadow-lg tw-transition">
+            <div class="tw-flex tw-justify-between tw-items-center">
+                <div>
+                    <div class="tw-text-sm tw-text-gray-500 tw-mb-1">Active Students</div>
+                    <div class="tw-text-2xl tw-font-bold tw-text-gray-900" id="unique-students">{{ stats.unique_students_today or 0 }}</div>
+                </div>
+                <div class="tw-text-emerald-500">
+                    <i class="bi bi-people tw-text-4xl"></i>
                 </div>
             </div>
         </div>
-        
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card stat-card stat-info h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <div class="small text-muted mb-1">Active Sessions</div>
-                            <div class="h4 mb-0" id="active-sessions">{{ stats.active_sessions or 0 }}</div>
-                        </div>
-                        <div class="text-info">
-                            <i class="fas fa-calendar fa-2x"></i>
-                        </div>
-                    </div>
+
+        <div class="tw-bg-white tw-rounded-2xl tw-p-5 tw-shadow-md tw-border-l-4 tw:border-blue-400 hover:tw-shadow-lg tw-transition">
+            <div class="tw-flex tw-justify-between tw-items-center">
+                <div>
+                    <div class="tw-text-sm tw-text-gray-500 tw-mb-1">Active Sessions</div>
+                    <div class="tw-text-2xl tw-font-bold tw-text-gray-900" id="active-sessions">{{ stats.active_sessions or 0 }}</div>
+                </div>
+                <div class="tw-text-blue-400">
+                    <i class="bi bi-calendar-event tw-text-4xl"></i>
                 </div>
             </div>
         </div>
-        
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card stat-card stat-warning h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <div class="small text-muted mb-1">Attendance Rate</div>
-                            <div class="h4 mb-0" id="attendance-rate">{{ "%.1f" | format(stats.attendance_rate or 0) }}%</div>
-                        </div>
-                        <div class="text-warning">
-                            <i class="fas fa-percentage fa-2x"></i>
-                        </div>
-                    </div>
+
+        <div class="tw-bg-white tw-rounded-2xl tw-p-5 tw-shadow-md tw-border-l-4 tw-border-amber-400 hover:tw-shadow-lg tw-transition">
+            <div class="tw-flex tw-justify-between tw-items-center">
+                <div>
+                    <div class="tw-text-sm tw-text-gray-500 tw-mb-1">Attendance Rate</div>
+                    <div class="tw-text-2xl tw-font-bold tw-text-gray-900" id="attendance-rate">{{ "%.1f" | format(stats.attendance_rate or 0) }}%</div>
+                </div>
+                <div class="tw-text-amber-400">
+                    <i class="bi bi-percent tw-text-4xl"></i>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Content Row -->
-    <div class="row">
+    <div class="tw-grid tw-grid-cols-1 lg:tw-grid-cols-2 tw-gap-6 tw-mb-8">
         <!-- Recent Activity -->
-        <div class="col-xl-6 mb-4">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-clock me-2"></i>Recent Activity
-                    </h6>
-                    <button class="btn btn-sm btn-outline-primary" onclick="refreshRecentActivity()">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                </div>
-                <div class="card-body p-0">
-                    <div class="recent-activity" id="recent-activity">
-                        {% if recent_scans %}
-                            {% for scan in recent_scans %}
-                            <div class="d-flex align-items-center p-3 border-bottom">
-                                <div class="me-3">
-                                    <div class="avatar bg-{{ 'success' if not scan.is_late else 'warning' }} text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                        <i class="fas fa-{{ 'check' if not scan.is_late else 'clock' }}"></i>
-                                    </div>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="fw-bold">{{ scan.student_name }}</div>
-                                    <div class="small text-muted">
-                                        {{ scan.room_name }} • {{ scan.scan_time }}
-                                        {% if scan.is_late %}<span class="badge bg-warning ms-1">Late</span>{% endif %}
-                                        {% if scan.is_duplicate %}<span class="badge bg-info ms-1">Duplicate</span>{% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="text-center p-4 text-muted">
-                                <i class="fas fa-info-circle fa-2x mb-2"></i>
-                                <p class="mb-0">No recent activity</p>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-                {% if permissions.can_view_reports %}
-                <div class="card-footer text-center">
-                    <a href="{{ url_for('attendance.reports') }}" class="btn btn-primary btn-sm">
-                        View All Records
-                    </a>
-                </div>
-                {% endif %}
+        <div class="tw-bg-white tw-rounded-2xl tw-shadow-md tw-border tw-border-gray-100">
+            <div class="tw-flex tw-justify-between tw-items-center tw-p-5 tw-border-b tw-border-gray-100">
+                <h6 class="tw-m-0 tw-text-base tw-font-bold tw-text-cyan-600 tw-flex tw-items-center tw-gap-2">
+                    <i class="bi bi-clock-history"></i>Recent Activity
+                </h6>
+                <button type="button" class="tw-p-2 tw-rounded-lg tw-border tw-border-cyan-200 tw-text-cyan-600 hover:tw-bg-cyan-50 tw-transition" onclick="refreshRecentActivity()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
             </div>
-        </div>
-        
-        <!-- Room Occupancy -->
-        <div class="col-xl-6 mb-4">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-door-open me-2"></i>Room Occupancy
-                    </h6>
-                    <button class="btn btn-sm btn-outline-primary" onclick="refreshRoomOccupancy()">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
+            <div class="tw-p-0">
+                <div class="tw-max-h-96 tw-overflow-y-auto" id="recent-activity">
+                    {% if recent_scans %}
+                        {% for scan in recent_scans %}
+                        <div class="tw-flex tw-items-center tw-gap-3 tw-p-4 tw-border-b tw-border-gray-100">
+                            <div class="tw-w-10 tw-h-10 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-text-white tw-shrink-0 {{ 'tw-bg-emerald-500' if not scan.is_late else 'tw-bg-amber-500' }}">
+                                <i class="bi bi-{{ 'check-lg' if not scan.is_late else 'clock' }}"></i>
+                            </div>
+                            <div class="tw-flex-1 tw-min-w-0">
+                                <div class="tw-text-sm tw-font-bold tw-text-gray-900">{{ scan.student_name }}</div>
+                                <div class="tw-text-xs tw-text-gray-500">
+                                    {{ scan.room_name }} • {{ scan.scan_time }}
+                                    {% if scan.is_late %}<span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-bg-amber-100 tw-text-amber-700 tw-text-xs tw-font-semibold tw-ml-1">Late</span>{% endif %}
+                                    {% if scan.is_duplicate %}<span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-bg-blue-100 tw-text-blue-700 tw-text-xs tw-font-semibold tw-ml-1">Duplicate</span>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="tw-text-center tw-py-8 tw-text-gray-500">
+                            <i class="bi bi-info-circle tw-text-3xl tw-mb-2 tw-text-gray-300"></i>
+                            <p class="tw-mb-0">No recent activity</p>
+                        </div>
+                    {% endif %}
                 </div>
-                <div class="card-body">
-                    <div id="room-occupancy">
-                        {% if permissions.can_view_reports and room_occupancy %}
-                            {% for room in room_occupancy[:8] %}
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <small class="fw-bold">{{ room.full_name }}</small>
-                                    <small class="text-muted">
-                                        {{ room.current_occupancy }}/{{ room.capacity }}
-                                        ({{ room.occupancy_percentage }}%)
-                                    </small>
-                                </div>
-                                <div class="room-occupancy-bar">
-                                    <div class="occupancy-fill bg-{{ room.status_color }}" 
-                                         style="width: {{ room.occupancy_percentage }}%"></div>
-                                </div>
+            </div>
+            {% if permissions.can_view_reports %}
+            <div class="tw-p-4 tw-text-center tw-border-t tw-border-gray-100">
+                <button type="button" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-bg-cyan-600 tw-text-white tw-rounded-lg tw-text-sm tw-font-semibold hover:tw-bg-cyan-700 tw-transition" onclick="openAllRecordsModal()">
+                    View All Records
+                </button>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Room Occupancy -->
+        <div class="tw-bg-white tw-rounded-2xl tw-shadow-md tw-border tw-border-gray-100">
+            <div class="tw-flex tw-justify-between tw-items-center tw-p-5 tw-border-b tw-border-gray-100">
+                <h6 class="tw-m-0 tw-text-base tw-font-bold tw-text-cyan-600 tw-flex tw-items-center tw-gap-2">
+                    <i class="bi bi-door-open"></i>Room Occupancy
+                </h6>
+                <button type="button" class="tw-p-2 tw-rounded-lg tw-border tw-border-cyan-200 tw-text-cyan-600 hover:tw-bg-cyan-50 tw-transition" onclick="refreshRoomOccupancy()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+            <div class="tw-p-5">
+                <div id="room-occupancy">
+                    {% if permissions.can_view_reports and room_occupancy %}
+                        {% for room in room_occupancy[:8] %}
+                        <div class="tw-mb-4">
+                            <div class="tw-flex tw-justify-between tw-items-center tw-mb-1">
+                                <small class="tw-font-bold tw-text-gray-700">{{ room.full_name }}</small>
+                                <small class="tw-text-gray-500">{{ room.current_occupancy }}/{{ room.capacity }} ({{ room.occupancy_percentage }}%)</small>
                             </div>
-                            {% endfor %}
-                        {% elif not permissions.can_view_reports %}
-                            <div class="text-center text-muted">
-                                <i class="fas fa-lock fa-2x mb-2"></i>
-                                <p class="mb-0">Access restricted</p>
+                            <div class="tw-h-2 tw-rounded-full tw-bg-gray-200 tw-overflow-hidden">
+                                <div class="tw-h-full tw-transition-all tw-duration-500
+                                    {% if room.status_color == 'danger' %}tw-bg-red-500
+                                    {% elif room.status_color == 'warning' %}tw-bg-amber-500
+                                    {% else %}tw-bg-emerald-500
+                                    {% endif %}" style="width: {{ room.occupancy_percentage }}%"></div>
                             </div>
-                        {% else %}
-                            <div class="text-center text-muted">
-                                <i class="fas fa-door-open fa-2x mb-2"></i>
-                                <p class="mb-0">No room data available</p>
-                            </div>
-                        {% endif %}
-                    </div>
+                        </div>
+                        {% endfor %}
+                    {% elif not permissions.can_view_reports %}
+                        <div class="tw-text-center tw-text-gray-500 tw-py-8">
+                            <i class="bi bi-lock tw-text-3xl tw-mb-2 tw-text-gray-300"></i>
+                            <p class="tw-mb-0">Access restricted</p>
+                        </div>
+                    {% else %}
+                        <div class="tw-text-center tw-text-gray-500 tw-py-8">
+                            <i class="bi bi-door-open tw-text-3xl tw-mb-2 tw-text-gray-300"></i>
+                            <p class="tw-mb-0">No room data available</p>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Today's Summary -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-calendar-day me-2"></i>Today's Summary
-                    </h6>
+    <div class="tw-bg-white tw-rounded-2xl tw-shadow-md tw-border tw-border-gray-100">
+        <div class="tw-p-5 tw-border-b tw-border-gray-100">
+            <h6 class="tw-m-0 tw-text-base tw-font-bold tw-text-cyan-600 tw-flex tw-items-center tw-gap-2">
+                <i class="bi bi-calendar-day"></i>Today's Summary
+            </h6>
+        </div>
+        <div class="tw-p-5">
+            <div class="tw-grid tw-grid-cols-2 sm:tw-grid-cols-3 md:tw-grid-cols-6 tw-gap-4 tw-text-center">
+                <div class="tw-border-r tw-border-gray-100 last:tw-border-r-0">
+                    <div class="tw-text-2xl tw-font-bold tw-text-cyan-600" id="summary-total-scans">{{ today_summary.total_scans or 0 }}</div>
+                    <small class="tw-text-gray-500">Total Scans</small>
                 </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-md-2">
-                            <div class="border-end">
-                                <div class="h4 mb-0 text-primary">{{ today_summary.total_scans or 0 }}</div>
-                                <small class="text-muted">Total Scans</small>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="border-end">
-                                <div class="h4 mb-0 text-success">{{ today_summary.unique_students or 0 }}</div>
-                                <small class="text-muted">Students</small>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="border-end">
-                                <div class="h4 mb-0 text-warning">{{ today_summary.late_arrivals or 0 }}</div>
-                                <small class="text-muted">Late Arrivals</small>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="border-end">
-                                <div class="h4 mb-0 text-info">{{ today_summary.duplicates or 0 }}</div>
-                                <small class="text-muted">Duplicates</small>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="border-end">
-                                <div class="h4 mb-0 text-secondary">{{ today_summary.active_rooms or 0 }}</div>
-                                <small class="text-muted">Active Rooms</small>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="h4 mb-0 text-primary">{{ today_summary.peak_hour or 'N/A' }}</div>
-                            <small class="text-muted">Peak Hour</small>
-                        </div>
-                    </div>
+                <div class="tw-border-r tw-border-gray-100 last:tw-border-r-0">
+                    <div class="tw-text-2xl tw-font-bold tw-text-emerald-600" id="summary-unique-students">{{ today_summary.unique_students or 0 }}</div>
+                    <small class="tw-text-gray-500">Students</small>
                 </div>
+                <div class="tw-border-r tw-border-gray-100 last:tw-border-r-0">
+                    <div class="tw-text-2xl tw-font-bold tw-text-amber-600" id="summary-late-arrivals">{{ today_summary.late_arrivals or 0 }}</div>
+                    <small class="tw-text-gray-500">Late Arrivals</small>
+                </div>
+                <div class="tw-border-r tw-border-gray-100 last:tw-border-r-0">
+                    <div class="tw-text-2xl tw-font-bold tw-text-blue-500" id="summary-duplicates">{{ today_summary.duplicates or 0 }}</div>
+                    <small class="tw-text-gray-500">Duplicates</small>
+                </div>
+                <div class="tw-border-r tw-border-gray-100 last:tw-border-r-0">
+                    <div class="tw-text-2xl tw-font-bold tw-text-gray-600" id="summary-active-rooms">{{ today_summary.active_rooms or 0 }}</div>
+                    <small class="tw-text-gray-500">Active Rooms</small>
+                </div>
+                <div>
+                    <div class="tw-text-2xl tw-font-bold tw-text-cyan-600" id="summary-peak-hour">{{ today_summary.peak_hour or 'N/A' }}</div>
+                    <small class="tw-text-gray-500">Peak Hour</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- All Records Modal -->
+<div class="modal fade" id="allRecordsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="allRecordsModalLabel">All Records</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="allRecordsModalBody">
+                <!-- Records loaded from the same API -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard Modal -->
+<div class="modal fade" id="dashboardModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dashboardModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="dashboardModalBody">
+                <!-- Modal content loaded via fetch -->
             </div>
         </div>
     </div>
@@ -276,109 +232,188 @@
 
 {% block extra_js %}
 <script>
-    // Auto-refresh dashboard data every 30 seconds
-    setInterval(function() {
-        refreshStats();
-        refreshRecentActivity();
-        refreshRoomOccupancy();
-    }, 30000);
-    
-    function refreshStats() {
-        fetch('/api/dashboard/stats')
-            .then(response => response.json())
-            .then(data => {
-                if (!data.error) {
-                    document.getElementById('today-scans').textContent = data.today_scans || 0;
-                    document.getElementById('unique-students').textContent = data.unique_students_today || 0;
-                    document.getElementById('active-sessions').textContent = data.active_sessions || 0;
-                    document.getElementById('attendance-rate').textContent = (data.attendance_rate || 0).toFixed(1) + '%';
-                }
-            })
-            .catch(error => console.error('Error refreshing stats:', error));
+function openDashboardModal(title, url) {
+    const modalEl = document.getElementById('dashboardModal');
+    document.getElementById('dashboardModalLabel').textContent = title;
+    const modalBody = document.getElementById('dashboardModalBody');
+    modalBody.innerHTML = '<div class="tw-text-center tw-py-8"><i class="bi bi-arrow-repeat tw-text-3xl tw-animate-spin"></i><p class="tw-mt-2">Loading...</p></div>';
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+    fetch(url)
+        .then(response => {
+            if (!response.ok) throw new Error('Failed to load modal');
+            return response.text();
+        })
+        .then(html => {
+            modalBody.innerHTML = html;
+        })
+        .catch(error => {
+            modalBody.innerHTML = '<div class="tw-text-center tw-py-8 tw-text-red-600"><i class="bi bi-exclamation-triangle tw-text-3xl"></i><p class="tw-mt-2">' + error.message + '</p></div>';
+        });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-modal-url]').forEach(button => {
+        button.addEventListener('click', function() {
+            openDashboardModal(this.dataset.modalTitle || '', this.dataset.modalUrl);
+        });
+    });
+});
+
+// Auto-refresh dashboard data every 30 seconds (skip when modal is open)
+setInterval(function() {
+    if (document.querySelector('.modal.show')) return;
+    refreshStats();
+    refreshRecentActivity();
+    refreshRoomOccupancy();
+}, 30000);
+
+function refreshStats() {
+    fetch('/api/dashboard/stats')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.error) {
+                document.getElementById('today-scans').textContent = data.today_scans || 0;
+                document.getElementById('unique-students').textContent = data.unique_students_today || 0;
+                document.getElementById('active-sessions').textContent = data.active_sessions || 0;
+                document.getElementById('attendance-rate').textContent = (data.attendance_rate || 0).toFixed(1) + '%';
+            }
+        })
+        .catch(error => console.error('Error refreshing stats:', error));
+}
+
+function refreshRecentActivity() {
+    fetch('/api/dashboard/recent-activity?limit=10')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.error && Array.isArray(data)) {
+                updateRecentActivity(data);
+            }
+        })
+        .catch(error => console.error('Error refreshing recent activity:', error));
+}
+
+function refreshRoomOccupancy() {
+    {% if permissions.can_view_reports %}
+    fetch('/api/dashboard/room-occupancy')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.error && Array.isArray(data)) {
+                updateRoomOccupancy(data.slice(0, 8));
+            }
+        })
+        .catch(error => console.error('Error refreshing room occupancy:', error));
+    {% endif %}
+}
+
+function updateRecentActivity(activities) {
+    const container = document.getElementById('recent-activity');
+    if (activities.length === 0) {
+        container.innerHTML = `
+            <div class="tw-text-center tw-py-8 tw-text-gray-500">
+                <i class="bi bi-info-circle tw-text-3xl tw-mb-2 tw-text-gray-300"></i>
+                <p class="tw-mb-0">No recent activity</p>
+            </div>
+        `;
+        return;
     }
-    
-    function refreshRecentActivity() {
-        fetch('/api/dashboard/recent-activity?limit=10')
-            .then(response => response.json())
-            .then(data => {
-                if (!data.error && Array.isArray(data)) {
-                    updateRecentActivity(data);
-                }
-            })
-            .catch(error => console.error('Error refreshing recent activity:', error));
-    }
-    
-    function refreshRoomOccupancy() {
-        {% if permissions.can_view_reports %}
-        fetch('/api/dashboard/room-occupancy')
-            .then(response => response.json())
-            .then(data => {
-                if (!data.error && Array.isArray(data)) {
-                    updateRoomOccupancy(data.slice(0, 8));
-                }
-            })
-            .catch(error => console.error('Error refreshing room occupancy:', error));
-        {% endif %}
-    }
-    
-    function updateRecentActivity(activities) {
-        const container = document.getElementById('recent-activity');
-        if (activities.length === 0) {
-            container.innerHTML = `
-                <div class="text-center p-4 text-muted">
-                    <i class="fas fa-info-circle fa-2x mb-2"></i>
-                    <p class="mb-0">No recent activity</p>
-                </div>
-            `;
-            return;
-        }
-        
-        container.innerHTML = activities.map(scan => `
-            <div class="d-flex align-items-center p-3 border-bottom">
-                <div class="me-3">
-                    <div class="avatar bg-${scan.is_late ? 'warning' : 'success'} text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                        <i class="fas fa-${scan.is_late ? 'clock' : 'check'}"></i>
-                    </div>
-                </div>
-                <div class="flex-grow-1">
-                    <div class="fw-bold">${scan.student_name}</div>
-                    <div class="small text-muted">
-                        ${scan.room_name} • ${scan.scan_time}
-                        ${scan.is_late ? '<span class="badge bg-warning ms-1">Late</span>' : ''}
-                        ${scan.is_duplicate ? '<span class="badge bg-info ms-1">Duplicate</span>' : ''}
-                    </div>
+
+    container.innerHTML = activities.map(scan => `
+        <div class="tw-flex tw-items-center tw-gap-3 tw-p-4 tw-border-b tw-border-gray-100">
+            <div class="tw-w-10 tw-h-10 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-text-white tw-shrink-0 ${scan.is_late ? 'tw-bg-amber-500' : 'tw-bg-emerald-500'}">
+                <i class="bi bi-${scan.is_late ? 'clock' : 'check-lg'}"></i>
+            </div>
+            <div class="tw-flex-1 tw-min-w-0">
+                <div class="tw-text-sm tw-font-bold tw-text-gray-900">${scan.student_name}</div>
+                <div class="tw-text-xs tw-text-gray-500">
+                    ${scan.room_name} • ${scan.scan_time}
+                    ${scan.is_late ? '<span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-bg-amber-100 tw-text-amber-700 tw-text-xs tw-font-semibold tw-ml-1">Late</span>' : ''}
+                    ${scan.is_duplicate ? '<span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-bg-blue-100 tw-text-blue-700 tw-text-xs tw-font-semibold tw-ml-1">Duplicate</span>' : ''}
                 </div>
             </div>
-        `).join('');
+        </div>
+    `).join('');
+}
+
+function updateRoomOccupancy(rooms) {
+    const container = document.getElementById('room-occupancy');
+    if (rooms.length === 0) {
+        container.innerHTML = `
+            <div class="tw-text-center tw-py-8 tw-text-gray-500">
+                <i class="bi bi-door-open tw-text-3xl tw-mb-2 tw-text-gray-300"></i>
+                <p class="tw-mb-0">No room data available</p>
+            </div>
+        `;
+        return;
     }
-    
-    function updateRoomOccupancy(rooms) {
-        const container = document.getElementById('room-occupancy');
-        if (rooms.length === 0) {
-            container.innerHTML = `
-                <div class="text-center text-muted">
-                    <i class="fas fa-door-open fa-2x mb-2"></i>
-                    <p class="mb-0">No room data available</p>
+
+    container.innerHTML = rooms.map(room => `
+        <div class="tw-mb-4">
+            <div class="tw-flex tw-justify-between tw-items-center tw-mb-1">
+                <small class="tw-font-bold tw-text-gray-700">${room.full_name}</small>
+                <small class="tw-text-gray-500">${room.current_occupancy}/${room.capacity} (${room.occupancy_percentage}%)</small>
+            </div>
+            <div class="tw-h-2 tw-rounded-full tw-bg-gray-200 tw-overflow-hidden">
+                <div class="tw-h-full tw-transition-all tw-duration-500 ${getRoomFillColor(room.status_color)}" style="width: ${room.occupancy_percentage}%"></div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getRoomFillColor(statusColor) {
+    if (statusColor === 'danger') return 'tw-bg-red-500';
+    if (statusColor === 'warning') return 'tw-bg-amber-500';
+    return 'tw-bg-emerald-500';
+}
+
+function openAllRecordsModal() {
+    const modalBody = document.getElementById('allRecordsModalBody');
+    modalBody.innerHTML = '<div class="tw-text-center tw-py-8"><i class="bi bi-arrow-repeat tw-text-3xl tw-animate-spin"></i><p class="tw-mt-2">Loading...</p></div>';
+    const modal = new bootstrap.Modal(document.getElementById('allRecordsModal'));
+    modal.show();
+    fetch('/api/dashboard/recent-activity?limit=100')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error || !Array.isArray(data)) throw new Error(data.error || 'Failed to load records');
+            if (data.length === 0) {
+                modalBody.innerHTML = '<div class="tw-text-center tw-py-8 tw-text-gray-500"><i class="bi bi-info-circle tw-text-3xl tw-mb-2 tw-text-gray-300"></i><p>No records found.</p></div>';
+                return;
+            }
+            const rows = data.map(scan => `
+                <tr class="tw-border-b tw-border-gray-100">
+                    <td class="tw-py-3 tw-pl-4">
+                        <div class="tw-flex tw-items-center tw-gap-2">
+                            <i class="bi bi-${scan.is_late ? 'clock text-amber-500' : 'check-lg text-emerald-500'}"></i>
+                            <span class="tw-font-semibold tw-text-sm">${scan.student_name}</span>
+                        </div>
+                    </td>
+                    <td class="tw-py-3 tw-text-sm tw-text-gray-600">${scan.room_name || '-'}</td>
+                    <td class="tw-py-3 tw-text-sm tw-text-gray-600">${scan.scan_time}</td>
+                    <td class="tw-py-3 tw-pr-4">
+                        ${scan.is_late ? '<span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-bg-amber-100 tw-text-amber-700 tw-text-xs tw-font-semibold">Late</span>' : ''}
+                        ${scan.is_duplicate ? '<span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-bg-blue-100 tw-text-blue-700 tw-text-xs tw-font-semibold tw-ml-1">Duplicate</span>' : ''}
+                    </td>
+                </tr>
+            `).join('');
+            modalBody.innerHTML = `
+                <div class="tw-overflow-x-auto">
+                    <table class="tw-w-full tw-text-left tw-border-collapse">
+                        <thead>
+                            <tr class="tw-bg-gray-50 tw-text-gray-600 tw-text-xs tw-uppercase tw-tracking-wider">
+                                <th class="tw-py-3 tw-pl-4 tw-font-semibold">Student</th>
+                                <th class="tw-py-3 tw-font-semibold">Room</th>
+                                <th class="tw-py-3 tw-font-semibold">Scan Time</th>
+                                <th class="tw-py-3 tw-pr-4 tw-font-semibold">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
                 </div>
             `;
-            return;
-        }
-        
-        container.innerHTML = rooms.map(room => `
-            <div class="mb-3">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <small class="fw-bold">${room.full_name}</small>
-                    <small class="text-muted">
-                        ${room.current_occupancy}/${room.capacity}
-                        (${room.occupancy_percentage}%)
-                    </small>
-                </div>
-                <div class="room-occupancy-bar">
-                    <div class="occupancy-fill bg-${room.status_color}" 
-                         style="width: ${room.occupancy_percentage}%"></div>
-                </div>
-            </div>
-        `).join('');
-    }
+        })
+        .catch(error => {
+            modalBody.innerHTML = '<div class="tw-text-center tw-py-8 tw-text-red-600"><i class="bi bi-exclamation-triangle tw-text-3xl"></i><p class="tw-mt-2">' + error.message + '</p></div>';
+        });
+}
 </script>
 {% endblock %}

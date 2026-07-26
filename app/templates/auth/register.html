@@ -1,361 +1,200 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - ScanMe</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Custom Auth CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
-</head>
-<body class="auth-page">
-    <div class="auth-container register-container">
-        <div class="auth-card">
-            <!-- Header -->
-            <div class="auth-header">
-                <h1><i class="fas fa-user-plus"></i> Join ScanMe</h1>
-                <p>Create your account to get started</p>
-                <div class="feature-badges">
-                    <div class="feature-badge">
-                        <i class="fas fa-shield-alt"></i> Secure
-                    </div>
-                    <div class="feature-badge">
-                        <i class="fas fa-bolt"></i> Fast Setup
-                    </div>
-                    <div class="feature-badge">
-                        <i class="fas fa-mobile-alt"></i> Mobile Ready
-                    </div>
+{% extends "auth/auth_base.html" %}
+
+{% block title %}Sign Up - ScanMe{% endblock %}
+
+{% block content %}
+<div class="tw-min-h-screen tw-flex tw-items-center tw-justify-center tw-px-4 tw-py-12 tw-bg-gradient-to-br tw-from-slate-50 tw-to-blue-100 tw-relative">
+    <div class="tw-absolute tw-inset-0 tw-overflow-hidden tw-pointer-events-none">
+        <div class="tw-absolute tw-top-[-10%] tw-left-[-10%] tw-w-96 tw-h-96 tw-bg-blue-300 tw-rounded-full tw-mix-blend-multiply tw-filter tw-blur-3xl tw-opacity-30"></div>
+        <div class="tw-absolute tw-top-[20%] tw-right-[-10%] tw-w-72 tw-h-72 tw-bg-indigo-300 tw-rounded-full tw-mix-blend-multiply tw-filter tw-blur-3xl tw-opacity-30"></div>
+        <div class="tw-absolute tw-bottom-[-10%] tw-left-[20%] tw-w-80 tw-h-80 tw-bg-purple-300 tw-rounded-full tw-mix-blend-multiply tw-filter tw-blur-3xl tw-opacity-30"></div>
+    </div>
+
+    <div class="tw-w-full tw-max-w-3xl tw-relative tw-z-10">
+        <div class="tw-bg-white tw-rounded-3xl tw-shadow-2xl tw-overflow-hidden">
+            <!-- Brand Banner -->
+            <div class="tw-bg-gradient-to-br tw-from-blue-600 tw-to-indigo-700 tw-p-8 tw-text-center tw-text-white">
+                <div class="tw-inline-flex tw-items-center tw-justify-center tw-w-16 tw-h-16 tw-rounded-2xl tw-bg-white/20 tw-backdrop-blur-sm tw-text-3xl tw-mb-4 tw-shadow-lg">
+                    <i class="bi bi-person-plus"></i>
                 </div>
+                <h2 class="tw-text-3xl tw-font-extrabold tw-mb-2">Join ScanMe</h2>
+                <p class="tw-text-white/90">Create your account to get started</p>
             </div>
-            
-            <!-- Form -->
-            <div class="auth-form">
+
+            <div class="tw-p-8">
+                <a href="{{ url_for('main.index') }}" class="tw-inline-flex tw-items-center tw-gap-2 tw-text-slate-500 hover:tw-text-blue-600 tw-text-sm tw-font-medium tw-mb-6 tw-transition-colors">
+                    <i class="bi bi-arrow-left"></i> Back to Home
+                </a>
+
                 <form method="POST" action="{{ url_for('auth.register') }}" id="registerForm">
                     {{ form.hidden_tag() }}
-                    
-                    <!-- Name Fields -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="first_name" class="form-label">
-                                <i class="fas fa-user me-1"></i> First Name
-                            </label>
-                            {{ form.first_name(class="form-input", placeholder="Enter your first name") }}
+
+                    <div class="row tw--mb-2">
+                        <div class="col-md-6 tw-mb-5">
+                            <label for="first_name" class="tw-block tw-text-sm tw-font-medium tw-text-slate-700 tw-mb-2">First Name</label>
+                            <div class="tw-relative">
+                                <span class="tw-absolute tw-left-4 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-400"><i class="bi bi-person"></i></span>
+                                {{ form.first_name(class="tw-w-full tw-pl-11 tw-pr-4 tw-py-3 tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-text-slate-800 placeholder:tw-text-slate-400 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-blue-500 focus:tw-border-blue-500 tw-transition-all", placeholder="Enter your first name") }}
+                            </div>
                             {% if form.first_name.errors %}
-                                <div class="error-message">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    {{ form.first_name.errors[0] }}
-                                </div>
+                                <p class="tw-text-red-500 tw-text-sm tw-mt-1"><i class="bi bi-exclamation-triangle-fill tw-me-1"></i> {{ form.first_name.errors[0] }}</p>
                             {% endif %}
                         </div>
-                        <div class="form-group">
-                            <label for="last_name" class="form-label">
-                                <i class="fas fa-user me-1"></i> Last Name
-                            </label>
-                            {{ form.last_name(class="form-input", placeholder="Enter your last name") }}
+                        <div class="col-md-6 tw-mb-5">
+                            <label for="last_name" class="tw-block tw-text-sm tw-font-medium tw-text-slate-700 tw-mb-2">Last Name</label>
+                            <div class="tw-relative">
+                                <span class="tw-absolute tw-left-4 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-400"><i class="bi bi-person"></i></span>
+                                {{ form.last_name(class="tw-w-full tw-pl-11 tw-pr-4 tw-py-3 tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-text-slate-800 placeholder:tw-text-slate-400 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-blue-500 focus:tw-border-blue-500 tw-transition-all", placeholder="Enter your last name") }}
+                            </div>
                             {% if form.last_name.errors %}
-                                <div class="error-message">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    {{ form.last_name.errors[0] }}
-                                </div>
+                                <p class="tw-text-red-500 tw-text-sm tw-mt-1"><i class="bi bi-exclamation-triangle-fill tw-me-1"></i> {{ form.last_name.errors[0] }}</p>
                             {% endif %}
                         </div>
                     </div>
-                    
-                    <!-- Email Field -->
-                    <div class="form-group">
-                        <label for="email" class="form-label">
-                            <i class="fas fa-envelope me-1"></i> Email Address
-                        </label>
-                        {{ form.email(class="form-input", placeholder="Enter your email address") }}
-                        {% if form.email.errors %}
-                            <div class="error-message">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                {{ form.email.errors[0] }}
+
+                    <div class="row tw--mb-2">
+                        <div class="col-md-6 tw-mb-5">
+                            <label for="email" class="tw-block tw-text-sm tw-font-medium tw-text-slate-700 tw-mb-2">Email Address</label>
+                            <div class="tw-relative">
+                                <span class="tw-absolute tw-left-4 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-400"><i class="bi bi-envelope"></i></span>
+                                {{ form.email(class="tw-w-full tw-pl-11 tw-pr-4 tw-py-3 tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-text-slate-800 placeholder:tw-text-slate-400 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-blue-500 focus:tw-border-blue-500 tw-transition-all", placeholder="Enter your email address") }}
                             </div>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Username Field -->
-                    <div class="form-group">
-                        <label for="username" class="form-label">
-                            <i class="fas fa-at me-1"></i> Username
-                        </label>
-                        {{ form.username(class="form-input", placeholder="Choose a unique username") }}
-                        {% if form.username.errors %}
-                            <div class="error-message">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                {{ form.username.errors[0] }}
+                            {% if form.email.errors %}
+                                <p class="tw-text-red-500 tw-text-sm tw-mt-1"><i class="bi bi-exclamation-triangle-fill tw-me-1"></i> {{ form.email.errors[0] }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 tw-mb-5">
+                            <label for="username" class="tw-block tw-text-sm tw-font-medium tw-text-slate-700 tw-mb-2">Username</label>
+                            <div class="tw-relative">
+                                <span class="tw-absolute tw-left-4 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-400"><i class="bi bi-at"></i></span>
+                                {{ form.username(class="tw-w-full tw-pl-11 tw-pr-4 tw-py-3 tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-text-slate-800 placeholder:tw-text-slate-400 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-blue-500 focus:tw-border-blue-500 tw-transition-all", placeholder="Choose a unique username") }}
                             </div>
-                        {% endif %}
+                            {% if form.username.errors %}
+                                <p class="tw-text-red-500 tw-text-sm tw-mt-1"><i class="bi bi-exclamation-triangle-fill tw-me-1"></i> {{ form.username.errors[0] }}</p>
+                            {% endif %}
+                        </div>
                     </div>
-                    
-                    <!-- Role Selection -->
-                    <div class="form-group">
-                        <label for="role" class="form-label">
-                            <i class="fas fa-user-tag me-1"></i> Account Type
-                        </label>
-                        {{ form.role(class="form-select") }}
+
+                    <div class="tw-mb-5">
+                        <label for="role" class="tw-block tw-text-sm tw-font-medium tw-text-slate-700 tw-mb-2">Account Type</label>
+                        <div class="tw-relative">
+                            <span class="tw-absolute tw-left-4 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-400"><i class="bi bi-person-gear"></i></span>
+                            {{ form.role(class="tw-w-full tw-pl-11 tw-pr-4 tw-py-3 tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-text-slate-800 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-blue-500 focus:tw-border-blue-500 tw-transition-all") }}
+                        </div>
                         {% if form.role.errors %}
-                            <div class="error-message">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                {{ form.role.errors[0] }}
-                            </div>
+                            <p class="tw-text-red-500 tw-text-sm tw-mt-1"><i class="bi bi-exclamation-triangle-fill tw-me-1"></i> {{ form.role.errors[0] }}</p>
                         {% endif %}
                     </div>
-                    
-                    <!-- Password Fields -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="password" class="form-label">
-                                <i class="fas fa-lock me-1"></i> Password
-                            </label>
-                            {{ form.password(class="form-input", placeholder="Create a strong password") }}
+
+                    <div class="row tw--mb-2">
+                        <div class="col-md-6 tw-mb-5">
+                            <label for="password" class="tw-block tw-text-sm tw-font-medium tw-text-slate-700 tw-mb-2">Password</label>
+                            <div class="tw-relative">
+                                <span class="tw-absolute tw-left-4 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-400"><i class="bi bi-lock"></i></span>
+                                {{ form.password(class="tw-w-full tw-pl-11 tw-pr-4 tw-py-3 tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-text-slate-800 placeholder:tw-text-slate-400 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-blue-500 focus:tw-border-blue-500 tw-transition-all", placeholder="Create a strong password") }}
+                            </div>
                             {% if form.password.errors %}
-                                <div class="error-message">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    {{ form.password.errors[0] }}
-                                </div>
+                                <p class="tw-text-red-500 tw-text-sm tw-mt-1"><i class="bi bi-exclamation-triangle-fill tw-me-1"></i> {{ form.password.errors[0] }}</p>
                             {% endif %}
                         </div>
-                        <div class="form-group">
-                            <label for="confirm_password" class="form-label">
-                                <i class="fas fa-lock me-1"></i> Confirm Password
-                            </label>
-                            {{ form.confirm_password(class="form-input", placeholder="Confirm your password") }}
+                        <div class="col-md-6 tw-mb-5">
+                            <label for="confirm_password" class="tw-block tw-text-sm tw-font-medium tw-text-slate-700 tw-mb-2">Confirm Password</label>
+                            <div class="tw-relative">
+                                <span class="tw-absolute tw-left-4 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-400"><i class="bi bi-lock"></i></span>
+                                {{ form.confirm_password(class="tw-w-full tw-pl-11 tw-pr-4 tw-py-3 tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-text-slate-800 placeholder:tw-text-slate-400 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-blue-500 focus:tw-border-blue-500 tw-transition-all", placeholder="Confirm your password") }}
+                            </div>
                             {% if form.confirm_password.errors %}
-                                <div class="error-message">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    {{ form.confirm_password.errors[0] }}
-                                </div>
+                                <p class="tw-text-red-500 tw-text-sm tw-mt-1"><i class="bi bi-exclamation-triangle-fill tw-me-1"></i> {{ form.confirm_password.errors[0] }}</p>
                             {% endif %}
                         </div>
                     </div>
-                    
-                    <!-- Terms and Conditions -->
-                    <div class="form-checkbox">
-                        {{ form.agree_terms() }}
-                        <label for="agree_terms">
-                            I agree to the 
-                            <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms of Service</a>
-                            and 
-                            <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">Privacy Policy</a>
+
+                    <div class="tw-mb-6">
+                        <label class="tw-flex tw-items-start tw-gap-3 tw-text-sm tw-text-slate-600">
+                            {{ form.agree_terms(class="tw-w-4 tw-h-4 tw-mt-1 tw-rounded tw-text-blue-600 focus:tw-ring-blue-500 tw-border-slate-300") }}
+                            <span>
+                                I agree to the
+                                <a href="#" class="tw-text-blue-600 hover:tw-text-blue-700 tw-font-medium" data-bs-toggle="modal" data-bs-target="#termsModal">Terms of Service</a>
+                                and
+                                <a href="#" class="tw-text-blue-600 hover:tw-text-blue-700 tw-font-medium" data-bs-toggle="modal" data-bs-target="#privacyModal">Privacy Policy</a>
+                            </span>
                         </label>
                         {% if form.agree_terms.errors %}
-                            <div class="error-message">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                {{ form.agree_terms.errors[0] }}
-                            </div>
+                            <p class="tw-text-red-500 tw-text-sm tw-mt-1"><i class="bi bi-exclamation-triangle-fill tw-me-1"></i> {{ form.agree_terms.errors[0] }}</p>
                         {% endif %}
                     </div>
-                    
-                    <!-- Submit Button -->
-                    <button type="submit" class="auth-button success">
-                        <i class="fas fa-user-plus"></i>
-                        Create Account
+
+                    <button type="submit" class="tw-w-full tw-bg-gradient-to-r tw-from-blue-600 tw-to-indigo-700 hover:tw-from-blue-700 hover:tw-to-indigo-800 tw-text-white tw-font-semibold tw-py-3 tw-rounded-xl tw-shadow-lg hover:tw-shadow-xl tw-transition-all tw-flex tw-items-center tw-justify-center tw-gap-2" id="submitBtn">
+                        <i class="bi bi-person-plus"></i> Create Account
                     </button>
                 </form>
-            </div>
-            
-            <!-- Footer -->
-            <div class="auth-footer">
-                <p>
-                    Already have an account?
-                    <a href="{{ url_for('auth.login') }}">
-                        <i class="fas fa-sign-in-alt me-1"></i>
-                        Sign in here
-                    </a>
-                </p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Terms Modal -->
-    <div class="modal fade" id="termsModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Terms of Service</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <h6>1. Acceptance of Terms</h6>
-                    <p>By using ScanMe, you agree to these terms and conditions.</p>
-                    
-                    <h6>2. Service Description</h6>
-                    <p>ScanMe is an attendance management system that uses QR codes for tracking.</p>
-                    
-                    <h6>3. User Responsibilities</h6>
-                    <p>Users are responsible for maintaining the confidentiality of their account information.</p>
-                    
-                    <h6>4. Data Usage</h6>
-                    <p>We collect and use data in accordance with our Privacy Policy.</p>
-                    
-                    <h6>5. Service Availability</h6>
-                    <p>We strive to maintain service availability but cannot guarantee 100% uptime.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+                <div class="tw-text-center tw-mt-6 tw-pt-6 tw-border-t tw-border-slate-100">
+                    <p class="tw-text-slate-600 tw-text-sm">
+                        Already have an account?
+                        <a href="{{ url_for('auth.login') }}" class="tw-text-blue-600 hover:tw-text-blue-700 tw-font-semibold">
+                            Sign in here
+                        </a>
+                    </p>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Privacy Modal -->
-    <div class="modal fade" id="privacyModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Privacy Policy</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <h6>1. Information We Collect</h6>
-                    <p>We collect information necessary for attendance tracking and account management.</p>
-                    
-                    <h6>2. How We Use Information</h6>
-                    <p>Information is used to provide and improve our services.</p>
-                    
-                    <h6>3. Information Sharing</h6>
-                    <p>We do not sell or share personal information with third parties.</p>
-                    
-                    <h6>4. Data Security</h6>
-                    <p>We implement security measures to protect your information.</p>
-                    
-                    <h6>5. Contact Us</h6>
-                    <p>For privacy concerns, contact us through our support channels.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
+</div>
+
+<!-- Terms Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content tw-rounded-2xl tw-border-0 tw-shadow-2xl">
+            <div class="modal-header">
+                <h5 class="modal-title">Terms of Service</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>By using ScanMe, you agree to our terms and conditions. The service is provided for attendance management and user data is handled responsibly.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
-    
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div id="flash-messages" style="position: fixed; top: 20px; right: 20px; z-index: 10000;">
-                {% for message in messages %}
-                    <div class="alert alert-info alert-dismissible fade show" role="alert">
-                        <i class="fas fa-info-circle me-2"></i>
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
+</div>
+
+<!-- Privacy Modal -->
+<div class="modal fade" id="privacyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content tw-rounded-2xl tw-border-0 tw-shadow-2xl">
+            <div class="modal-header">
+                <h5 class="modal-title">Privacy Policy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-        {% endif %}
-    {% endwith %}
-    
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Form Enhancement Script -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('registerForm');
-            const inputs = form.querySelectorAll('.form-input');
-            const submitBtn = form.querySelector('.auth-button');
-            const passwordField = document.getElementById('password');
-            const confirmPasswordField = document.getElementById('confirm_password');
-            
-            // Add input validation styling
-            inputs.forEach(input => {
-                input.addEventListener('blur', function() {
-                    validateField(this);
-                });
-                
-                input.addEventListener('input', function() {
-                    this.classList.remove('error');
-                    if (this.value.trim() !== '') {
-                        this.classList.add('success');
-                    }
-                });
-            });
-            
-            // Password confirmation validation
-            confirmPasswordField.addEventListener('input', function() {
-                if (passwordField.value !== this.value) {
-                    this.classList.add('error');
-                    this.classList.remove('success');
-                } else if (this.value !== '') {
-                    this.classList.add('success');
-                    this.classList.remove('error');
-                }
-            });
-            
-            function validateField(field) {
-                const value = field.value.trim();
-                
-                if (value === '') {
-                    field.classList.add('error');
-                    field.classList.remove('success');
-                    return false;
-                }
-                
-                // Email validation
-                if (field.type === 'email' || field.name === 'email') {
-                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                    if (!emailRegex.test(value)) {
-                        field.classList.add('error');
-                        field.classList.remove('success');
-                        return false;
-                    }
-                }
-                
-                // Password validation
-                if (field.name === 'password' && value.length < 8) {
-                    field.classList.add('error');
-                    field.classList.remove('success');
-                    return false;
-                }
-                
-                field.classList.add('success');
-                field.classList.remove('error');
-                return true;
+            <div class="modal-body">
+                <p>ScanMe collects only the data necessary for attendance tracking. We do not sell or share personal information with third parties.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('registerForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const terms = document.getElementById('agree_terms');
+
+        form.addEventListener('submit', function(e) {
+            if (!terms.checked) {
+                e.preventDefault();
+                alert('Please agree to the Terms of Service and Privacy Policy.');
+                return;
             }
-            
-            // Form submission with loading state
-            form.addEventListener('submit', function(e) {
-                let isValid = true;
-                
-                // Validate all fields
-                inputs.forEach(input => {
-                    if (!validateField(input)) {
-                        isValid = false;
-                    }
-                });
-                
-                // Check terms agreement
-                const termsCheckbox = document.getElementById('agree_terms');
-                if (!termsCheckbox.checked) {
-                    isValid = false;
-                }
-                
-                if (isValid) {
-                    submitBtn.innerHTML = '<i class="fas fa-spinner spinner"></i> Creating Account...';
-                    submitBtn.disabled = true;
-                } else {
-                    e.preventDefault();
-                }
-            });
-            
-            // Auto-dismiss flash messages
-            setTimeout(function() {
-                const flashMessages = document.getElementById('flash-messages');
-                if (flashMessages) {
-                    flashMessages.style.opacity = '0';
-                    setTimeout(() => flashMessages.remove(), 500);
-                }
-            }, 5000);
+            submitBtn.innerHTML = '<i class="bi bi-arrow-repeat tw-animate-spin tw-me-2"></i>Creating Account...';
+            submitBtn.disabled = true;
         });
-    </script>
-</body>
-</html>
+    });
+</script>
+{% endblock %}

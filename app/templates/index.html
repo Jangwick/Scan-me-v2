@@ -2,199 +2,206 @@
 
 {% block title %}Welcome - ScanMe Attendance System{% endblock %}
 
-{% block content %}
-<div class="hero-section bg-primary text-white py-5 mb-5">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6">
-                <h1 class="display-4 fw-bold mb-4">
-                    <i class="fas fa-qrcode me-3"></i>ScanMe
-                </h1>
-                <p class="lead mb-4">
-                    Modern QR Code-based room attendance system for schools and institutions. 
-                    Track student attendance in real-time with advanced analytics and reporting.
-                </p>
-                <div class="d-flex gap-3">
-                    <a href="{{ url_for('auth.login') }}" class="btn btn-light btn-lg">
-                        <i class="fas fa-sign-in-alt me-2"></i>Login
-                    </a>
-                    {% if not current_user.is_authenticated %}
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-light btn-lg">
-                        <i class="fas fa-user-plus me-2"></i>Register
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="col-lg-6 text-center">
-                <i class="fas fa-mobile-alt fa-10x opacity-75"></i>
-            </div>
-        </div>
-    </div>
-</div>
+{% block extra_css %}
+<!-- Tailwind CSS (prefixed to coexist with Bootstrap) -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+        prefix: 'tw-',
+        important: true,
+        corePlugins: { preflight: false }
+    };
+</script>
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+    .hero-bg {
+        background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+    }
+    .float-anim {
+        animation: floatY 4s ease-in-out infinite;
+    }
+    @keyframes floatY {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-14px); }
+    }
+</style>
+{% endblock %}
 
-<div class="container">
-    <!-- Features Section -->
-    <div class="row mb-5">
-        <div class="col-12">
-            <h2 class="text-center mb-5">System Features</h2>
-        </div>
-        
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="feature-icon text-primary mb-3">
-                        <i class="fas fa-qrcode fa-3x"></i>
-                    </div>
-                    <h5 class="card-title">QR Code Scanning</h5>
-                    <p class="card-text">
-                        Students scan their unique QR codes at room entrances for instant attendance logging.
-                    </p>
+{% block content %}
+<!-- Hero -->
+<section class="hero-bg tw-text-white tw-relative tw-overflow-hidden">
+    <div class="tw-absolute tw-inset-0 tw-bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_40%)]"></div>
+    <div class="container tw-relative tw-z-10 tw-py-20 lg:tw-py-28">
+        <div class="row tw-items-center">
+            <div class="col-lg-6">
+                <div class="tw-inline-flex tw-items-center tw-gap-2 tw-bg-white/10 tw-backdrop-blur-sm tw-px-4 tw-py-2 tw-rounded-full tw-text-sm tw-font-medium tw-mb-6">
+                    <span class="tw-w-2 tw-h-2 tw-bg-emerald-400 tw-rounded-full"></span>
+                    Smart Attendance System
                 </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="feature-icon text-success mb-3">
-                        <i class="fas fa-clock fa-3x"></i>
-                    </div>
-                    <h5 class="card-title">Real-Time Tracking</h5>
-                    <p class="card-text">
-                        Monitor attendance in real-time with instant notifications and live dashboards.
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="feature-icon text-info mb-3">
-                        <i class="fas fa-chart-bar fa-3x"></i>
-                    </div>
-                    <h5 class="card-title">Advanced Analytics</h5>
-                    <p class="card-text">
-                        Comprehensive reports and analytics to track attendance patterns and trends.
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="feature-icon text-warning mb-3">
-                        <i class="fas fa-door-open fa-3x"></i>
-                    </div>
-                    <h5 class="card-title">Room Management</h5>
-                    <p class="card-text">
-                        Manage multiple rooms and track occupancy with capacity monitoring.
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="feature-icon text-danger mb-3">
-                        <i class="fas fa-shield-alt fa-3x"></i>
-                    </div>
-                    <h5 class="card-title">Duplicate Prevention</h5>
-                    <p class="card-text">
-                        Advanced algorithms prevent duplicate scans and fraudulent attendance.
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="feature-icon text-secondary mb-3">
-                        <i class="fas fa-file-export fa-3x"></i>
-                    </div>
-                    <h5 class="card-title">Data Export</h5>
-                    <p class="card-text">
-                        Export attendance data to Excel, CSV, or PDF formats for reporting.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- How It Works -->
-    <div class="row mb-5">
-        <div class="col-12">
-            <h2 class="text-center mb-5">How It Works</h2>
-        </div>
-        
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="text-center">
-                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                    <span class="fw-bold fs-4">1</span>
-                </div>
-                <h5>Generate QR Codes</h5>
-                <p class="text-muted">Each student gets a unique QR code for attendance tracking.</p>
-            </div>
-        </div>
-        
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="text-center">
-                <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                    <span class="fw-bold fs-4">2</span>
-                </div>
-                <h5>Scan at Entry</h5>
-                <p class="text-muted">Students scan their QR codes at room entrances using the scanner.</p>
-            </div>
-        </div>
-        
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="text-center">
-                <div class="bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                    <span class="fw-bold fs-4">3</span>
-                </div>
-                <h5>Real-Time Logging</h5>
-                <p class="text-muted">Attendance is recorded instantly with timestamp and room information.</p>
-            </div>
-        </div>
-        
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="text-center">
-                <div class="bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                    <span class="fw-bold fs-4">4</span>
-                </div>
-                <h5>Generate Reports</h5>
-                <p class="text-muted">Access comprehensive reports and analytics for attendance tracking.</p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Call to Action -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card bg-light">
-                <div class="card-body text-center py-5">
-                    <h3 class="card-title">Ready to Get Started?</h3>
-                    <p class="card-text lead">
-                        Join thousands of institutions using ScanMe for efficient attendance tracking.
-                    </p>
-                    {% if not current_user.is_authenticated %}
-                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg me-3">
-                        <i class="fas fa-sign-in-alt me-2"></i>Login Now
-                    </a>
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary btn-lg">
-                        <i class="fas fa-user-plus me-2"></i>Create Account
+                <h1 class="tw-text-4xl lg:tw-text-6xl tw-font-extrabold tw-leading-tight tw-mb-6">
+                    <i class="bi bi-qr-code-scan tw-me-3"></i>ScanMe
+                </h1>
+                <p class="tw-text-lg lg:tw-text-xl tw-text-white/90 tw-leading-relaxed tw-mb-8 tw-max-w-2xl">
+                    A modern QR Code-based room attendance system built for schools and institutions. Track student attendance in real time with powerful analytics and effortless reporting.
+                </p>
+                <div class="tw-flex tw-flex-wrap tw-gap-4">
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('main.dashboard') }}" class="tw-inline-flex tw-items-center tw-gap-2 tw-bg-white tw-text-blue-600 tw-font-semibold tw-px-6 tw-py-3 tw-rounded-xl tw-shadow-lg hover:tw-shadow-xl hover:tw-scale-105 tw-transition-all">
+                        <i class="bi bi-speedometer2"></i> Go to Dashboard
                     </a>
                     {% else %}
-                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">
-                        <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                    <a href="{{ url_for('auth.login') }}" class="tw-inline-flex tw-items-center tw-gap-2 tw-bg-white tw-text-blue-600 tw-font-semibold tw-px-6 tw-py-3 tw-rounded-xl tw-shadow-lg hover:tw-shadow-xl hover:tw-scale-105 tw-transition-all">
+                        <i class="bi bi-box-arrow-in-right"></i> Login
+                    </a>
+                    <a href="{{ url_for('auth.register') }}" class="tw-inline-flex tw-items-center tw-gap-2 tw-border-2 tw-border-white tw-text-white tw-font-semibold tw-px-6 tw-py-3 tw-rounded-xl hover:tw-bg-white hover:tw-text-blue-600 tw-transition-all">
+                        <i class="bi bi-person-plus"></i> Register
                     </a>
                     {% endif %}
                 </div>
             </div>
+            <div class="col-lg-6 tw-text-center tw-mt-12 lg:tw-mt-0">
+                <div class="tw-inline-block tw-p-8 tw-bg-white/10 tw-rounded-full float-anim">
+                    <i class="bi bi-phone tw-text-[8rem] tw-text-white/90"></i>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+</section>
+
+<!-- Features -->
+<section class="container tw-py-16 lg:tw-py-20">
+    <div class="tw-text-center tw-mb-12">
+        <h2 class="tw-text-3xl lg:tw-text-4xl tw-font-bold tw-text-slate-800">System Features</h2>
+        <p class="tw-text-slate-500 tw-mt-3">Everything you need to manage attendance efficiently</p>
+    </div>
+    <div class="row">
+        <div class="col-lg-4 col-md-6 tw-mb-6">
+            <div class="tw-bg-white tw-rounded-2xl tw-p-6 tw-shadow-md hover:tw-shadow-xl tw-transition-all tw-duration-300 tw-h-full tw-border tw-border-slate-100 tw-group">
+                <div class="tw-w-14 tw-h-14 tw-flex tw-items-center tw-justify-center tw-rounded-xl tw-bg-blue-50 tw-text-blue-600 tw-text-2xl tw-mb-4 group-hover:tw-bg-blue-600 group-hover:tw-text-white tw-transition-colors">
+                    <i class="bi bi-qr-code-scan"></i>
+                </div>
+                <h5 class="tw-text-lg tw-font-bold tw-text-slate-800 tw-mb-2">QR Code Scanning</h5>
+                <p class="tw-text-slate-500 tw-mb-0">Students scan unique QR codes at room entrances for instant, accurate attendance logging.</p>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 tw-mb-6">
+            <div class="tw-bg-white tw-rounded-2xl tw-p-6 tw-shadow-md hover:tw-shadow-xl tw-transition-all tw-duration-300 tw-h-full tw-border tw-border-slate-100 tw-group">
+                <div class="tw-w-14 tw-h-14 tw-flex tw-items-center tw-justify-center tw-rounded-xl tw-bg-emerald-50 tw-text-emerald-600 tw-text-2xl tw-mb-4 group-hover:tw-bg-emerald-600 group-hover:tw-text-white tw-transition-colors">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <h5 class="tw-text-lg tw-font-bold tw-text-slate-800 tw-mb-2">Real-Time Tracking</h5>
+                <p class="tw-text-slate-500 tw-mb-0">Monitor attendance live with instant notifications and up-to-the-second dashboards.</p>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 tw-mb-6">
+            <div class="tw-bg-white tw-rounded-2xl tw-p-6 tw-shadow-md hover:tw-shadow-xl tw-transition-all tw-duration-300 tw-h-full tw-border tw-border-slate-100 tw-group">
+                <div class="tw-w-14 tw-h-14 tw-flex tw-items-center tw-justify-center tw-rounded-xl tw-bg-indigo-50 tw-text-indigo-600 tw-text-2xl tw-mb-4 group-hover:tw-bg-indigo-600 group-hover:tw-text-white tw-transition-colors">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <h5 class="tw-text-lg tw-font-bold tw-text-slate-800 tw-mb-2">Advanced Analytics</h5>
+                <p class="tw-text-slate-500 tw-mb-0">Comprehensive reports and visual analytics to uncover attendance patterns and trends.</p>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 tw-mb-6">
+            <div class="tw-bg-white tw-rounded-2xl tw-p-6 tw-shadow-md hover:tw-shadow-xl tw-transition-all tw-duration-300 tw-h-full tw-border tw-border-slate-100 tw-group">
+                <div class="tw-w-14 tw-h-14 tw-flex tw-items-center tw-justify-center tw-rounded-xl tw-bg-amber-50 tw-text-amber-600 tw-text-2xl tw-mb-4 group-hover:tw-bg-amber-600 group-hover:tw-text-white tw-transition-colors">
+                    <i class="bi bi-door-open"></i>
+                </div>
+                <h5 class="tw-text-lg tw-font-bold tw-text-slate-800 tw-mb-2">Room Management</h5>
+                <p class="tw-text-slate-500 tw-mb-0">Manage multiple rooms and track occupancy with built-in capacity monitoring.</p>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 tw-mb-6">
+            <div class="tw-bg-white tw-rounded-2xl tw-p-6 tw-shadow-md hover:tw-shadow-xl tw-transition-all tw-duration-300 tw-h-full tw-border tw-border-slate-100 tw-group">
+                <div class="tw-w-14 tw-h-14 tw-flex tw-items-center tw-justify-center tw-rounded-xl tw-bg-rose-50 tw-text-rose-600 tw-text-2xl tw-mb-4 group-hover:tw-bg-rose-600 group-hover:tw-text-white tw-transition-colors">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <h5 class="tw-text-lg tw-font-bold tw-text-slate-800 tw-mb-2">Duplicate Prevention</h5>
+                <p class="tw-text-slate-500 tw-mb-0">Smart algorithms block duplicate scans and protect against fraudulent attendance.</p>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 tw-mb-6">
+            <div class="tw-bg-white tw-rounded-2xl tw-p-6 tw-shadow-md hover:tw-shadow-xl tw-transition-all tw-duration-300 tw-h-full tw-border tw-border-slate-100 tw-group">
+                <div class="tw-w-14 tw-h-14 tw-flex tw-items-center tw-justify-center tw-rounded-xl tw-bg-slate-100 tw-text-slate-600 tw-text-2xl tw-mb-4 group-hover:tw-bg-slate-600 group-hover:tw-text-white tw-transition-colors">
+                    <i class="bi bi-file-earmark-arrow-down"></i>
+                </div>
+                <h5 class="tw-text-lg tw-font-bold tw-text-slate-800 tw-mb-2">Data Export</h5>
+                <p class="tw-text-slate-500 tw-mb-0">Export attendance data to Excel, CSV, or PDF formats for easy sharing and reporting.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="tw-bg-slate-50 tw-py-16 lg:tw-py-20">
+    <div class="container">
+        <div class="tw-text-center tw-mb-12">
+            <h2 class="tw-text-3xl lg:tw-text-4xl tw-font-bold tw-text-slate-800">How It Works</h2>
+            <p class="tw-text-slate-500 tw-mt-3">A simple four-step process</p>
+        </div>
+        <div class="row">
+            <div class="col-lg-3 col-md-6 tw-mb-6">
+                <div class="tw-text-center tw-relative">
+                    <div class="tw-w-16 tw-h-16 tw-mx-auto tw-flex tw-items-center tw-justify-center tw-rounded-full tw-bg-blue-600 tw-text-white tw-font-bold tw-text-2xl tw-shadow-lg tw-mb-4">
+                        1
+                    </div>
+                    <h5 class="tw-text-lg tw-font-semibold tw-text-slate-800 tw-mb-2">Generate QR Codes</h5>
+                    <p class="tw-text-slate-500 tw-mb-0">Each student receives a unique QR code for attendance tracking.</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 tw-mb-6">
+                <div class="tw-text-center tw-relative">
+                    <div class="tw-w-16 tw-h-16 tw-mx-auto tw-flex tw-items-center tw-justify-center tw-rounded-full tw-bg-emerald-600 tw-text-white tw-font-bold tw-text-2xl tw-shadow-lg tw-mb-4">
+                        2
+                    </div>
+                    <h5 class="tw-text-lg tw-font-semibold tw-text-slate-800 tw-mb-2">Scan at Entry</h5>
+                    <p class="tw-text-slate-500 tw-mb-0">Students scan their codes at room entrances using the scanner.</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 tw-mb-6">
+                <div class="tw-text-center tw-relative">
+                    <div class="tw-w-16 tw-h-16 tw-mx-auto tw-flex tw-items-center tw-justify-center tw-rounded-full tw-bg-indigo-600 tw-text-white tw-font-bold tw-text-2xl tw-shadow-lg tw-mb-4">
+                        3
+                    </div>
+                    <h5 class="tw-text-lg tw-font-semibold tw-text-slate-800 tw-mb-2">Real-Time Logging</h5>
+                    <p class="tw-text-slate-500 tw-mb-0">Attendance is recorded instantly with timestamps and room details.</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 tw-mb-6">
+                <div class="tw-text-center tw-relative">
+                    <div class="tw-w-16 tw-h-16 tw-mx-auto tw-flex tw-items-center tw-justify-center tw-rounded-full tw-bg-amber-600 tw-text-white tw-font-bold tw-text-2xl tw-shadow-lg tw-mb-4">
+                        4
+                    </div>
+                    <h5 class="tw-text-lg tw-font-semibold tw-text-slate-800 tw-mb-2">Generate Reports</h5>
+                    <p class="tw-text-slate-500 tw-mb-0">Access comprehensive reports and analytics for attendance tracking.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="container tw-py-16 lg:tw-py-20">
+    <div class="tw-bg-gradient-to-r tw-from-blue-600 tw-to-indigo-700 tw-rounded-3xl tw-p-10 lg:tw-p-14 tw-text-center tw-text-white tw-shadow-2xl">
+        <h3 class="tw-text-3xl tw-font-bold tw-mb-4">Ready to Get Started?</h3>
+        <p class="tw-text-lg tw-text-white/90 tw-mb-8 tw-max-w-2xl tw-mx-auto">
+            Join institutions using ScanMe for efficient, reliable attendance tracking.
+        </p>
+        <div class="tw-flex tw-flex-wrap tw-justify-center tw-gap-4">
+            {% if not current_user.is_authenticated %}
+            <a href="{{ url_for('auth.login') }}" class="tw-inline-flex tw-items-center tw-gap-2 tw-bg-white tw-text-blue-600 tw-font-semibold tw-px-8 tw-py-3 tw-rounded-xl tw-shadow-lg hover:tw-shadow-xl hover:tw-scale-105 tw-transition-all">
+                <i class="bi bi-box-arrow-in-right"></i> Login Now
+            </a>
+            <a href="{{ url_for('auth.register') }}" class="tw-inline-flex tw-items-center tw-gap-2 tw-border-2 tw-border-white tw-text-white tw-font-semibold tw-px-8 tw-py-3 tw-rounded-xl hover:tw-bg-white hover:tw-text-blue-600 tw-transition-all">
+                <i class="bi bi-person-plus"></i> Create Account
+            </a>
+            {% else %}
+            <a href="{{ url_for('main.dashboard') }}" class="tw-inline-flex tw-items-center tw-gap-2 tw-bg-white tw-text-blue-600 tw-font-semibold tw-px-8 tw-py-3 tw-rounded-xl tw-shadow-lg hover:tw-shadow-xl hover:tw-scale-105 tw-transition-all">
+                <i class="bi bi-speedometer2"></i> Go to Dashboard
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
 {% endblock %}

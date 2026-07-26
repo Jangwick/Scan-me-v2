@@ -1,171 +1,117 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In - ScanMe</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Custom Auth CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
-</head>
-<body class="auth-page">
-    <div class="auth-container">
-        <div class="auth-card">
-            <!-- Header -->
-            <div class="auth-header">
-                <h1><i class="fas fa-qrcode"></i> ScanMe</h1>
-                <p>Attendance Management System</p>
-                <div class="feature-badges">
-                    <div class="feature-badge">
-                        <i class="fas fa-check"></i> QR Scanning
+{% extends "auth/auth_base.html" %}
+
+{% block title %}Sign In - ScanMe{% endblock %}
+
+{% block content %}
+<div class="tw-min-h-screen tw-flex tw-items-center tw-justify-center tw-px-4 tw-py-12 tw-bg-gradient-to-br tw-from-slate-50 tw-to-blue-100">
+    <div class="tw-absolute tw-inset-0 tw-overflow-hidden tw-pointer-events-none">
+        <div class="tw-absolute tw-top-[-10%] tw-left-[-10%] tw-w-96 tw-h-96 tw-bg-blue-300 tw-rounded-full tw-mix-blend-multiply tw-filter tw-blur-3xl tw-opacity-30"></div>
+        <div class="tw-absolute tw-top-[20%] tw-right-[-10%] tw-w-72 tw-h-72 tw-bg-indigo-300 tw-rounded-full tw-mix-blend-multiply tw-filter tw-blur-3xl tw-opacity-30"></div>
+        <div class="tw-absolute tw-bottom-[-10%] tw-left-[20%] tw-w-80 tw-h-80 tw-bg-purple-300 tw-rounded-full tw-mix-blend-multiply tw-filter tw-blur-3xl tw-opacity-30"></div>
+    </div>
+
+    <div class="tw-w-full tw-max-w-4xl tw-relative tw-z-10">
+        <div class="tw-bg-white tw-rounded-3xl tw-shadow-2xl tw-overflow-hidden tw-grid tw-grid-cols-1 md:tw-grid-cols-2">
+            <!-- Brand Panel -->
+            <div class="tw-bg-gradient-to-br tw-from-blue-600 tw-to-indigo-700 tw-p-10 tw-flex tw-flex-col tw-justify-center tw-text-white">
+                <div class="tw-inline-flex tw-items-center tw-justify-center tw-w-16 tw-h-16 tw-rounded-2xl tw-bg-white/20 tw-backdrop-blur-sm tw-text-3xl tw-mb-6 tw-shadow-lg">
+                    <i class="bi bi-qr-code-scan"></i>
+                </div>
+                <h2 class="tw-text-3xl tw-font-extrabold tw-mb-4">Welcome Back</h2>
+                <p class="tw-text-white/90 tw-leading-relaxed tw-mb-8">
+                    Sign in to manage attendance, view real-time reports, and keep your classroom running smoothly.
+                </p>
+                <div class="tw-space-y-3 tw-text-sm">
+                    <div class="tw-flex tw-items-center tw-gap-3">
+                        <i class="bi bi-check-circle-fill tw-text-emerald-300"></i>
+                        <span>QR Code Scanning</span>
                     </div>
-                    <div class="feature-badge">
-                        <i class="fas fa-check"></i> Real-time Tracking
+                    <div class="tw-flex tw-items-center tw-gap-3">
+                        <i class="bi bi-check-circle-fill tw-text-emerald-300"></i>
+                        <span>Real-Time Tracking</span>
                     </div>
-                    <div class="feature-badge">
-                        <i class="fas fa-check"></i> Reports
+                    <div class="tw-flex tw-items-center tw-gap-3">
+                        <i class="bi bi-check-circle-fill tw-text-emerald-300"></i>
+                        <span>Advanced Reports</span>
                     </div>
                 </div>
             </div>
-            
-            <!-- Form -->
-            <div class="auth-form">
+
+            <!-- Form Panel -->
+            <div class="tw-p-10 tw-flex tw-flex-col tw-justify-center">
+                <a href="{{ url_for('main.index') }}" class="tw-inline-flex tw-items-center tw-gap-2 tw-text-slate-500 hover:tw-text-blue-600 tw-text-sm tw-font-medium tw-mb-6 tw-transition-colors">
+                    <i class="bi bi-arrow-left"></i> Back to Home
+                </a>
+
+                <div class="tw-mb-8">
+                    <h1 class="tw-text-2xl tw-font-extrabold tw-text-slate-800">Sign In</h1>
+                    <p class="tw-text-slate-500 tw-mt-1">Enter your credentials to continue</p>
+                </div>
+
                 <form method="POST" action="{{ url_for('auth.login') }}" id="loginForm">
                     {{ form.hidden_tag() }}
-                    
-                    <!-- Username Field -->
-                    <div class="form-group">
-                        <label for="username" class="form-label">
-                            <i class="fas fa-user me-1"></i> Username or Email
-                        </label>
-                        {{ form.username(class="form-input", placeholder="Enter your username or email") }}
+
+                    <div class="tw-mb-5">
+                        <label for="username" class="tw-block tw-text-sm tw-font-medium tw-text-slate-700 tw-mb-2">Username or Email</label>
+                        <div class="tw-relative">
+                            <span class="tw-absolute tw-left-4 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-400"><i class="bi bi-person"></i></span>
+                            {{ form.username(class="tw-w-full tw-pl-11 tw-pr-4 tw-py-3 tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-text-slate-800 placeholder:tw-text-slate-400 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-blue-500 focus:tw-border-blue-500 tw-transition-all", placeholder="Enter your username or email") }}
+                        </div>
                         {% if form.username.errors %}
-                            <div class="error-message">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                {{ form.username.errors[0] }}
-                            </div>
+                            <p class="tw-text-red-500 tw-text-sm tw-mt-1"><i class="bi bi-exclamation-triangle-fill tw-me-1"></i> {{ form.username.errors[0] }}</p>
                         {% endif %}
                     </div>
-                    
-                    <!-- Password Field -->
-                    <div class="form-group">
-                        <label for="password" class="form-label">
-                            <i class="fas fa-lock me-1"></i> Password
-                        </label>
-                        {{ form.password(class="form-input", placeholder="Enter your password") }}
+
+                    <div class="tw-mb-5">
+                        <label for="password" class="tw-block tw-text-sm tw-font-medium tw-text-slate-700 tw-mb-2">Password</label>
+                        <div class="tw-relative">
+                            <span class="tw-absolute tw-left-4 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-400"><i class="bi bi-lock"></i></span>
+                            {{ form.password(class="tw-w-full tw-pl-11 tw-pr-4 tw-py-3 tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-text-slate-800 placeholder:tw-text-slate-400 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-blue-500 focus:tw-border-blue-500 tw-transition-all", placeholder="Enter your password") }}
+                        </div>
                         {% if form.password.errors %}
-                            <div class="error-message">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                {{ form.password.errors[0] }}
-                            </div>
+                            <p class="tw-text-red-500 tw-text-sm tw-mt-1"><i class="bi bi-exclamation-triangle-fill tw-me-1"></i> {{ form.password.errors[0] }}</p>
                         {% endif %}
                     </div>
-                    
-                    <!-- Remember Me -->
-                    <div class="form-checkbox">
-                        {{ form.remember_me() }}
-                        <label for="remember_me">
-                            Remember me on this device
+
+                    <div class="tw-flex tw-items-center tw-justify-between tw-mb-6">
+                        <label class="tw-flex tw-items-center tw-gap-2 tw-text-sm tw-text-slate-600">
+                            {{ form.remember_me(class="tw-w-4 tw-h-4 tw-rounded tw-text-blue-600 focus:tw-ring-blue-500 tw-border-slate-300") }}
+                            Remember me
                         </label>
-                    </div>
-                    
-                    <!-- Submit Button -->
-                    <button type="submit" class="auth-button primary">
-                        <i class="fas fa-sign-in-alt"></i>
-                        Sign In
-                    </button>
-                    
-                    <!-- Forgot Password Link -->
-                    <div class="auth-links">
-                        <a href="{{ url_for('auth.forgot_password') }}">
-                            <i class="fas fa-key me-1"></i>
-                            Forgot your password?
+                        <a href="{{ url_for('auth.forgot_password') }}" class="tw-text-sm tw-text-blue-600 hover:tw-text-blue-700 tw-font-medium">
+                            Forgot password?
                         </a>
                     </div>
+
+                    <button type="submit" class="tw-w-full tw-bg-gradient-to-r tw-from-blue-600 tw-to-indigo-700 hover:tw-from-blue-700 hover:tw-to-indigo-800 tw-text-white tw-font-semibold tw-py-3 tw-rounded-xl tw-shadow-lg hover:tw-shadow-xl tw-transition-all tw-flex tw-items-center tw-justify-center tw-gap-2" id="submitBtn">
+                        <i class="bi bi-box-arrow-in-right"></i> Sign In
+                    </button>
                 </form>
-            </div>
-            
-            <!-- Footer -->
-            <div class="auth-footer">
-                <p>
-                    Don't have an account?
-                    <a href="{{ url_for('auth.register') }}">
-                        <i class="fas fa-user-plus me-1"></i>
-                        Create one here
-                    </a>
-                </p>
+
+                <div class="tw-text-center tw-mt-6 tw-pt-6 tw-border-t tw-border-slate-100">
+                    <p class="tw-text-slate-600 tw-text-sm">
+                        Don't have an account?
+                        <a href="{{ url_for('auth.register') }}" class="tw-text-blue-600 hover:tw-text-blue-700 tw-font-semibold">
+                            Create one here
+                        </a>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
-    
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div id="flash-messages" style="position: fixed; top: 20px; right: 20px; z-index: 10000;">
-                {% for message in messages %}
-                    <div class="alert alert-info alert-dismissible fade show" role="alert">
-                        <i class="fas fa-info-circle me-2"></i>
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-    
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Form Enhancement Script -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('loginForm');
-            const inputs = form.querySelectorAll('.form-input');
-            const submitBtn = form.querySelector('.auth-button');
-            
-            // Add input validation styling
-            inputs.forEach(input => {
-                input.addEventListener('blur', function() {
-                    if (this.value.trim() === '') {
-                        this.classList.add('error');
-                        this.classList.remove('success');
-                    } else {
-                        this.classList.add('success');
-                        this.classList.remove('error');
-                    }
-                });
-                
-                input.addEventListener('input', function() {
-                    this.classList.remove('error');
-                    if (this.value.trim() !== '') {
-                        this.classList.add('success');
-                    }
-                });
-            });
-            
-            // Form submission with loading state
-            form.addEventListener('submit', function(e) {
-                submitBtn.innerHTML = '<i class="fas fa-spinner spinner"></i> Signing In...';
-                submitBtn.disabled = true;
-            });
-            
-            // Auto-dismiss flash messages
-            setTimeout(function() {
-                const flashMessages = document.getElementById('flash-messages');
-                if (flashMessages) {
-                    flashMessages.style.opacity = '0';
-                    setTimeout(() => flashMessages.remove(), 500);
-                }
-            }, 5000);
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('loginForm');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', function() {
+            submitBtn.innerHTML = '<i class="bi bi-arrow-repeat tw-animate-spin tw-me-2"></i>Signing In...';
+            submitBtn.disabled = true;
         });
-    </script>
-</body>
-</html>
+    });
+</script>
+{% endblock %}

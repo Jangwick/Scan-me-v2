@@ -38,14 +38,15 @@ def dashboard():
         # Get professor's sessions (either created by them or assigned as instructor)
         professor_name = current_user.username  # Use username since User model doesn't have first_name/last_name
         
-        # Get sessions where professor is the instructor or creator
+        # Get all sessions where professor is the instructor or creator
         professor_sessions = AttendanceSession.query.filter(
             db.or_(
                 AttendanceSession.instructor == professor_name,
                 AttendanceSession.created_by == current_user.id
-            ),
-            AttendanceSession.is_active == True
+            )
         ).order_by(AttendanceSession.start_time.desc()).all()
+        
+        session_ids = [s.id for s in professor_sessions]
         
         # Categorize sessions
         today = datetime.now().date()
@@ -74,11 +75,29 @@ def dashboard():
             total_students_today += summary['unique_students']
             total_scans_today += summary['total_scans']
         
+        # Overall professor stats
+        total_students = db.session.query(AttendanceRecord.student_id).filter(
+            AttendanceRecord.session_id.in_(session_ids)
+        ).distinct().count() if session_ids else 0
+        
+        total_scans = AttendanceRecord.query.filter(
+            AttendanceRecord.session_id.in_(session_ids)
+        ).count() if session_ids else 0
+        
+        average_attendance = 0
+        if professor_sessions:
+            rates = [float(s.get_attendance_summary()['attendance_rate']) for s in professor_sessions]
+            average_attendance = round(sum(rates) / len(rates), 1)
+        
         stats = {
+            'active_sessions': len(current_sessions),
             'total_classes_today': len(today_sessions),
             'total_students_today': total_students_today,
             'total_scans_today': total_scans_today,
-            'active_sessions': len(current_sessions)
+            'total_sessions': len(professor_sessions),
+            'total_students': total_students,
+            'total_scans': total_scans,
+            'average_attendance': average_attendance
         }
         
         return render_template('professor/dashboard.html',
@@ -86,8 +105,8 @@ def dashboard():
                              upcoming_sessions=upcoming_sessions,
                              past_sessions=past_sessions[:10],  # Limit past sessions
                              stats=stats,
-                             datetime=datetime,  # Pass datetime for grace period calculations
-                             now=datetime.now())  # Pass current time
+                             datetime=datetime,
+                             now=datetime.now())
         
     except Exception as e:
         flash(f'Error loading professor dashboard: {str(e)}', 'error')

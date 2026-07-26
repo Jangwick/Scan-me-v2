@@ -2,494 +2,239 @@
 
 {% block page_title %}Manage Rooms{% endblock %}
 
-{% block extra_css %}
-<style>
-    .rooms-header {
-        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 16px;
-        margin-bottom: 2rem;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    }
-
-    .rooms-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .room-card {
-        background: white;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-        border: 2px solid transparent;
-    }
-
-    .room-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        border-color: #8b5cf6;
-    }
-
-    .room-card-header {
-        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-        padding: 1.5rem;
-        border-bottom: 1px solid #e5e7eb;
-    }
-
-    .room-number {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1f2937;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .room-type {
-        background: #8b5cf6;
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.025em;
-        margin-left: auto;
-    }
-
-    .room-card-body {
-        padding: 1.5rem;
-    }
-
-    .room-info {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .info-item {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-
-    .info-label {
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.025em;
-    }
-
-    .info-value {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #1f2937;
-    }
-
-    .room-description {
-        background: #f9fafb;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        font-size: 0.875rem;
-        color: #4b5563;
-        line-height: 1.5;
-    }
-
-    .room-actions {
-        display: flex;
-        gap: 0.5rem;
-        justify-content: flex-end;
-    }
-
-    .btn {
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        font-weight: 600;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        transition: all 0.2s ease;
-        cursor: pointer;
-        border: none;
-        font-size: 0.875rem;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-        color: white;
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        color: white;
-        text-decoration: none;
-    }
-
-    .btn-outline-primary {
-        background: transparent;
-        border: 1px solid #3b82f6;
-        color: #3b82f6;
-    }
-
-    .btn-outline-primary:hover {
-        background: #3b82f6;
-        color: white;
-        text-decoration: none;
-    }
-
-    .btn-outline-danger {
-        background: transparent;
-        border: 1px solid #ef4444;
-        color: #ef4444;
-    }
-
-    .btn-outline-danger:hover {
-        background: #ef4444;
-        color: white;
-        text-decoration: none;
-    }
-
-    .btn-success {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        border: none;
-        padding: 0.875rem 2rem;
-        border-radius: 10px;
-        color: white;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .btn-success:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
-        text-decoration: none;
-        color: white;
-    }
-
-    .status-badge {
-        padding: 0.375rem 0.75rem;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.025em;
-    }
-
-    .status-active {
-        background-color: #d1fae5;
-        color: #065f46;
-    }
-
-    .status-inactive {
-        background-color: #f3f4f6;
-        color: #6b7280;
-    }
-
-    .status-maintenance {
-        background-color: #fef3c7;
-        color: #92400e;
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 3rem;
-        color: #6b7280;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .empty-state i {
-        font-size: 4rem;
-        margin-bottom: 1rem;
-        opacity: 0.5;
-    }
-
-    .room-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-
-    .stat-card {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        text-align: center;
-    }
-
-    .stat-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 1rem;
-        font-size: 1.5rem;
-        color: white;
-    }
-
-    .stat-icon.total { background: #8b5cf6; }
-    .stat-icon.active { background: #10b981; }
-    .stat-icon.maintenance { background: #f59e0b; }
-    .stat-icon.inactive { background: #6b7280; }
-
-    .stat-number {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #1f2937;
-        margin-bottom: 0.25rem;
-    }
-
-    .stat-label {
-        color: #6b7280;
-        font-size: 0.875rem;
-        font-weight: 500;
-    }
-
-    @media (max-width: 768px) {
-        .rooms-header {
-            padding: 1.5rem;
-        }
-
-        .rooms-header .d-flex {
-            flex-direction: column;
-            gap: 1rem;
-            text-align: center;
-        }
-
-        .rooms-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .room-info {
-            grid-template-columns: 1fr;
-        }
-
-        .room-actions {
-            justify-content: center;
-        }
-    }
-</style>
-{% endblock %}
+{% block extra_css %}{% endblock %}
 
 {% block content %}
-<div class="rooms-header">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h1 class="mb-1">
-                <i class="fas fa-door-open me-2"></i>
-                Room Management
-            </h1>
-            <p class="mb-0 opacity-75">Manage classrooms and facilities</p>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-light">
-                <i class="fas fa-arrow-left"></i>
-                Back to Admin
-            </a>
-            <a href="{{ url_for('admin.add_room') }}" class="btn-success">
-                <i class="fas fa-plus"></i>
-                Add Room
-            </a>
-        </div>
-    </div>
-</div>
-
-<!-- Room Statistics -->
-<div class="room-stats">
-    <div class="stat-card">
-        <div class="stat-icon total">
-            <i class="fas fa-door-open"></i>
-        </div>
-        <div class="stat-number">{{ rooms|length if rooms else 0 }}</div>
-        <div class="stat-label">Total Rooms</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon active">
-            <i class="fas fa-check-circle"></i>
-        </div>
-        <div class="stat-number">
-            {{ rooms|selectattr('is_active', 'equalto', true)|list|length if rooms else 0 }}
-        </div>
-        <div class="stat-label">Active Rooms</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon maintenance">
-            <i class="fas fa-tools"></i>
-        </div>
-        <div class="stat-number">
-            {{ rooms|selectattr('is_active', 'equalto', false)|list|length if rooms else 0 }}
-        </div>
-        <div class="stat-label">Under Maintenance</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon inactive">
-            <i class="fas fa-times-circle"></i>
-        </div>
-        <div class="stat-number">0</div>
-        <div class="stat-label">Inactive Rooms</div>
-    </div>
-</div>
-
-{% if rooms %}
-<div class="rooms-grid">
-    {% for room in rooms %}
-    <div class="room-card">
-        <div class="room-card-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h3 class="room-number">
-                    <i class="fas fa-door-closed me-2"></i>
-                    Room {{ room.number or room.name or 'Unknown' }}
-                </h3>
-                <span class="room-type">{{ room.type or 'Classroom' }}</span>
+<div class="tw-p-6 tw-bg-gray-50">
+    <!-- Header -->
+    <div class="tw-bg-gradient-to-r tw-from-violet-500 tw-to-purple-600 tw-rounded-2xl tw-p-6 tw-mb-8 tw-text-white tw-shadow-lg">
+        <div class="tw-flex tw-flex-col sm:tw-flex-row tw-justify-between tw-items-start sm:tw-items-center tw-gap-4">
+            <div>
+                <h1 class="tw-text-2xl tw-font-bold tw-mb-1">
+                    <i class="fas fa-door-open tw-mr-2"></i>Room Management
+                </h1>
+                <p class="tw-opacity-90 tw-text-sm">Manage classrooms and facilities</p>
             </div>
+            <button type="button" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-bg-white tw-text-violet-600 tw-rounded-lg tw-font-semibold hover:tw-bg-violet-50 tw-transition" data-modal-url="{{ url_for('admin.add_room', modal=1) }}">
+                <i class="fas fa-plus"></i>Add Room
+            </button>
         </div>
-        
-        <div class="room-card-body">
-            <div class="room-info">
-                <div class="info-item">
-                    <div class="info-label">Capacity</div>
-                    <div class="info-value">
-                        <i class="fas fa-users me-1"></i>
-                        {{ room.capacity or 'N/A' }} people
-                    </div>
+    </div>
+
+    <!-- Room Statistics -->
+    <div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 lg:tw-grid-cols-4 tw-gap-4 tw-mb-8">
+        <div class="tw-bg-white tw-rounded-2xl tw-p-5 tw-shadow-md tw-border tw-border-gray-100 tw-text-center">
+            <div class="tw-w-12 tw-h-12 tw-rounded-full tw-bg-violet-100 tw-text-violet-600 tw-flex tw-items-center tw-justify-center tw-mx-auto tw-mb-3 tw-text-xl">
+                <i class="fas fa-door-open"></i>
+            </div>
+            <div class="tw-text-2xl tw-font-bold tw-text-gray-900">{{ rooms|length if rooms else 0 }}</div>
+            <div class="tw-text-sm tw-text-gray-500">Total Rooms</div>
+        </div>
+        <div class="tw-bg-white tw-rounded-2xl tw-p-5 tw-shadow-md tw-border tw-border-gray-100 tw-text-center">
+            <div class="tw-w-12 tw-h-12 tw-rounded-full tw-bg-emerald-100 tw-text-emerald-600 tw-flex tw-items-center tw-justify-center tw-mx-auto tw-mb-3 tw-text-xl">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="tw-text-2xl tw-font-bold tw-text-gray-900">{{ rooms|selectattr('is_active', 'equalto', true)|list|length if rooms else 0 }}</div>
+            <div class="tw-text-sm tw-text-gray-500">Active Rooms</div>
+        </div>
+        <div class="tw-bg-white tw-rounded-2xl tw-p-5 tw-shadow-md tw-border tw-border-gray-100 tw-text-center">
+            <div class="tw-w-12 tw-h-12 tw-rounded-full tw-bg-amber-100 tw-text-amber-600 tw-flex tw-items-center tw-justify-center tw-mx-auto tw-mb-3 tw-text-xl">
+                <i class="fas fa-tools"></i>
+            </div>
+            <div class="tw-text-2xl tw-font-bold tw-text-gray-900">{{ rooms|selectattr('is_active', 'equalto', false)|list|length if rooms else 0 }}</div>
+            <div class="tw-text-sm tw-text-gray-500">Under Maintenance</div>
+        </div>
+        <div class="tw-bg-white tw-rounded-2xl tw-p-5 tw-shadow-md tw-border tw-border-gray-100 tw-text-center">
+            <div class="tw-w-12 tw-h-12 tw-rounded-full tw-bg-gray-100 tw-text-gray-600 tw-flex tw-items-center tw-justify-center tw-mx-auto tw-mb-3 tw-text-xl">
+                <i class="fas fa-times-circle"></i>
+            </div>
+            <div class="tw-text-2xl tw-font-bold tw-text-gray-900">0</div>
+            <div class="tw-text-sm tw-text-gray-500">Inactive Rooms</div>
+        </div>
+    </div>
+
+    {% if rooms %}
+    <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 xl:tw-grid-cols-3 tw-gap-6">
+        {% for room in rooms %}
+        <div class="tw-bg-white tw-rounded-2xl tw-overflow-hidden tw-shadow-md tw-border tw-border-gray-100 hover:tw-shadow-lg hover:tw-border-violet-300 tw-transition">
+            <div class="tw-bg-gray-100 tw-p-5 tw-border-b tw-border-gray-200">
+                <div class="tw-flex tw-justify-between tw-items-center">
+                    <h3 class="tw-text-xl tw-font-bold tw-text-gray-900 tw-flex tw-items-center tw-gap-2">
+                        <i class="fas fa-door-closed"></i>Room {{ room.number or room.name or 'Unknown' }}
+                    </h3>
+                    <span class="tw-bg-violet-600 tw-text-white tw-px-3 tw-py-1 tw-rounded-full tw-text-xs tw-font-semibold tw-uppercase">{{ room.type or 'Classroom' }}</span>
                 </div>
-                <div class="info-item">
-                    <div class="info-label">Status</div>
-                    <div class="info-value">
-                        <span class="status-badge status-{{ room.status or 'active' }}">
-                            {% if room.status == 'active' %}
-                                <i class="fas fa-check-circle me-1"></i>
-                                Active
-                            {% elif room.status == 'maintenance' %}
-                                <i class="fas fa-tools me-1"></i>
-                                Maintenance
-                            {% else %}
-                                <i class="fas fa-times-circle me-1"></i>
-                                Inactive
-                            {% endif %}
-                        </span>
+            </div>
+            <div class="tw-p-5">
+                <div class="tw-grid tw-grid-cols-2 tw-gap-4 tw-mb-4">
+                    <div>
+                        <p class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase">Capacity</p>
+                        <p class="tw-font-semibold tw-text-gray-900"><i class="fas fa-users tw-mr-1"></i>{{ room.capacity or 'N/A' }} people</p>
                     </div>
+                    <div>
+                        <p class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase">Status</p>
+                        <p class="tw-font-semibold">
+                            <span class="tw-inline-flex tw-items-center tw-px-2 tw-py-1 tw-rounded-md tw-text-xs tw-font-semibold
+                                {% if room.status == 'active' %}tw-bg-emerald-100 tw-text-emerald-700
+                                {% elif room.status == 'maintenance' %}tw-bg-amber-100 tw-text-amber-700
+                                {% else %}tw-bg-gray-100 tw-text-gray-700
+                                {% endif %}">
+                                {% if room.status == 'active' %}
+                                <i class="fas fa-check-circle tw-mr-1"></i>Active
+                                {% elif room.status == 'maintenance' %}
+                                <i class="fas fa-tools tw-mr-1"></i>Maintenance
+                                {% else %}
+                                <i class="fas fa-times-circle tw-mr-1"></i>Inactive
+                                {% endif %}
+                            </span>
+                        </p>
+                    </div>
+                    {% if room.building %}
+                    <div>
+                        <p class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase">Building</p>
+                        <p class="tw-font-semibold tw-text-gray-900"><i class="fas fa-building tw-mr-1"></i>{{ room.building }}</p>
+                    </div>
+                    {% endif %}
+                    {% if room.floor %}
+                    <div>
+                        <p class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase">Floor</p>
+                        <p class="tw-font-semibold tw-text-gray-900"><i class="fas fa-layer-group tw-mr-1"></i>Floor {{ room.floor }}</p>
+                    </div>
+                    {% endif %}
                 </div>
-                {% if room.building %}
-                <div class="info-item">
-                    <div class="info-label">Building</div>
-                    <div class="info-value">
-                        <i class="fas fa-building me-1"></i>
-                        {{ room.building }}
-                    </div>
+
+                {% if room.description %}
+                <div class="tw-bg-gray-50 tw-rounded-lg tw-p-3 tw-mb-4 tw-text-sm tw-text-gray-600">
+                    <i class="fas fa-info-circle tw-mr-1"></i>{{ room.description }}
                 </div>
                 {% endif %}
-                {% if room.floor %}
-                <div class="info-item">
-                    <div class="info-label">Floor</div>
-                    <div class="info-value">
-                        <i class="fas fa-layer-group me-1"></i>
-                        Floor {{ room.floor }}
-                    </div>
+
+                <div class="tw-flex tw-justify-end tw-gap-2">
+                    <button type="button" class="tw-inline-flex tw-items-center tw-justify-center tw-w-8 tw-h-8 tw-rounded-lg tw-border tw-border-blue-200 tw-text-blue-600 hover:tw-bg-blue-50 tw-transition" title="View Details" data-modal-url="{{ url_for('admin.view_room', id=room.id, modal=1) }}" data-modal-title="View Room">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button type="button" class="tw-inline-flex tw-items-center tw-justify-center tw-w-8 tw-h-8 tw-rounded-lg tw-border tw-border-blue-200 tw-text-blue-600 hover:tw-bg-blue-50 tw-transition" title="Edit Room" data-modal-url="{{ url_for('admin.edit_room', id=room.id, modal=1) }}" data-modal-title="Edit Room">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    {% if room.is_active %}
+                    <button type="button" onclick="setMaintenance({{ room.id }}, {{ room.get_full_name() | tojson | forceescape }})" class="tw-inline-flex tw-items-center tw-justify-center tw-w-8 tw-h-8 tw-rounded-lg tw-border tw-border-amber-200 tw-text-amber-600 hover:tw-bg-amber-50 tw-transition" title="Set Maintenance">
+                        <i class="fas fa-tools"></i>
+                    </button>
+                    {% else %}
+                    <button type="button" onclick="setActive({{ room.id }}, {{ room.get_full_name() | tojson | forceescape }})" class="tw-inline-flex tw-items-center tw-justify-center tw-w-8 tw-h-8 tw-rounded-lg tw-border tw-border-emerald-200 tw-text-emerald-600 hover:tw-bg-emerald-50 tw-transition" title="Mark Active">
+                        <i class="fas fa-check-circle"></i>
+                    </button>
+                    {% endif %}
+                    <button type="button" onclick="confirmDelete({{ room.id }}, {{ room.get_full_name() | tojson | forceescape }})" class="tw-inline-flex tw-items-center tw-justify-center tw-w-8 tw-h-8 tw-rounded-lg tw-border tw-border-red-200 tw-text-red-600 hover:tw-bg-red-50 tw-transition" title="Delete Room">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
-                {% endif %}
             </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="tw-bg-white tw-rounded-2xl tw-p-12 tw-text-center tw-shadow-md tw-border tw-border-gray-100">
+        <i class="fas fa-door-open tw-text-5xl tw-text-gray-300 tw-mb-4"></i>
+        <h4 class="tw-text-xl tw-font-bold tw-text-gray-900 tw-mb-2">No Rooms Found</h4>
+        <p class="tw-text-gray-500 tw-mb-4">No rooms have been added to the system yet.</p>
+        <button type="button" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-bg-violet-600 tw-text-white tw-rounded-lg tw-font-semibold hover:tw-bg-violet-700 tw-transition" data-modal-url="{{ url_for('admin.add_room', modal=1) }}">
+            <i class="fas fa-plus"></i>Add First Room
+        </button>
+    </div>
+    {% endif %}
+</div>
 
-            {% if room.description %}
-            <div class="room-description">
-                <i class="fas fa-info-circle me-1"></i>
-                {{ room.description }}
+<!-- Add Room Modal -->
+<div class="modal fade" id="roomModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="roomModalLabel">Add Room</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            {% endif %}
-
-            <div class="room-actions">
-                <a href="#" 
-                   class="btn btn-outline-primary btn-sm"
-                   title="View Details"
-                   onclick="viewRoom({{ room.id }})">
-                    <i class="fas fa-eye"></i>
-                </a>
-                
-                <a href="#" 
-                   class="btn btn-outline-primary btn-sm"
-                   title="Edit Room"
-                   onclick="editRoom({{ room.id }})">
-                    <i class="fas fa-edit"></i>
-                </a>
-                
-                {% if room.is_active %}
-                <button onclick="setMaintenance({{ room.id }}, '{{ room.get_full_name() }}')" 
-                        class="btn btn-outline-warning btn-sm"
-                        title="Set Maintenance">
-                    <i class="fas fa-tools"></i>
-                </button>
-                {% else %}
-                <button onclick="setActive({{ room.id }}, '{{ room.get_full_name() }}')" 
-                        class="btn btn-outline-success btn-sm"
-                        title="Mark Active">
-                    <i class="fas fa-check-circle"></i>
-                </button>
-                {% endif %}
-                
-                <button onclick="confirmDelete({{ room.id }}, '{{ room.get_full_name() }}')" 
-                        class="btn btn-outline-danger btn-sm"
-                        title="Delete Room">
-                    <i class="fas fa-trash"></i>
-                </button>
+            <div class="modal-body" id="roomModalBody">
+                <!-- Modal content loaded via fetch -->
             </div>
         </div>
     </div>
-    {% endfor %}
 </div>
-{% else %}
-<div class="empty-state">
-    <i class="fas fa-door-open"></i>
-    <h4>No Rooms Found</h4>
-    <p>No rooms have been added to the system yet.</p>
-    <a href="{{ url_for('admin.add_room') }}" class="btn-success">
-        <i class="fas fa-plus"></i>
-        Add First Room
-    </a>
-</div>
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function viewRoom(roomId) {
-    // Redirect to view room page
-    window.location.href = `/admin/rooms/${roomId}/view`;
+function openRoomModal(url, title) {
+    const modalBody = document.getElementById('roomModalBody');
+    document.getElementById('roomModalLabel').textContent = title || 'Room';
+    modalBody.innerHTML = '<div class="tw-text-center tw-py-8"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="tw-mt-2">Loading...</p></div>';
+    const modal = new bootstrap.Modal(document.getElementById('roomModal'));
+    modal.show();
+    fetch(url)
+        .then(response => {
+            if (!response.ok) throw new Error('Failed to load modal');
+            return response.text();
+        })
+        .then(html => {
+            modalBody.innerHTML = html;
+            bindRoomModalForm();
+        })
+        .catch(error => {
+            modalBody.innerHTML = '<div class="tw-text-center tw-py-8 tw-text-red-600"><i class="fas fa-exclamation-triangle fa-2x"></i><p class="tw-mt-2">' + error.message + '</p></div>';
+        });
 }
 
-function editRoom(roomId) {
-    // Redirect to edit room page
-    window.location.href = `/admin/rooms/${roomId}/edit`;
+function bindRoomModalForm() {
+    const form = document.getElementById('roomModalBody').querySelector('form');
+    if (!form) return;
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        }
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form)
+            });
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const data = await response.json();
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('roomModal')).hide();
+                    window.location.reload();
+                } else {
+                    throw new Error(data.message || 'Error saving room');
+                }
+            } else {
+                throw new Error('Unexpected response from server');
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+    });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-modal-url]').forEach(button => {
+        button.addEventListener('click', function() {
+            openRoomModal(this.dataset.modalUrl, this.dataset.modalTitle);
+        });
+    });
+});
 
 function confirmDelete(roomId, roomName) {
     if (confirm(`Are you sure you want to delete room "${roomName}"? This action cannot be undone.`)) {
-        // Create form to submit delete request
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/admin/rooms/${roomId}/delete`;
-        
-        // Add CSRF token if needed
         const csrfToken = document.querySelector('meta[name=csrf-token]');
         if (csrfToken) {
             const input = document.createElement('input');
@@ -498,7 +243,6 @@ function confirmDelete(roomId, roomName) {
             input.value = csrfToken.getAttribute('content');
             form.appendChild(input);
         }
-        
         document.body.appendChild(form);
         form.submit();
     }
@@ -506,12 +250,9 @@ function confirmDelete(roomId, roomName) {
 
 function setMaintenance(roomId, roomName) {
     if (confirm(`Are you sure you want to mark room "${roomName}" as under maintenance? It will be unavailable for scheduling.`)) {
-        // Create form to submit maintenance request
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/admin/rooms/${roomId}/maintenance`;
-        
-        // Add CSRF token if needed
         const csrfToken = document.querySelector('meta[name=csrf-token]');
         if (csrfToken) {
             const input = document.createElement('input');
@@ -520,7 +261,6 @@ function setMaintenance(roomId, roomName) {
             input.value = csrfToken.getAttribute('content');
             form.appendChild(input);
         }
-        
         document.body.appendChild(form);
         form.submit();
     }
@@ -528,12 +268,9 @@ function setMaintenance(roomId, roomName) {
 
 function setActive(roomId, roomName) {
     if (confirm(`Are you sure you want to mark room "${roomName}" as active?`)) {
-        // Create form to submit activation request
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/admin/rooms/${roomId}/activate`;
-        
-        // Add CSRF token if needed
         const csrfToken = document.querySelector('meta[name=csrf-token]');
         if (csrfToken) {
             const input = document.createElement('input');
@@ -542,25 +279,22 @@ function setActive(roomId, roomName) {
             input.value = csrfToken.getAttribute('content');
             form.appendChild(input);
         }
-        
         document.body.appendChild(form);
         form.submit();
     }
 }
 
-// Auto-refresh statistics every 30 seconds
 setInterval(function() {
-    // Only refresh if no modals or forms are open
     if (!document.querySelector('.modal.show') && !document.querySelector('form:focus-within')) {
-        // Update only the statistics section
         fetch(window.location.href)
             .then(response => response.text())
             .then(html => {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
-                const newStats = doc.querySelector('.room-stats');
+                const newStats = doc.querySelector('.tw-grid');
                 if (newStats) {
-                    document.querySelector('.room-stats').innerHTML = newStats.innerHTML;
+                    const current = document.querySelector('.tw-grid');
+                    if (current) current.innerHTML = newStats.innerHTML;
                 }
             })
             .catch(error => console.log('Failed to update statistics:', error));

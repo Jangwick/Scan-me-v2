@@ -518,108 +518,98 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="tw-w-full tw-px-4 tw-py-6">
     <!-- Modern Header -->
-    <div class="reports-header">
-        <div class="row align-items-center">
-            <div class="col-lg-8">
-                <h1>
+    <div class="tw-bg-gradient-to-br tw-from-cyan-500 tw-to-blue-600 tw-text-white tw-p-8 tw-rounded-3xl tw-mb-8 tw-shadow-xl tw-relative tw-overflow-hidden">
+        <div class="tw-flex tw-flex-col lg:tw-flex-row tw-items-start lg:tw-items-center tw-justify-between tw-gap-6">
+            <div class="tw-w-full lg:tw-flex-1">
+                <h1 class="tw-text-3xl tw-font-bold tw-mb-2">
                     <i class="fas fa-chart-line me-2"></i>
                     Attendance Reports
                 </h1>
-                <p class="mb-0">Generate comprehensive attendance reports with advanced filtering and export options</p>
-            </div>
-            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                <a href="{{ url_for('attendance.manage_sessions') }}" class="btn btn-light me-2">
-                    <i class="fas fa-clock"></i>
-                    Sessions
-                </a>
-                <a href="{{ url_for('attendance.analytics') }}" class="btn btn-light">
-                    <i class="fas fa-chart-bar"></i>
-                    Analytics
-                </a>
+                <p class="tw-text-base tw-text-white/90 tw-mb-0">Generate comprehensive attendance reports with advanced filtering and export options</p>
             </div>
         </div>
     </div>
 
     <!-- Summary Stats -->
-    <div class="row stats-overview" id="summary-stats" style="display: none;">
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="stat-card primary">
-                <div class="stat-icon primary">
+    <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 lg:tw-grid-cols-4 tw-gap-6 tw-mb-8 tw-hidden" id="summary-stats">
+        <div class="tw-w-full">
+            <div class="stat-card primary tw-bg-white tw-rounded-2xl tw-p-6 tw-shadow-md tw-relative tw-overflow-hidden hover:tw:-translate-y-1 tw-transition">
+                <div class="stat-icon primary tw-w-14 tw-h-14 tw-rounded-xl tw-flex tw-items-center tw-justify-center tw-text-2xl tw-text-white tw-mb-4">
                     <i class="fas fa-clipboard-list"></i>
                 </div>
-                <p class="stat-value" id="total-records">0</p>
-                <p class="stat-label">Total Records</p>
+                <p class="tw-text-3xl tw-font-bold tw-text-gray-900 tw-leading-none" id="total-records">0</p>
+                <p class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide tw-mt-2">Total Records</p>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="stat-card success">
-                <div class="stat-icon success">
+        <div class="tw-w-full">
+            <div class="stat-card success tw-bg-white tw-rounded-2xl tw-p-6 tw-shadow-md tw-relative tw-overflow-hidden hover:tw:-translate-y-1 tw-transition">
+                <div class="stat-icon success tw-w-14 tw-h-14 tw-rounded-xl tw-flex tw-items-center tw-justify-center tw-text-2xl tw-text-white tw-mb-4">
                     <i class="fas fa-user-graduate"></i>
                 </div>
-                <p class="stat-value" id="unique-students">0</p>
-                <p class="stat-label">Unique Students</p>
+                <p class="tw-text-3xl tw-font-bold tw-text-gray-900 tw-leading-none" id="unique-students">0</p>
+                <p class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide tw-mt-2">Unique Students</p>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="stat-card success">
-                <div class="stat-icon success">
+        <div class="tw-w-full">
+            <div class="stat-card success tw-bg-white tw-rounded-2xl tw-p-6 tw-shadow-md tw-relative tw-overflow-hidden hover:tw:-translate-y-1 tw-transition">
+                <div class="stat-icon success tw-w-14 tw-h-14 tw-rounded-xl tw-flex tw-items-center tw-justify-center tw-text-2xl tw-text-white tw-mb-4">
                     <i class="fas fa-check-circle"></i>
                 </div>
-                <p class="stat-value" id="on-time-rate">0%</p>
-                <p class="stat-label">On Time</p>
+                <p class="tw-text-3xl tw-font-bold tw-text-gray-900 tw-leading-none" id="on-time-rate">0%</p>
+                <p class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide tw-mt-2">On Time</p>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="stat-card warning">
-                <div class="stat-icon warning">
+        <div class="tw-w-full">
+            <div class="stat-card warning tw-bg-white tw-rounded-2xl tw-p-6 tw-shadow-md tw-relative tw-overflow-hidden hover:tw:-translate-y-1 tw-transition">
+                <div class="stat-icon warning tw-w-14 tw-h-14 tw-rounded-xl tw-flex tw-items-center tw-justify-center tw-text-2xl tw-text-white tw-mb-4">
                     <i class="fas fa-clock"></i>
                 </div>
-                <p class="stat-value" id="late-rate">0%</p>
-                <p class="stat-label">Late Arrivals</p>
+                <p class="tw-text-3xl tw-font-bold tw-text-gray-900 tw-leading-none" id="late-rate">0%</p>
+                <p class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide tw-mt-2">Late Arrivals</p>
             </div>
         </div>
     </div>
 
     <!-- Advanced Filters -->
-    <div class="filter-card">
-        <div class="filter-header">
-            <h5>
+    <div class="tw-bg-white tw-rounded-3xl tw-p-6 tw-shadow-md tw-mb-8">
+        <div class="tw-flex tw-items-center tw-gap-2 tw-pb-4 tw-mb-4 tw-border-b tw-border-gray-100">
+            <h5 class="tw-flex tw-items-center tw-gap-2 tw-text-lg tw-font-semibold tw-text-gray-900 tw-m-0">
                 <i class="fas fa-filter me-2"></i>
                 Advanced Filters & Export
             </h5>
         </div>
         
         <form id="filter-form">
-            <div class="row g-3 mb-4">
-                <div class="col-lg-3 col-md-6">
-                    <label for="start_date" class="form-label">
+            <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 lg:tw-grid-cols-4 tw-gap-4 tw-mb-6">
+                <div class="tw-w-full">
+                    <label for="start_date" class="tw-block tw-text-xs tw-font-semibold tw-text-gray-600 tw-uppercase tw-tracking-wide tw-mb-2">
                         <i class="fas fa-calendar-alt me-1"></i> Start Date
                     </label>
                     <input type="date" 
                            id="start_date" 
                            name="start_date" 
-                           class="form-control"
+                           class="tw-w-full tw-px-4 tw-py-2.5 tw-bg-gray-50 tw-text-gray-900 tw-border tw-border-gray-200 tw-rounded-xl focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-indigo-500/50 focus:tw-border-indigo-500"
                            value="{{ start_date }}">
                 </div>
                 
-                <div class="col-lg-3 col-md-6">
-                    <label for="end_date" class="form-label">
+                <div class="tw-w-full">
+                    <label for="end_date" class="tw-block tw-text-xs tw-font-semibold tw-text-gray-600 tw-uppercase tw-tracking-wide tw-mb-2">
                         <i class="fas fa-calendar-check me-1"></i> End Date
                     </label>
                     <input type="date" 
                            id="end_date" 
                            name="end_date" 
-                           class="form-control"
+                           class="tw-w-full tw-px-4 tw-py-2.5 tw-bg-gray-50 tw-text-gray-900 tw-border tw-border-gray-200 tw-rounded-xl focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-indigo-500/50 focus:tw-border-indigo-500"
                            value="{{ end_date }}">
                 </div>
                 
-                <div class="col-lg-3 col-md-6">
-                    <label for="room_id" class="form-label">
+                <div class="tw-w-full">
+                    <label for="room_id" class="tw-block tw-text-xs tw-font-semibold tw-text-gray-600 tw-uppercase tw-tracking-wide tw-mb-2">
                         <i class="fas fa-door-open me-1"></i> Room
                     </label>
-                    <select id="room_id" name="room_id" class="form-select">
+                    <select id="room_id" name="room_id" class="tw-w-full tw-px-4 tw-py-2.5 tw-bg-gray-50 tw-text-gray-900 tw-border tw-border-gray-200 tw-rounded-xl focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-indigo-500/50 focus:tw-border-indigo-500">
                         <option value="">All Rooms</option>
                         {% for room in rooms %}
                         <option value="{{ room.id }}">{{ room.get_full_name() }}</option>
@@ -627,11 +617,11 @@
                     </select>
                 </div>
                 
-                <div class="col-lg-3 col-md-6">
-                    <label for="student_id" class="form-label">
+                <div class="tw-w-full">
+                    <label for="student_id" class="tw-block tw-text-xs tw-font-semibold tw-text-gray-600 tw-uppercase tw-tracking-wide tw-mb-2">
                         <i class="fas fa-user me-1"></i> Student
                     </label>
-                    <select id="student_id" name="student_id" class="form-select">
+                    <select id="student_id" name="student_id" class="tw-w-full tw-px-4 tw-py-2.5 tw-bg-gray-50 tw-text-gray-900 tw-border tw-border-gray-200 tw-rounded-xl focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-indigo-500/50 focus:tw-border-indigo-500">
                         <option value="">All Students</option>
                         {% for student in students %}
                         <option value="{{ student.id }}">{{ student.get_full_name() }}</option>
@@ -639,11 +629,11 @@
                     </select>
                 </div>
 
-                <div class="col-lg-3 col-md-6">
-                    <label for="status_filter" class="form-label">
+                <div class="tw-w-full">
+                    <label for="status_filter" class="tw-block tw-text-xs tw-font-semibold tw-text-gray-600 tw-uppercase tw-tracking-wide tw-mb-2">
                         <i class="fas fa-flag me-1"></i> Status
                     </label>
-                    <select id="status_filter" name="status_filter" class="form-select">
+                    <select id="status_filter" name="status_filter" class="tw-w-full tw-px-4 tw-py-2.5 tw-bg-gray-50 tw-text-gray-900 tw-border tw-border-gray-200 tw-rounded-xl focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-indigo-500/50 focus:tw-border-indigo-500">
                         <option value="">All Status</option>
                         <option value="on_time">On Time</option>
                         <option value="late">Late</option>
@@ -651,11 +641,11 @@
                     </select>
                 </div>
 
-                <div class="col-lg-3 col-md-6">
-                    <label for="department" class="form-label">
+                <div class="tw-w-full">
+                    <label for="department" class="tw-block tw-text-xs tw-font-semibold tw-text-gray-600 tw-uppercase tw-tracking-wide tw-mb-2">
                         <i class="fas fa-building me-1"></i> Department
                     </label>
-                    <select id="department" name="department" class="form-select">
+                    <select id="department" name="department" class="tw-w-full tw-px-4 tw-py-2.5 tw-bg-gray-50 tw-text-gray-900 tw-border tw-border-gray-200 tw-rounded-xl focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-indigo-500/50 focus:tw-border-indigo-500">
                         <option value="">All Departments</option>
                         <option value="Information Technology">Information Technology</option>
                         <option value="Computer Science">Computer Science</option>
@@ -664,11 +654,11 @@
                     </select>
                 </div>
 
-                <div class="col-lg-3 col-md-6">
-                    <label for="limit" class="form-label">
+                <div class="tw-w-full">
+                    <label for="limit" class="tw-block tw-text-xs tw-font-semibold tw-text-gray-600 tw-uppercase tw-tracking-wide tw-mb-2">
                         <i class="fas fa-list-ol me-1"></i> Limit
                     </label>
-                    <select id="limit" name="limit" class="form-select">
+                    <select id="limit" name="limit" class="tw-w-full tw-px-4 tw-py-2.5 tw-bg-gray-50 tw-text-gray-900 tw-border tw-border-gray-200 tw-rounded-xl focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-indigo-500/50 focus:tw-border-indigo-500">
                         <option value="100">100 records</option>
                         <option value="500">500 records</option>
                         <option value="1000">1000 records</option>
@@ -677,36 +667,36 @@
                 </div>
             </div>
             
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div class="d-flex gap-2">
-                    <button type="button" id="load-records" class="btn btn-primary">
+            <div class="tw-flex tw-flex-col md:tw-flex-row tw-items-start md:tw-items-center tw-justify-between tw-flex-wrap tw-gap-4">
+                <div class="tw-flex tw-flex-wrap tw-gap-2">
+                    <button type="button" id="load-records" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-5 tw-py-2.5 tw-rounded-xl tw-text-sm tw-font-semibold tw-text-white tw-bg-indigo-600 hover:tw-bg-indigo-700 tw-transition">
                         <i class="fas fa-search"></i>
                         Load Records
                     </button>
-                    <button type="button" id="clear-filters" class="btn btn-outline-primary">
+                    <button type="button" id="clear-filters" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-5 tw-py-2.5 tw-rounded-xl tw-text-sm tw-font-semibold tw-text-indigo-600 tw-bg-white tw-border tw-border-indigo-200 hover:tw-bg-indigo-50 tw-transition">
                         <i class="fas fa-times"></i>
                         Clear Filters
                     </button>
-                    <button type="button" id="refresh-data" class="btn btn-outline-primary">
+                    <button type="button" id="refresh-data" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-5 tw-py-2.5 tw-rounded-xl tw-text-sm tw-font-semibold tw-text-indigo-600 tw-bg-white tw-border tw-border-indigo-200 hover:tw-bg-indigo-50 tw-transition">
                         <i class="fas fa-sync-alt"></i>
                         Refresh
                     </button>
                 </div>
                 
-                <div class="d-flex gap-2 flex-wrap">
-                    <button type="button" id="export-excel" class="btn btn-success" disabled>
+                <div class="tw-flex tw-flex-wrap tw-gap-2">
+                    <button type="button" id="export-excel" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-5 tw-py-2.5 tw-rounded-xl tw-text-sm tw-font-semibold tw-text-white tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-transition disabled:tw-opacity-50" disabled>
                         <i class="fas fa-file-excel"></i>
                         Excel
                     </button>
-                    <button type="button" id="export-csv" class="btn btn-success" disabled>
+                    <button type="button" id="export-csv" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-5 tw-py-2.5 tw-rounded-xl tw-text-sm tw-font-semibold tw-text-white tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-transition disabled:tw-opacity-50" disabled>
                         <i class="fas fa-file-csv"></i>
                         CSV
                     </button>
-                    <button type="button" id="export-pdf" class="btn btn-success" disabled>
+                    <button type="button" id="export-pdf" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-5 tw-py-2.5 tw-rounded-xl tw-text-sm tw-font-semibold tw-text-white tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-transition disabled:tw-opacity-50" disabled>
                         <i class="fas fa-file-pdf"></i>
                         PDF
                     </button>
-                    <button type="button" id="print-report" class="btn btn-outline-primary" disabled>
+                    <button type="button" id="print-report" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-5 tw-py-2.5 tw-rounded-xl tw-text-sm tw-font-semibold tw-text-indigo-600 tw-bg-white tw-border tw-border-indigo-200 hover:tw-bg-indigo-50 tw-transition" disabled>
                         <i class="fas fa-print"></i>
                         Print
                     </button>
@@ -716,57 +706,57 @@
     </div>
 
     <!-- Results Section -->
-    <div class="results-card">
-        <div class="results-header">
-            <h5>
+    <div class="tw-bg-white tw-rounded-3xl tw-shadow-md tw-overflow-hidden">
+        <div class="tw-flex tw-flex-col sm:tw-flex-row tw-items-start sm:tw-items-center tw-justify-between tw-p-6 tw-border-b tw-border-gray-100">
+            <h5 class="tw-flex tw-items-center tw-gap-2 tw-text-lg tw-font-semibold tw-text-gray-900 tw-m-0">
                 <i class="fas fa-table me-2"></i>
                 Attendance Records
             </h5>
-            <div class="results-meta">
-                <span id="record-count" class="badge badge-info">No records loaded</span>
+            <div class="tw-flex tw-items-center tw-gap-3 tw-mt-3 sm:tw-mt-0">
+                <span id="record-count" class="tw-inline-flex tw-items-center tw-px-2.5 tw-py-0.5 tw-rounded-full tw-text-xs tw-font-medium tw-bg-cyan-100 tw-text-cyan-800">No records loaded</span>
                 <span id="loading-indicator" style="display: none;">
                     <i class="fas fa-spinner fa-spin me-1"></i> Loading...
                 </span>
             </div>
         </div>
         
-        <div class="results-content">
+        <div class="tw-p-6">
             <!-- Loading State -->
-            <div id="loading-state" class="loading-overlay" style="display: none;">
-                <div class="spinner"></div>
-                <p class="text-muted">Loading attendance records...</p>
+            <div id="loading-state" class="tw-flex tw-flex-col tw-items-center tw-justify-center tw-py-12 tw-hidden">
+                <div class="tw-animate-spin tw-w-10 tw-h-10 tw-border-4 tw-border-indigo-200 tw-border-t-indigo-600 tw-rounded-full tw-mb-4"></div>
+                <p class="tw-text-gray-500">Loading attendance records...</p>
             </div>
             
             <!-- Empty State -->
-            <div id="empty-state" class="empty-state">
-                <div class="empty-state-icon">
+            <div id="empty-state" class="tw-flex tw-flex-col tw-items-center tw-justify-center tw-py-12 tw-text-center tw-hidden">
+                <div class="tw-w-20 tw-h-20 tw-rounded-full tw-bg-indigo-100 tw-text-indigo-600 tw-flex tw-items-center tw-justify-center tw-text-4xl tw-mb-6">
                     <i class="fas fa-clipboard-list"></i>
                 </div>
-                <h4>No Records Found</h4>
-                <p>Select your filters above and click "Load Records" to view attendance data.</p>
-                <button type="button" class="btn btn-primary mt-3" onclick="document.getElementById('load-records').click()">
+                <h4 class="tw-text-xl tw-font-semibold tw-text-gray-900 tw-mb-2">No Records Found</h4>
+                <p class="tw-text-gray-500 tw-mb-6">Select your filters above and click "Load Records" to view attendance data.</p>
+                <button type="button" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-5 tw-py-2.5 tw-rounded-xl tw-text-sm tw-font-semibold tw-text-white tw-bg-indigo-600 hover:tw-bg-indigo-700 tw-transition tw-mt-3" onclick="document.getElementById('load-records').click()">
                     <i class="fas fa-search"></i>
                     Load Records
                 </button>
             </div>
             
             <!-- Table -->
-            <div id="results-table" style="display: none;">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead>
+            <div id="results-table" class="tw-hidden">
+                <div class="tw-overflow-x-auto">
+                    <table class="tw-w-full tw-text-sm tw-text-left tw-border-collapse">
+                        <thead class="tw-bg-gray-50 tw-text-gray-500 tw-uppercase tw-text-xs tw-tracking-wider">
                             <tr>
-                                <th><i class="fas fa-hashtag me-1"></i> #</th>
-                                <th><i class="fas fa-calendar me-1"></i> Date</th>
-                                <th><i class="fas fa-clock me-1"></i> Time</th>
-                                <th><i class="fas fa-user-graduate me-1"></i> Student</th>
-                                <th><i class="fas fa-building me-1"></i> Department</th>
-                                <th><i class="fas fa-door-open me-1"></i> Room</th>
-                                <th><i class="fas fa-flag me-1"></i> Status</th>
-                                <th><i class="fas fa-user-shield me-1"></i> Scanner</th>
+                                <th class="tw-px-4 tw-py-3 tw-font-medium tw-whitespace-nowrap"><i class="fas fa-hashtag me-1"></i> #</th>
+                                <th class="tw-px-4 tw-py-3 tw-font-medium tw-whitespace-nowrap"><i class="fas fa-calendar me-1"></i> Date</th>
+                                <th class="tw-px-4 tw-py-3 tw-font-medium tw-whitespace-nowrap"><i class="fas fa-clock me-1"></i> Time</th>
+                                <th class="tw-px-4 tw-py-3 tw-font-medium tw-whitespace-nowrap"><i class="fas fa-user-graduate me-1"></i> Student</th>
+                                <th class="tw-px-4 tw-py-3 tw-font-medium tw-whitespace-nowrap"><i class="fas fa-building me-1"></i> Department</th>
+                                <th class="tw-px-4 tw-py-3 tw-font-medium tw-whitespace-nowrap"><i class="fas fa-door-open me-1"></i> Room</th>
+                                <th class="tw-px-4 tw-py-3 tw-font-medium tw-whitespace-nowrap"><i class="fas fa-flag me-1"></i> Status</th>
+                                <th class="tw-px-4 tw-py-3 tw-font-medium tw-whitespace-nowrap"><i class="fas fa-user-shield me-1"></i> Scanner</th>
                             </tr>
                         </thead>
-                        <tbody id="records-tbody">
+                        <tbody id="records-tbody" class="tw-divide-y tw-divide-gray-100">
                             <!-- Records will be loaded here dynamically -->
                         </tbody>
                     </table>
@@ -821,9 +811,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Reset to default date range
         const today = new Date().toISOString().split('T')[0];
-        const weekAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
+        const yearAgo = new Date(Date.now() - 365*24*60*60*1000).toISOString().split('T')[0];
         
-        document.getElementById('start_date').value = weekAgo;
+        document.getElementById('start_date').value = yearAgo;
         document.getElementById('end_date').value = today;
         
         showEmptyState();
@@ -842,6 +832,9 @@ document.addEventListener('DOMContentLoaded', function() {
             window.print();
         });
     }
+    
+    // Load records automatically on page load
+    loadRecords();
     
     // CSV Export - Custom handler for web view (add BEFORE the general export handlers)
     const csvBtn = document.getElementById('export-csv');
@@ -934,33 +927,33 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Display functions
     function showLoading() {
-        loadingState.style.display = 'flex';
-        emptyState.style.display = 'none';
-        resultsTable.style.display = 'none';
-        summaryStats.style.display = 'none';
+        loadingState.classList.remove('tw-hidden');
+        emptyState.classList.add('tw-hidden');
+        resultsTable.classList.add('tw-hidden');
+        summaryStats.classList.add('tw-hidden');
         loadingIndicator.style.display = 'inline';
         recordCount.textContent = 'Loading...';
-        recordCount.className = 'badge badge-info';
+        recordCount.className = 'tw-inline-flex tw-items-center tw-px-2.5 tw-py-0.5 tw-rounded-full tw-text-xs tw-font-medium tw-bg-cyan-100 tw-text-cyan-800';
     }
     
     function showEmptyState() {
-        loadingState.style.display = 'none';
-        emptyState.style.display = 'block';
-        resultsTable.style.display = 'none';
-        summaryStats.style.display = 'none';
+        loadingState.classList.add('tw-hidden');
+        emptyState.classList.remove('tw-hidden');
+        resultsTable.classList.add('tw-hidden');
+        summaryStats.classList.add('tw-hidden');
         loadingIndicator.style.display = 'none';
         recordCount.textContent = 'No records loaded';
-        recordCount.className = 'badge badge-info';
+        recordCount.className = 'tw-inline-flex tw-items-center tw-px-2.5 tw-py-0.5 tw-rounded-full tw-text-xs tw-font-medium tw-bg-cyan-100 tw-text-cyan-800';
     }
     
     function showError(message) {
-        loadingState.style.display = 'none';
-        emptyState.style.display = 'block';
-        resultsTable.style.display = 'none';
-        summaryStats.style.display = 'none';
+        loadingState.classList.add('tw-hidden');
+        emptyState.classList.remove('tw-hidden');
+        resultsTable.classList.add('tw-hidden');
+        summaryStats.classList.add('tw-hidden');
         loadingIndicator.style.display = 'none';
         recordCount.textContent = 'Error';
-        recordCount.className = 'badge badge-danger';
+        recordCount.className = 'tw-inline-flex tw-items-center tw-px-2.5 tw-py-0.5 tw-rounded-full tw-text-xs tw-font-medium tw-bg-red-100 tw-text-red-800';
         
         emptyState.innerHTML = `
             <div class="empty-state-icon">
@@ -976,8 +969,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function displayRecords(records) {
-        loadingState.style.display = 'none';
-        emptyState.style.display = 'none';
+        loadingState.classList.add('tw-hidden');
+        emptyState.classList.add('tw-hidden');
         loadingIndicator.style.display = 'none';
         
         if (!records || records.length === 0) {
@@ -992,63 +985,65 @@ document.addEventListener('DOMContentLoaded', function() {
                     Clear Filters
                 </button>
             `;
-            emptyState.style.display = 'block';
-            summaryStats.style.display = 'none';
+            emptyState.classList.remove('tw-hidden');
+            summaryStats.classList.add('tw-hidden');
             recordCount.textContent = 'No records found';
-            recordCount.className = 'badge badge-warning';
+            recordCount.className = 'tw-inline-flex tw-items-center tw-px-2.5 tw-py-0.5 tw-rounded-full tw-text-xs tw-font-medium tw-bg-amber-100 tw-text-amber-800';
             return;
         }
         
-        resultsTable.style.display = 'block';
+        resultsTable.classList.remove('tw-hidden');
         recordCount.textContent = `${records.length} record${records.length !== 1 ? 's' : ''}`;
-        recordCount.className = 'badge badge-success';
+        recordCount.className = 'tw-inline-flex tw-items-center tw-px-2.5 tw-py-0.5 tw-rounded-full tw-text-xs tw-font-medium tw-bg-emerald-100 tw-text-emerald-800';
         
         // Generate table rows with modern styling
         recordsTbody.innerHTML = records.map((record, index) => {
             const date = new Date(record.scan_time || record.time_in);
             const initials = getInitials(record.student_name || 'Unknown');
             
-            let statusClass = 'badge-success';
+            let statusClass = 'tw-bg-emerald-100 tw-text-emerald-800';
             let statusText = 'On Time';
             let statusIcon = 'check-circle';
             
             if (record.is_late) {
-                statusClass = 'badge-warning';
+                statusClass = 'tw-bg-amber-100 tw-text-amber-800';
                 statusText = 'Late';
                 statusIcon = 'clock';
             } else if (record.is_duplicate) {
-                statusClass = 'badge-danger';
+                statusClass = 'tw-bg-red-100 tw-text-red-800';
                 statusText = 'Duplicate';
                 statusIcon = 'exclamation-triangle';
             }
             
             return `
-                <tr>
-                    <td class="fw-bold text-muted">${index + 1}</td>
-                    <td>${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-                    <td>${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</td>
-                    <td>
-                        <div class="student-info">
-                            <div class="student-avatar">${initials}</div>
-                            <div class="student-details">
-                                <strong>${record.student_name || 'Unknown'}</strong>
-                                <small>${record.student_no || 'N/A'}</small>
+                <tr class="hover:tw-bg-gray-50 tw-transition tw-duration-150">
+                    <td class="tw-px-4 tw-py-3 tw-font-semibold tw-text-gray-500">${index + 1}</td>
+                    <td class="tw-px-4 tw-py-3 tw-text-gray-900">${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                    <td class="tw-px-4 tw-py-3 tw-text-gray-900">${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</td>
+                    <td class="tw-px-4 tw-py-3">
+                        <div class="tw-flex tw-items-center tw-gap-3">
+                            <div class="tw-w-8 tw-h-8 tw-rounded-full tw-bg-indigo-100 tw-text-indigo-600 tw-flex tw-items-center tw-justify-center tw-text-xs tw-font-bold">${initials}</div>
+                            <div class="tw-flex tw-flex-col">
+                                <span class="tw-font-semibold tw-text-gray-900">${record.student_name || 'Unknown'}</span>
+                                <span class="tw-text-xs tw-text-gray-500">${record.student_no || 'N/A'}</span>
                             </div>
                         </div>
                     </td>
-                    <td>
-                        <span class="text-muted">${record.department || 'N/A'}</span>
+                    <td class="tw-px-4 tw-py-3">
+                        <span class="tw-text-gray-500">${record.department || 'N/A'}</span>
                     </td>
-                    <td>
-                        <strong>${record.room_name || 'Unknown'}</strong>
-                        ${record.building ? '<br><small class="text-muted">' + record.building + '</small>' : ''}
+                    <td class="tw-px-4 tw-py-3">
+                        <div class="tw-flex tw-flex-col">
+                            <span class="tw-font-semibold tw-text-gray-900">${record.room_name || 'Unknown'}</span>
+                            ${record.building ? '<span class="tw-text-xs tw-text-gray-500">' + record.building + '</span>' : ''}
+                        </div>
                     </td>
-                    <td>
-                        <span class="badge ${statusClass}">
-                            <i class="fas fa-${statusIcon} me-1"></i> ${statusText}
+                    <td class="tw-px-4 tw-py-3">
+                        <span class="tw-inline-flex tw-items-center tw-gap-1 tw-px-2.5 tw-py-0.5 tw-rounded-full tw-text-xs tw-font-medium ${statusClass}">
+                            <i class="fas fa-${statusIcon}"></i> ${statusText}
                         </span>
                     </td>
-                    <td class="text-muted">${record.scanner_name || 'System'}</td>
+                    <td class="tw-px-4 tw-py-3 tw-text-gray-500">${record.scanner_name || 'System'}</td>
                 </tr>
             `;
         }).join('');
@@ -1056,11 +1051,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateStats(records) {
         if (!records || records.length === 0) {
-            summaryStats.style.display = 'none';
+            summaryStats.classList.add('tw-hidden');
             return;
         }
         
-        summaryStats.style.display = 'flex';
+        summaryStats.classList.remove('tw-hidden');
         
         const totalRecords = records.length;
         const uniqueStudents = new Set(records.map(r => r.student_id)).size;
@@ -1216,10 +1211,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Statistics
         htmlContent += '<div class="stats-box">';
-        htmlContent += '<div class="stat-item"><div class="stat-number">' + totalScans + '</div><div class="stat-label"><i class="fas fa-qrcode"></i> Total Scans</div></div>';
-        htmlContent += '<div class="stat-item"><div class="stat-number">' + uniqueStudents + '</div><div class="stat-label"><i class="fas fa-users"></i> Unique Students</div></div>';
-        htmlContent += '<div class="stat-item"><div class="stat-number">' + lateArrivals + '</div><div class="stat-label"><i class="fas fa-clock"></i> Late Arrivals</div></div>';
-        htmlContent += '<div class="stat-item"><div class="stat-number">' + attendanceRate + '%</div><div class="stat-label"><i class="fas fa-chart-line"></i> Attendance Rate</div></div>';
+        htmlContent += '<div class="stat-item"><div class="stat-number">' + totalScans + '</div><div class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide tw-mt-2"><i class="fas fa-qrcode"></i> Total Scans</div></div>';
+        htmlContent += '<div class="stat-item"><div class="stat-number">' + uniqueStudents + '</div><div class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide tw-mt-2"><i class="fas fa-users"></i> Unique Students</div></div>';
+        htmlContent += '<div class="stat-item"><div class="stat-number">' + lateArrivals + '</div><div class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide tw-mt-2"><i class="fas fa-clock"></i> Late Arrivals</div></div>';
+        htmlContent += '<div class="stat-item"><div class="stat-number">' + attendanceRate + '%</div><div class="tw-text-xs tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide tw-mt-2"><i class="fas fa-chart-line"></i> Attendance Rate</div></div>';
         htmlContent += '</div>';
         
         // Table

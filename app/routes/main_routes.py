@@ -254,6 +254,9 @@ def settings():
 def generate_my_qr():
     """Generate QR code for current user"""
     try:
+        modal = request.args.get('modal') == '1'
+        parent_template = 'modal_base.html' if modal else 'dashboard_base.html'
+        
         # Prepare user data based on role
         if current_user.is_student():
             # For students, try to find student record by email or username
@@ -306,7 +309,9 @@ def generate_my_qr():
                              qr_data=qr_base64,
                              user_data=user_data,
                              user_type=user_type,
-                             user=current_user)
+                             user=current_user,
+                             modal=modal,
+                             parent_template=parent_template)
         
     except Exception as e:
         flash(f'Error generating QR code: {str(e)}', 'error')

@@ -1,4 +1,4 @@
-{% extends "dashboard_base.html" %}
+{% extends parent_template|default("dashboard_base.html") %}
 
 {% block page_title %}View Room - {{ room.get_full_name() }}{% endblock %}
 
@@ -203,6 +203,7 @@
 {% endblock %}
 
 {% block content %}
+{% if not modal %}
 <div class="room-detail-header">
     <div class="d-flex justify-content-between align-items-start">
         <div>
@@ -222,6 +223,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 <div class="room-info-grid">
     <!-- Room Number -->
@@ -353,6 +355,7 @@
 </div>
 
 <!-- Action Buttons -->
+{% if not modal %}
 <div class="action-buttons">
     <a href="{{ url_for('schedule.add_session') }}?room_id={{ room.id }}" class="btn btn-success">
         <i class="fas fa-calendar-plus"></i> Schedule Session
@@ -363,22 +366,23 @@
     </a>
     
     {% if room.is_active %}
-        <button onclick="setMaintenance({{ room.id }}, '{{ room.get_full_name() }}')" 
+        <button onclick="setMaintenance({{ room.id }}, {{ room.get_full_name() | tojson | forceescape }})" 
                 class="btn btn-warning">
             <i class="fas fa-tools"></i> Set Maintenance
         </button>
     {% else %}
-        <button onclick="setActive({{ room.id }}, '{{ room.get_full_name() }}')" 
+        <button onclick="setActive({{ room.id }}, {{ room.get_full_name() | tojson | forceescape }})" 
                 class="btn btn-success">
             <i class="fas fa-check-circle"></i> Activate
         </button>
     {% endif %}
     
-    <button onclick="confirmDelete({{ room.id }}, '{{ room.get_full_name() }}')" 
+    <button onclick="confirmDelete({{ room.id }}, {{ room.get_full_name() | tojson | forceescape }})" 
             class="btn btn-danger">
         <i class="fas fa-trash"></i> Delete Room
     </button>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
