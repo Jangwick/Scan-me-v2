@@ -87,8 +87,9 @@
                     {% if recent_scans %}
                         {% for scan in recent_scans %}
                         <div class="tw-flex tw-items-center tw-gap-3 tw-p-4 tw-border-b tw-border-gray-100">
-                            <div class="tw-w-10 tw-h-10 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-text-white tw-shrink-0 {{ 'tw-bg-emerald-500' if not scan.is_late else 'tw-bg-amber-500' }}">
-                                <i class="bi bi-{{ 'check-lg' if not scan.is_late else 'clock' }}"></i>
+                            <div class="tw-w-12 tw-h-12 tw-relative tw-rounded-full tw-flex tw-items-center tw-justify-center tw-text-white tw-shrink-0 tw-shadow-md tw-ring-2 tw-ring-offset-2 {{ 'tw-bg-emerald-500 tw-ring-emerald-200' if not scan.is_late else 'tw-bg-amber-500 tw-ring-amber-200' }}" style="--tw-ring-offset-color: #ffffff;">
+                                <i class="bi bi-{{ 'check-lg' if not scan.is_late else 'clock' }} tw-text-lg"></i>
+                                {% if scan.is_late %}<i class="bi bi-exclamation-fill tw-absolute tw-bottom-0 tw-right-1 tw-text-[10px]"></i>{% endif %}
                             </div>
                             <div class="tw-flex-1 tw-min-w-0">
                                 <div class="tw-text-sm tw-font-bold tw-text-gray-900">{{ scan.student_name }}</div>
@@ -253,6 +254,7 @@ function openDashboardModal(title, url) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    refreshTodaySummary();
     document.querySelectorAll('[data-modal-url]').forEach(button => {
         button.addEventListener('click', function() {
             openDashboardModal(this.dataset.modalTitle || '', this.dataset.modalUrl);
@@ -264,6 +266,7 @@ document.addEventListener('DOMContentLoaded', function() {
 setInterval(function() {
     if (document.querySelector('.modal.show')) return;
     refreshStats();
+    refreshTodaySummary();
     refreshRecentActivity();
     refreshRoomOccupancy();
 }, 30000);
@@ -306,6 +309,22 @@ function refreshRoomOccupancy() {
     {% endif %}
 }
 
+function refreshTodaySummary() {
+    fetch('/api/dashboard/today-summary')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.error) {
+                document.getElementById('summary-total-scans').textContent = data.total_scans || 0;
+                document.getElementById('summary-unique-students').textContent = data.unique_students || 0;
+                document.getElementById('summary-late-arrivals').textContent = data.late_arrivals || 0;
+                document.getElementById('summary-duplicates').textContent = data.duplicates || 0;
+                document.getElementById('summary-active-rooms').textContent = data.active_rooms || 0;
+                document.getElementById('summary-peak-hour').textContent = data.peak_hour || 'N/A';
+            }
+        })
+        .catch(error => console.error('Error refreshing today summary:', error));
+}
+
 function updateRecentActivity(activities) {
     const container = document.getElementById('recent-activity');
     if (activities.length === 0) {
@@ -320,8 +339,9 @@ function updateRecentActivity(activities) {
 
     container.innerHTML = activities.map(scan => `
         <div class="tw-flex tw-items-center tw-gap-3 tw-p-4 tw-border-b tw-border-gray-100">
-            <div class="tw-w-10 tw-h-10 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-text-white tw-shrink-0 ${scan.is_late ? 'tw-bg-amber-500' : 'tw-bg-emerald-500'}">
-                <i class="bi bi-${scan.is_late ? 'clock' : 'check-lg'}"></i>
+            <div class="tw-w-12 tw-h-12 tw-relative tw-rounded-full tw-flex tw-items-center tw-justify-center tw-text-white tw-shrink-0 tw-shadow-md tw-ring-2 tw-ring-offset-2 ${scan.is_late ? 'tw-bg-amber-500 tw-ring-amber-200' : 'tw-bg-emerald-500 tw-ring-emerald-200'}">
+                <i class="bi bi-${scan.is_late ? 'clock' : 'check-lg'} tw-text-lg"></i>
+                ${scan.is_late ? '<i class="bi bi-exclamation-fill tw-absolute tw-bottom-0 tw-right-1 tw-text-[10px]"></i>' : ''}
             </div>
             <div class="tw-flex-1 tw-min-w-0">
                 <div class="tw-text-sm tw-font-bold tw-text-gray-900">${scan.student_name}</div>

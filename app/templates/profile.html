@@ -7,8 +7,18 @@
 {% block content %}
 <!-- Profile Header -->
 <div class="tw-bg-gradient-to-r tw-from-indigo-500 tw-to-purple-600 tw-rounded-2xl tw-p-8 tw-mb-8 tw-text-white tw-shadow-lg tw-text-center">
-    <div class="tw-w-28 tw-h-28 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-text-4xl tw-font-bold tw-mx-auto tw-mb-4 tw-border-4 tw-border-white/30" style="background: {{ get_avatar_color(user.username or 'User') }};">
-        {{ (user.username[0] if user.username else 'U').upper() }}
+    <div class="tw-relative tw-w-28 tw-h-28 tw-mx-auto tw-mb-4">
+        {% if user.avatar_url %}
+        <img src="{{ url_for('static', filename=user.avatar_url) }}" alt="Profile Avatar" class="tw-w-28 tw-h-28 tw-rounded-full tw-object-cover tw-border-4 tw-border-white/30">
+        {% else %}
+        <div class="tw-w-28 tw-h-28 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-text-4xl tw-font-bold tw-text-white tw-border-4 tw-border-white/30" style="background: {{ get_avatar_color(user.username or 'User') }};">
+            {{ (user.username[0] if user.username else 'U').upper() }}
+        </div>
+        {% endif %}
+        <label for="avatar-input" class="tw-absolute tw-inset-0 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-bg-black/40 tw-text-white tw-opacity-0 hover:tw-opacity-100 tw-transition tw-cursor-pointer">
+            <i class="fas fa-camera tw-text-2xl"></i>
+        </label>
+        <input type="file" id="avatar-input" name="avatar" accept="image/png,image/jpeg,image/gif,image/webp" class="tw-hidden" data-upload-url="{{ url_for('auth.update_avatar') }}">
     </div>
     <h1 class="tw-text-2xl tw-font-bold tw-mb-2">{{ user.get_display_name() if user.get_display_name() else user.username or 'Unknown User' }}</h1>
     <p>
@@ -138,15 +148,20 @@
         <h6 class="tw-text-base tw-font-bold tw-text-gray-900 tw-mb-3 tw-flex tw-items-center tw-gap-2">
             <i class="fas fa-history tw-text-indigo-500"></i>Recent Activity
         </h6>
-        <div class="tw-max-h-96 tw-overflow-y-auto tw-space-y-3">
-            {% if user.attendance_records %}
-                {% for record in user.attendance_records[-10:] %}
+        <div class="tw-max-h-96 tw-overflow-y-auto tw-space-y-3" id="profile-recent-activity">
+            {% if recent_records %}
+                {% for record in recent_records %}
                 <div class="tw-flex tw-items-center tw-gap-3 tw-p-3 tw-bg-gray-50 tw-rounded-lg">
-                    <div class="tw-w-10 tw-h-10 tw-rounded-full tw-bg-blue-500 tw-flex tw-items-center tw-justify-center tw-text-white tw-shrink-0">
+                    <div class="tw-w-10 tw-h-10 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-text-white tw-shrink-0 {{ 'tw-bg-amber-500' if record.is_late else 'tw-bg-blue-500' }}">
                         <i class="fas fa-qrcode"></i>
                     </div>
                     <div class="tw-flex-1 tw-min-w-0">
-                        <p class="tw-text-sm tw-font-semibold tw-text-gray-900 tw-mb-0">QR Code Scanned{% if record.room %} in {{ record.room.room_name }}{% endif %}</p>
+                        <p class="tw-text-sm tw-font-semibold tw-text-gray-900 tw-mb-0">
+                            {% if current_user.is_student() %}Scanned in{% else %}QR Code Scanned{% endif %}
+                            {% if record.room %} {{ record.room.room_name }}{% endif %}
+                            {% if record.is_late %}<span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-bg-amber-100 tw-text-amber-700 tw-text-xs tw-font-semibold tw-ml-1">Late</span>{% endif %}
+                            {% if record.is_duplicate %}<span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-bg-blue-100 tw-text-blue-700 tw-text-xs tw-font-semibold tw-ml-1">Duplicate</span>{% endif %}
+                        </p>
                         <p class="tw-text-xs tw-text-gray-500 tw-mb-0">{{ record.scan_time.strftime('%B %d, %Y at %I:%M %p') if record.scan_time else 'Unknown' }}</p>
                     </div>
                 </div>
@@ -283,6 +298,28 @@ document.addEventListener('DOMContentLoaded', function() {
             openProfileModal(this.dataset.modalUrl);
         });
     });
+
+    const avatarInput = document.getElementById('avatar-input');
+    if (avatarInput) {
+        avatarInput.addEventListener('change', async function() {
+            if (!this.files.length) return;
+            const formData = new FormData();
+            formData.append('avatar', this.files[0]);
+            try {
+                const response = await fetch(this.dataset.uploadUrl, { method: 'POST', body: formData });
+                const data = await response.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'Unable to update avatar'));
+                }
+            } catch (error) {
+                alert('Error uploading avatar: ' + error.message);
+            } finally {
+                this.value = '';
+            }
+        });
+    }
 });
 
 // Auto-refresh activity feed every 2 minutes

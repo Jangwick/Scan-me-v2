@@ -23,6 +23,11 @@ reportlab
 python-dotenv
 click
 
+# Testing packages
+pytest
+pytest-flask
+pytest-cov
+
 # Optional: Add these later if camera scanning is needed
 # opencv-python==4.8.1.78
 # pyzbar==0.1.9

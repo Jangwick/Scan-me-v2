@@ -3,8 +3,11 @@ Authentication Routes for ScanMe Attendance System
 Handles user login, logout, and registration
 """
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
+import os
+import time
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app
 from flask_login import login_user, logout_user, login_required, current_user
+from werkzeug.utils import secure_filename
 from app import db
 from app.models.user_model import User
 from app.utils.auth_utils import hash_password, validate_email, validate_username, validate_password
@@ -210,3 +213,50 @@ def check_email():
         return {'available': False, 'message': 'Email already exists'}
     
     return {'available': True, 'message': 'Email is available'}
+
+
+@auth_bp.route('/update-avatar', methods=['POST'])
+@login_required
+def update_avatar():
+    """Handle avatar image upload"""
+    try:
+        if 'avatar' not in request.files:
+            return jsonify({'success': False, 'message': 'No file selected'}), 400
+
+        file = request.files['avatar']
+        if file.filename == '':
+            return jsonify({'success': False, 'message': 'No file selected'}), 400
+
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+        extension = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+        if extension not in allowed_extensions:
+            return jsonify({'success': False, 'message': 'Invalid file type. Allowed: png, jpg, jpeg, gif, webp'}), 400
+
+        # Determine upload directory
+        upload_folder = current_app.config.get('AVATAR_UPLOAD_FOLDER')
+        if not upload_folder:
+            upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'avatars')
+        os.makedirs(upload_folder, exist_ok=True)
+
+        # Save with a unique filename based on user id and timestamp
+        filename = secure_filename(f"user_{current_user.id}_{int(time.time())}.{extension}")
+        filepath = os.path.join(upload_folder, filename)
+        file.save(filepath)
+
+        # Remove old avatar file if it exists
+        if current_user.avatar_url:
+            old_path = os.path.join(current_app.root_path, 'static', current_user.avatar_url)
+            if os.path.exists(old_path):
+                os.remove(old_path)
+
+        # Store relative path for static file serving
+        relative_path = os.path.relpath(filepath, os.path.join(current_app.root_path, 'static')).replace('\\', '/')
+        current_user.update_avatar(relative_path)
+
+        return jsonify({
+            'success': True,
+            'message': 'Avatar updated successfully!',
+            'avatar_url': relative_path
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error updating avatar: {str(e)}'}), 500

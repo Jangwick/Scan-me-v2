@@ -13,7 +13,7 @@ from app.models.user_model import User
 from app.utils.auth_utils import get_user_permissions
 from app.utils.qr_utils import generate_user_qr_code
 from datetime import datetime, date, timedelta
-from sqlalchemy import func
+from sqlalchemy import func, desc
 import io
 import base64
 
@@ -100,6 +100,16 @@ def api_room_occupancy():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@main_bp.route('/api/dashboard/today-summary')
+@login_required
+def api_today_summary():
+    """API endpoint for today's attendance summary"""
+    try:
+        summary = get_today_summary()
+        return jsonify(summary)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @main_bp.route('/search')
 @login_required
 def search():
@@ -145,6 +155,7 @@ def search():
 def profile():
     """User profile page with statistics"""
     stats = {}
+    recent_records = []
     
     if current_user.role == 'student':
         # Get student's attendance statistics
@@ -181,6 +192,11 @@ def profile():
             ).distinct().count()
             
             attendance_rate = (attended_sessions / total_sessions * 100) if total_sessions > 0 else 0
+
+            # Recent attendance for this student
+            recent_records = AttendanceRecord.query.filter_by(
+                student_id=student.id
+            ).order_by(desc(AttendanceRecord.scan_time)).limit(10).all()
             
             stats = {
                 'total_scans': total_scans,
@@ -210,6 +226,11 @@ def profile():
         students_managed = db.session.query(AttendanceRecord.student_id).filter_by(
             scanned_by=current_user.id
         ).distinct().count()
+
+        # Recent scans by this professor
+        recent_records = AttendanceRecord.query.filter_by(
+            scanned_by=current_user.id
+        ).order_by(desc(AttendanceRecord.scan_time)).limit(10).all()
         
         stats = {
             'sessions_created': sessions_created,
@@ -233,6 +254,11 @@ def profile():
         
         # Total system scans
         system_scans = AttendanceRecord.query.filter_by(scanned_by=current_user.id).count()
+
+        # Recent scans system-wide for admins
+        recent_records = AttendanceRecord.query.order_by(
+            desc(AttendanceRecord.scan_time)
+        ).limit(10).all()
         
         stats = {
             'total_users': total_users,
@@ -241,7 +267,7 @@ def profile():
             'total_scans': system_scans
         }
     
-    return render_template('profile.html', user=current_user, stats=stats)
+    return render_template('profile.html', user=current_user, stats=stats, recent_records=recent_records)
 
 @main_bp.route('/settings')
 @login_required

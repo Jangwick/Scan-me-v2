@@ -22,6 +22,7 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='student')  # admin, student, professor
     is_active = db.Column(db.Boolean, default=True, nullable=False)
+    avatar_url = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime)
     
@@ -172,6 +173,11 @@ class User(UserMixin, db.Model):
                 raise ValueError("Email already exists")
             self.email = email
         
+        db.session.commit()
+    
+    def update_avatar(self, avatar_url):
+        """Update user avatar URL"""
+        self.avatar_url = avatar_url
         db.session.commit()
     
     def change_password(self, old_password, new_password):

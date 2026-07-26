@@ -19,6 +19,10 @@ body {
     line-height: 1.6;
 }
 
+a, a:hover {
+    text-decoration: none !important;
+}
+
 /* Default body background for non-login pages */
 body:not(.login-page) {
     background-color: #f8f9fa;

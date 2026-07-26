@@ -133,7 +133,7 @@ def scan_qr_code():
                 'action': result['action'],
                 'student': {
                     'id': student.id,
-                    'name': student.name,
+                    'name': student.get_full_name(),
                     'student_no': student.student_no,
                     'department': student.department,
                     'section': student.section,
@@ -142,7 +142,7 @@ def scan_qr_code():
                 },
                 'room': {
                     'id': room.id,
-                    'name': room.name
+                    'name': room.get_full_name()
                 },
                 'scan_time': result.get('scan_time'),
                 'is_late': result.get('is_late', False),
