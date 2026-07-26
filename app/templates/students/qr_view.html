@@ -1,0 +1,25 @@
+{% extends parent_template|default("dashboard_base.html") %}
+
+{% block content %}
+<div class="tw-flex tw-flex-col tw-items-center tw-justify-center tw-p-6 tw-text-center">
+    <h5 class="tw-text-lg tw-font-semibold tw-text-gray-900 tw-mb-1">{{ student.get_full_name() }}</h5>
+    <p class="tw-text-sm tw-text-gray-500 tw-mb-6">{{ student.student_no }}</p>
+
+    {% if student.qr_code_path %}
+    <img src="{{ url_for('static', filename=student.qr_code_path) }}"
+         alt="{{ student.get_full_name() }}'s QR Code"
+         class="tw-w-64 tw-h-auto tw-rounded-xl tw-border-4 tw-border-white tw-shadow-lg tw-mb-6">
+    {% else %}
+    <div class="tw-w-64 tw-h-64 tw-flex tw-items-center tw-justify-center tw-bg-gray-100 tw-rounded-xl tw-mb-6 tw-text-gray-500">
+        <i class="fas fa-qrcode tw-text-5xl"></i>
+    </div>
+    {% endif %}
+
+    <a href="{{ url_for('students.download_qr_code', id=student.id) }}"
+       download
+       class="tw-inline-flex tw-items-center tw-justify-center tw-px-5 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-transition">
+        <i class="fas fa-download tw-mr-2"></i>
+        Download QR Code
+    </a>
+</div>
+{% endblock %}

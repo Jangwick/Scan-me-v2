@@ -202,7 +202,10 @@ def edit_student(id):
             return redirect(url_for('students.view_student', id=student.id))
         
         except Exception as e:
+            if modal:
+                return jsonify({'success': False, 'errors': [f'Error updating student: {str(e)}']}), 500
             flash(f'Error updating student: {str(e)}', 'error')
+            return render_template('students/edit.html', student=student, parent_template=parent_template, modal=modal)
     
     return render_template('students/edit.html', student=student, parent_template=parent_template, modal=modal)
 
@@ -255,6 +258,30 @@ def download_qr_code(id):
     
     except Exception as e:
         flash(f'Error downloading QR code: {str(e)}', 'error')
+        return redirect(url_for('students.view_student', id=id))
+
+@student_bp.route('/<int:id>/qr')
+@login_required
+@requires_professor_or_admin
+def view_qr_code(id):
+    """View student's QR code in a modal"""
+    try:
+        student = Student.query.get_or_404(id)
+        
+        # Ensure QR code exists for display
+        if not student.qr_code_path or not os.path.exists(os.path.join(current_app.static_folder, student.qr_code_path)):
+            student.generate_qr_code()
+        
+        modal = request.args.get('modal') == '1'
+        parent_template = 'modal_base.html' if modal else 'dashboard_base.html'
+        
+        return render_template('students/qr_view.html',
+                             student=student,
+                             parent_template=parent_template,
+                             modal=modal)
+    
+    except Exception as e:
+        flash(f'Error loading QR code: {str(e)}', 'error')
         return redirect(url_for('students.view_student', id=id))
 
 @student_bp.route('/<int:id>/generate-qr', methods=['POST'])

@@ -347,22 +347,22 @@
 <div class="students-table">
     {% if students %}
     <div class="table-responsive">
-        <table class="table">
-            <thead>
+        <table class="table tw-w-full tw-text-sm tw-text-left tw-border-collapse tw-bg-white">
+            <thead class="tw-bg-gray-50 tw-text-gray-500 tw-uppercase tw-text-xs tw-tracking-wider">
                 <tr>
-                    <th>Student</th>
-                    <th>Student Number</th>
-                    <th>Department</th>
-                    <th>Section</th>
-                    <th>Year Level</th>
-                    <th>Status</th>
-                    <th>Actions</th>
+                    <th class="tw-px-4 tw-py-3 tw-font-medium">Student</th>
+                    <th class="tw-px-4 tw-py-3 tw-font-medium">Student Number</th>
+                    <th class="tw-px-4 tw-py-3 tw-font-medium">Department</th>
+                    <th class="tw-px-4 tw-py-3 tw-font-medium">Section</th>
+                    <th class="tw-px-4 tw-py-3 tw-font-medium">Year Level</th>
+                    <th class="tw-px-4 tw-py-3 tw-font-medium">Status</th>
+                    <th class="tw-px-4 tw-py-3 tw-font-medium">Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="tw-divide-y tw-divide-gray-100">
                 {% for student in students %}
-                <tr>
-                    <td>
+                <tr class="hover:tw-bg-gray-50 tw-transition" data-student-id="{{ student.id }}">
+                    <td class="tw-px-4 tw-py-3 tw-text-sm tw-text-gray-700">
                         <div class="student-info">
                             <div class="student-avatar" style="background: {{ get_avatar_color(student.get_full_name()) }};">
                                 {{ student.first_name[0] }}{{ student.last_name[0] }}
@@ -373,35 +373,37 @@
                             </div>
                         </div>
                     </td>
-                    <td>
+                    <td class="tw-px-4 tw-py-3 tw-text-sm tw-text-gray-700">
                         <strong>{{ student.student_no }}</strong>
                     </td>
-                    <td>{{ student.department }}</td>
-                    <td>{{ student.section }}</td>
-                    <td>{{ student.year_level }}</td>
-                    <td>
+                    <td class="tw-px-4 tw-py-3 tw-text-sm tw-text-gray-700">{{ student.department }}</td>
+                    <td class="tw-px-4 tw-py-3 tw-text-sm tw-text-gray-700">{{ student.section }}</td>
+                    <td class="tw-px-4 tw-py-3 tw-text-sm tw-text-gray-700">{{ student.year_level }}</td>
+                    <td class="tw-px-4 tw-py-3 tw-text-sm tw-text-gray-700">
                         {% if student.is_active %}
-                        <span class="badge badge-success">Active</span>
+                        <span class="tw-inline-flex tw-items-center tw-px-2.5 tw-py-0.5 tw-rounded-full tw-text-xs tw-font-medium tw-bg-emerald-100 tw-text-emerald-800">Active</span>
                         {% else %}
-                        <span class="badge badge-warning">Inactive</span>
+                        <span class="tw-inline-flex tw-items-center tw-px-2.5 tw-py-0.5 tw-rounded-full tw-text-xs tw-font-medium tw-bg-amber-100 tw-text-amber-800">Inactive</span>
                         {% endif %}
                     </td>
-                    <td>
-                        <button type="button" class="btn btn-outline-primary btn-sm" 
+                    <td class="tw-px-4 tw-py-3 tw-text-sm tw-text-gray-700">
+                        <button type="button" class="tw-inline-flex tw-items-center tw-justify-center tw-w-8 tw-h-8 tw-rounded-lg tw-text-sm tw-text-indigo-600 tw-bg-indigo-50 hover:tw-bg-indigo-100 active:tw-scale-95 tw-transition focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-indigo-500/50" 
                                 data-modal-url="{{ url_for('students.view_student', id=student.id, modal=1) }}" title="View">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button type="button" class="btn btn-outline-primary btn-sm" 
+                        <button type="button" class="tw-inline-flex tw-items-center tw-justify-center tw-w-8 tw-h-8 tw-rounded-lg tw-text-sm tw-text-indigo-600 tw-bg-indigo-50 hover:tw-bg-indigo-100 active:tw-scale-95 tw-transition focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-indigo-500/50" 
                                 data-modal-url="{{ url_for('students.edit_student', id=student.id, modal=1) }}" title="Edit">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <a href="{{ url_for('students.download_qr_code', id=student.id) }}" 
-                           class="btn btn-outline-primary btn-sm" title="Download QR Code">
+                        <button type="button"
+                                class="tw-inline-flex tw-items-center tw-justify-center tw-w-8 tw-h-8 tw-rounded-lg tw-text-sm tw-text-emerald-600 tw-bg-emerald-50 hover:tw-bg-emerald-100 active:tw-scale-95 tw-transition focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-emerald-500/50"
+                                data-modal-url="{{ url_for('students.view_qr_code', id=student.id, modal=1) }}"
+                                title="Download QR Code">
                             <i class="fas fa-qrcode"></i>
-                        </a>
+                        </button>
                         {% if student.is_active %}
                         <button type="button" data-delete-id="{{ student.id }}" data-delete-name="{{ student.get_full_name()|e }}"
-                                class="btn btn-outline-danger btn-sm btn-delete" title="Deactivate">
+                                class="tw-inline-flex tw-items-center tw-justify-center tw-w-8 tw-h-8 tw-rounded-lg tw-text-sm tw-text-red-600 tw-bg-red-50 hover:tw-bg-red-100 active:tw-scale-95 tw-transition focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-red-500/50 btn-delete" title="Deactivate">
                             <i class="fas fa-ban"></i>
                         </button>
                         {% endif %}
@@ -446,8 +448,8 @@
 <!-- Student Modal -->
 <div class="modal fade" id="studentModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg tw-mx-auto tw-my-4 md:tw-my-8 tw-w-full md:tw-max-w-4xl tw-px-4">
-        <div class="modal-content tw-rounded-2xl tw-shadow-2xl tw-overflow-hidden tw-border-0">
-            <div class="modal-body tw-p-0 tw-max-h-[85vh] tw-overflow-y-auto" id="studentModalBody">
+        <div class="modal-content tw-bg-white tw-rounded-2xl tw-shadow-2xl tw-overflow-hidden tw-border-0">
+            <div class="modal-body tw-bg-gray-50 tw-p-0 tw-max-h-[85vh] tw-overflow-y-auto" id="studentModalBody">
                 <div class="tw-flex tw-flex-col tw-items-center tw-justify-center tw-p-8 tw-min-h-[200px]">
                     <div class="spinner-border tw-text-indigo-600" role="status">
                         <span class="visually-hidden">Loading...</span>
@@ -464,16 +466,16 @@
     <div class="modal-dialog tw-mx-auto tw-my-20 tw-w-full tw-max-w-md tw-px-4">
         <div class="modal-content tw-rounded-2xl tw-shadow-2xl tw-overflow-hidden tw-border-0 tw-bg-white">
             <div class="modal-body tw-text-center tw-p-8">
-                <div class="tw-mx-auto tw-flex tw-h-14 tw-w-14 tw-items-center tw-justify-center tw-rounded-full tw-bg-red-100 tw-mb-4">
-                    <i class="fas fa-exclamation-triangle tw-text-xl tw-text-red-600"></i>
+                <div id="deleteModalIcon" class="tw-mx-auto tw-flex tw-h-14 tw-w-14 tw-items-center tw-justify-center tw-rounded-full tw-bg-red-100 tw-mb-4">
+                    <i id="deleteModalIconSymbol" class="fas fa-exclamation-triangle tw-text-xl tw-text-red-600"></i>
                 </div>
-                <h5 class="tw-text-lg tw-font-semibold tw-text-gray-900">Deactivate Student</h5>
-                <p class="tw-mt-2 tw-text-sm tw-text-gray-500">
+                <h5 id="deleteModalTitle" class="tw-text-lg tw-font-semibold tw-text-gray-900">Deactivate Student</h5>
+                <p id="deleteModalMessage" class="tw-mt-2 tw-text-sm tw-text-gray-500">
                     Are you sure you want to deactivate <strong id="deleteStudentName" class="tw-text-gray-900"></strong>?
                 </p>
                 <form id="deleteForm" method="POST" class="tw-mt-6 tw-flex tw-flex-col-reverse sm:tw-flex-row sm:tw-justify-center tw-gap-3">
                     <button type="button" class="tw-inline-flex tw-items-center tw-justify-center tw-rounded-lg tw-px-4 tw-py-2 tw-text-sm tw-font-medium tw-text-gray-700 tw-bg-white tw-border tw-border-gray-300 hover:tw-bg-gray-50" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="tw-inline-flex tw-items-center tw-justify-center tw-rounded-lg tw-px-4 tw-py-2 tw-text-sm tw-font-medium tw-text-white tw-bg-red-600 hover:tw-bg-red-700">Deactivate</button>
+                    <button id="deleteModalActionBtn" type="submit" class="tw-inline-flex tw-items-center tw-justify-center tw-rounded-lg tw-px-4 tw-py-2 tw-text-sm tw-font-medium tw-text-white tw-bg-red-600 hover:tw-bg-red-700">Deactivate</button>
                 </form>
             </div>
         </div>
@@ -516,6 +518,7 @@ function openStudentModal(url) {
         .then(function(response) { return response.text(); })
         .then(function(html) {
             body.innerHTML = html;
+            bindModalLinks(body);
             bindModalForm(body);
         })
         .catch(function() {
@@ -532,12 +535,25 @@ function bindModalForm(container) {
         const submitBtn = form.querySelector('button[type="submit"]');
         if (submitBtn) submitBtn.disabled = true;
 
-        fetch(form.action, {
+        let actionUrl = form.action;
+        if (actionUrl.indexOf('modal=') === -1) {
+            actionUrl += (actionUrl.indexOf('?') === -1 ? '?' : '&') + 'modal=1';
+        }
+
+        fetch(actionUrl, {
             method: 'POST',
             body: new FormData(form),
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(function(response) { return response.json(); })
+        .then(function(response) {
+            return response.text().then(function(text) {
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    throw new Error('Server returned non-JSON: ' + text.slice(0, 500));
+                }
+            });
+        })
         .then(function(data) {
             if (data.success) {
                 studentModalInstance.hide();
@@ -548,17 +564,49 @@ function bindModalForm(container) {
                 alert(msg);
             }
         })
-        .catch(function() {
+        .catch(function(err) {
             if (submitBtn) submitBtn.disabled = false;
-            alert('An error occurred. Please try again.');
+            alert('Update failed: ' + (err.message ? err.message.substring(0, 800) : 'Please try again.'));
         });
     });
 }
 
-function openDeleteModal(studentId, studentName) {
-    document.getElementById('deleteStudentName').textContent = studentName;
+function bindModalLinks(container) {
+    container.querySelectorAll('[data-modal-url]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            openStudentModal(btn.dataset.modalUrl);
+        });
+    });
+}
+
+function openDeleteModal(studentId, studentName, actionType) {
+    actionType = actionType || 'delete';
     const form = document.getElementById('deleteForm');
-    form.action = '/students/' + studentId + '/delete';
+    const icon = document.getElementById('deleteModalIcon');
+    const iconSymbol = document.getElementById('deleteModalIconSymbol');
+    const title = document.getElementById('deleteModalTitle');
+    const message = document.getElementById('deleteModalMessage');
+    const actionBtn = document.getElementById('deleteModalActionBtn');
+
+    if (actionType === 'reactivate') {
+        form.action = '/students/' + studentId + '/reactivate';
+        icon.className = 'tw-mx-auto tw-flex tw-h-14 tw-w-14 tw-items-center tw-justify-center tw-rounded-full tw-bg-emerald-100 tw-mb-4';
+        iconSymbol.className = 'fas fa-check-circle tw-text-xl tw-text-emerald-600';
+        title.textContent = 'Reactivate Student';
+        message.innerHTML = 'Are you sure you want to reactivate <strong class="tw-text-gray-900">' + studentName + '</strong>?';
+        actionBtn.textContent = 'Reactivate';
+        actionBtn.className = 'tw-inline-flex tw-items-center tw-justify-center tw-rounded-lg tw-px-4 tw-py-2 tw-text-sm tw-font-medium tw-text-white tw-bg-emerald-600 hover:tw-bg-emerald-700';
+    } else {
+        form.action = '/students/' + studentId + '/delete';
+        icon.className = 'tw-mx-auto tw-flex tw-h-14 tw-w-14 tw-items-center tw-justify-center tw-rounded-full tw-bg-red-100 tw-mb-4';
+        iconSymbol.className = 'fas fa-exclamation-triangle tw-text-xl tw-text-red-600';
+        title.textContent = 'Deactivate Student';
+        message.innerHTML = 'Are you sure you want to deactivate <strong class="tw-text-gray-900">' + studentName + '</strong>? This will prevent them from marking attendance.';
+        actionBtn.textContent = 'Deactivate';
+        actionBtn.className = 'tw-inline-flex tw-items-center tw-justify-center tw-rounded-lg tw-px-4 tw-py-2 tw-text-sm tw-font-medium tw-text-white tw-bg-red-600 hover:tw-bg-red-700';
+    }
 
     const modalEl = document.getElementById('deleteModal');
     const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);

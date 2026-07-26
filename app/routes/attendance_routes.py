@@ -238,12 +238,17 @@ def view_student_attendance(student_id):
             datetime.combine(end_date_obj, datetime.max.time())
         )
         
+        modal = request.args.get('modal') == '1'
+        parent_template = 'modal_base.html' if modal else 'dashboard_base.html'
+        
         return render_template('attendance/student_attendance.html',
                              student=student,
                              records=records,
                              attendance_stats=attendance_stats,
                              start_date=start_date,
-                             end_date=end_date)
+                             end_date=end_date,
+                             parent_template=parent_template,
+                             modal=modal)
         
     except Exception as e:
         flash(f'Error loading student attendance: {str(e)}', 'error')

@@ -1,4 +1,4 @@
-{% extends "dashboard_base.html" %}
+{% extends parent_template|default("dashboard_base.html") %}
 
 {% block page_title %}{{ student.get_full_name() }} - Attendance Records{% endblock %}
 
@@ -232,14 +232,14 @@
 
 {% block content %}
 <!-- Student Header -->
-<div class="student-header">
-    <div class="student-info">
-        <div class="student-avatar">
+<div class="student-header tw-bg-gradient-to-r tw-from-blue-500 tw-to-indigo-600 tw-text-white tw-p-6 md:tw-p-8 tw-rounded-t-2xl">
+    <div class="student-info tw-flex tw-flex-col md:tw-flex-row tw-items-center tw-gap-4">
+        <div class="student-avatar tw-w-20 tw-h-20 tw-flex tw-items-center tw-justify-center tw-rounded-full tw-text-2xl tw-font-bold tw-bg-white/20 tw-backdrop-blur tw-border tw-border-white/30">
             {{ student.first_name[0] }}{{ student.last_name[0] }}
         </div>
-        <div>
-            <h1 class="mb-1">{{ student.get_full_name() }}</h1>
-            <p class="mb-0 opacity-75">{{ student.student_no }} • {{ student.department }} • {{ student.section }}</p>
+        <div class="tw-text-center md:tw-text-left">
+            <h1 class="tw-text-2xl md:tw-text-3xl tw-font-bold tw-mb-1">{{ student.get_full_name() }}</h1>
+            <p class="tw-mb-0 tw-text-white/80 tw-text-sm md:tw-text-base">{{ student.student_no }} • {{ student.department }} • {{ student.section }}</p>
         </div>
     </div>
 </div>

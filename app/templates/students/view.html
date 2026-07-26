@@ -336,33 +336,33 @@
 <div class="info-cards tw-grid tw-grid-cols-1 lg:tw-grid-cols-2 tw-gap-4 tw-p-6">
     <!-- Personal Information -->
     <div class="info-card tw-bg-white tw-rounded-xl tw-p-5 tw-shadow-sm tw-border tw-border-gray-100">
-        <h5>
+        <h5 class="tw-flex tw-items-center tw-gap-2 tw-text-base tw-font-semibold tw-text-gray-900 tw-mb-4">
             <i class="fas fa-user text-primary"></i>
             Personal Information
         </h5>
         <div class="info-item tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-b-0">
-            <span class="info-label">
+            <span class="info-label tw-flex tw-items-center tw-gap-2 tw-text-sm tw-font-medium tw-text-gray-500">
                 <i class="fas fa-signature"></i>
                 Full Name
             </span>
-            <span class="info-value">{{ student.get_full_name() }}</span>
+            <span class="info-value tw-text-sm tw-font-semibold">{{ student.get_full_name() }}</span>
         </div>
         <div class="info-item tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-b-0">
-            <span class="info-label">
+            <span class="info-label tw-flex tw-items-center tw-gap-2 tw-text-sm tw-font-medium tw-text-gray-500">
                 <i class="fas fa-envelope"></i>
                 Email
             </span>
-            <span class="info-value">{{ student.email }}</span>
+            <span class="info-value tw-text-sm tw-font-semibold">{{ student.email }}</span>
         </div>
         <div class="info-item tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-b-0">
-            <span class="info-label">
+            <span class="info-label tw-flex tw-items-center tw-gap-2 tw-text-sm tw-font-medium tw-text-gray-500">
                 <i class="fas fa-calendar-alt"></i>
                 Date Added
             </span>
-            <span class="info-value">{{ student.created_at.strftime('%B %d, %Y') if student.created_at else 'Unknown' }}</span>
+            <span class="info-value tw-text-sm tw-font-semibold">{{ student.created_at.strftime('%B %d, %Y') if student.created_at else 'Unknown' }}</span>
         </div>
         <div class="info-item tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-b-0">
-            <span class="info-label">
+            <span class="info-label tw-flex tw-items-center tw-gap-2 tw-text-sm tw-font-medium tw-text-gray-500">
                 <i class="fas fa-toggle-on"></i>
                 Status
             </span>
@@ -374,30 +374,30 @@
 
     <!-- Academic Information -->
     <div class="info-card tw-bg-white tw-rounded-xl tw-p-5 tw-shadow-sm tw-border tw-border-gray-100">
-        <h5>
+        <h5 class="tw-flex tw-items-center tw-gap-2 tw-text-base tw-font-semibold tw-text-gray-900 tw-mb-4">
             <i class="fas fa-graduation-cap text-success"></i>
             Academic Information
         </h5>
         <div class="info-item tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-b-0">
-            <span class="info-label">
+            <span class="info-label tw-flex tw-items-center tw-gap-2 tw-text-sm tw-font-medium tw-text-gray-500">
                 <i class="fas fa-building"></i>
                 Department
             </span>
-            <span class="info-value">{{ student.department }}</span>
+            <span class="info-value tw-text-sm tw-font-semibold">{{ student.department }}</span>
         </div>
         <div class="info-item tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-b-0">
-            <span class="info-label">
+            <span class="info-label tw-flex tw-items-center tw-gap-2 tw-text-sm tw-font-medium tw-text-gray-500">
                 <i class="fas fa-users"></i>
                 Section
             </span>
-            <span class="info-value">{{ student.section }}</span>
+            <span class="info-value tw-text-sm tw-font-semibold">{{ student.section }}</span>
         </div>
         <div class="info-item tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-b-0">
-            <span class="info-label">
+            <span class="info-label tw-flex tw-items-center tw-gap-2 tw-text-sm tw-font-medium tw-text-gray-500">
                 <i class="fas fa-layer-group"></i>
                 Year Level
             </span>
-            <span class="info-value">
+            <span class="info-value tw-text-sm tw-font-semibold">
                 {% if student.year_level == 1 %}1st Year{% endif %}
                 {% if student.year_level == 2 %}2nd Year{% endif %}
                 {% if student.year_level == 3 %}3rd Year{% endif %}
@@ -406,47 +406,47 @@
             </span>
         </div>
         <div class="info-item tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-b-0">
-            <span class="info-label">
+            <span class="info-label tw-flex tw-items-center tw-gap-2 tw-text-sm tw-font-medium tw-text-gray-500">
                 <i class="fas fa-hashtag"></i>
                 Student Number
             </span>
-            <span class="info-value">{{ student.student_no }}</span>
+            <span class="info-value tw-text-sm tw-font-semibold">{{ student.student_no }}</span>
         </div>
     </div>
 </div>
 
 <!-- Attendance Statistics -->
-<div class="info-card tw-bg-white tw-rounded-xl tw-p-5 tw-shadow-sm tw-border tw-border-gray-100">
+<div class="info-card tw-bg-white tw-rounded-xl tw-p-5 tw-shadow-sm tw-border tw-border-gray-100 tw-mx-6 tw-mb-6">
     <h5>
         <i class="fas fa-chart-bar text-warning"></i>
         Attendance Statistics
     </h5>
     {% if attendance_stats %}
-    <div class="attendance-stats">
-        <div class="stat-item">
-            <span class="stat-number">{{ attendance_stats.total_sessions or 0 }}</span>
-            <span class="stat-text">Total Sessions</span>
+    <div class="attendance-stats tw-grid tw-grid-cols-2 md:tw-grid-cols-4 tw-gap-4">
+        <div class="stat-item tw-bg-gray-50 tw-rounded-lg tw-p-4 tw-text-center">
+            <span class="stat-number tw-block tw-text-2xl tw-font-bold tw-text-gray-900">{{ attendance_stats.total_sessions or 0 }}</span>
+            <span class="stat-text tw-block tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wide">Total Sessions</span>
         </div>
-        <div class="stat-item">
-            <span class="stat-number">{{ attendance_stats.attended_sessions or 0 }}</span>
-            <span class="stat-text">Attended</span>
+        <div class="stat-item tw-bg-gray-50 tw-rounded-lg tw-p-4 tw-text-center">
+            <span class="stat-number tw-block tw-text-2xl tw-font-bold tw-text-gray-900">{{ attendance_stats.attended_sessions or 0 }}</span>
+            <span class="stat-text tw-block tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wide">Attended</span>
         </div>
-        <div class="stat-item">
-            <span class="stat-number">{{ attendance_stats.missed_sessions or 0 }}</span>
-            <span class="stat-text">Missed</span>
+        <div class="stat-item tw-bg-gray-50 tw-rounded-lg tw-p-4 tw-text-center">
+            <span class="stat-number tw-block tw-text-2xl tw-font-bold tw-text-gray-900">{{ attendance_stats.missed_sessions or 0 }}</span>
+            <span class="stat-text tw-block tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wide">Missed</span>
         </div>
-        <div class="stat-item">
-            <span class="stat-number">{{ attendance_stats.attendance_rate or 0 }}%</span>
-            <span class="stat-text">Attendance Rate</span>
+        <div class="stat-item tw-bg-gray-50 tw-rounded-lg tw-p-4 tw-text-center">
+            <span class="stat-number tw-block tw-text-2xl tw-font-bold tw-text-gray-900">{{ attendance_stats.attendance_rate or 0 }}%</span>
+            <span class="stat-text tw-block tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wide">Attendance Rate</span>
         </div>
     </div>
     {% else %}
-    <p class="text-muted text-center py-3">No attendance data available yet</p>
+    <p class="tw-text-center tw-text-sm tw-text-gray-500 tw-py-4">No attendance data available yet</p>
     {% endif %}
 </div>
 
 <!-- QR Code and Actions -->
-<div class="actions-card tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-6 tw-p-6 tw-bg-white tw-rounded-b-2xl tw-shadow-lg">
+<div class="actions-card tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-6 tw-p-6 tw-bg-white tw-rounded-xl tw-shadow-sm tw-border tw-border-gray-100 tw-mx-6 tw-mb-6">
     <div class="qr-code-section tw-flex tw-flex-col tw-items-center tw-justify-center tw-p-6 tw-bg-gray-50 tw-rounded-xl tw-mb-0">
         {% if student.qr_code_path %}
         <img src="{{ url_for('static', filename=student.qr_code_path) }}"
@@ -464,16 +464,16 @@
     </div>
     
     <div class="action-buttons tw-flex tw-flex-col tw-gap-3">
-        <a href="{{ url_for('students.edit_student', id=student.id) }}" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-indigo-600 hover:tw-bg-indigo-700 tw-transition">
+        <button type="button" data-modal-url="{{ url_for('students.edit_student', id=student.id, modal=1) }}" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-indigo-600 hover:tw-bg-indigo-700 tw-transition">
             <i class="fas fa-edit tw-mr-2"></i>
             Edit Student
-        </a>
+        </button>
 
         {% if student.qr_code_path %}
-        <a href="{{ url_for('students.download_qr_code', id=student.id) }}" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-transition">
-            <i class="fas fa-download tw-mr-2"></i>
-            Download QR
-        </a>
+        <button type="button" data-modal-url="{{ url_for('students.view_qr_code', id=student.id, modal=1) }}" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-transition">
+            <i class="fas fa-qrcode tw-mr-2"></i>
+            View QR Code
+        </button>
         {% else %}
         <button onclick="generateQRCode({{ student.id|tojson }})" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-transition">
             <i class="fas fa-qrcode tw-mr-2"></i>
@@ -481,18 +481,18 @@
         </button>
         {% endif %}
 
-        <a href="{{ url_for('attendance.view_student_attendance', student_id=student.id) }}" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-amber-600 hover:tw-bg-amber-700 tw-transition">
+        <button type="button" data-modal-url="{{ url_for('attendance.view_student_attendance', student_id=student.id, modal=1) }}" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-amber-600 hover:tw-bg-amber-700 tw-transition">
             <i class="fas fa-clock tw-mr-2"></i>
             View Attendance
-        </a>
+        </button>
 
         {% if student.is_active %}
-        <button onclick="confirmDeactivate({{ student.id|tojson }}, {{ student.get_full_name()|tojson }})" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-red-600 hover:tw-bg-red-700 tw-transition">
+        <button onclick="openDeleteModal({{ student.id|tojson }}, {{ student.get_full_name()|tojson }})" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-red-600 hover:tw-bg-red-700 tw-transition">
             <i class="fas fa-ban tw-mr-2"></i>
             Deactivate
         </button>
         {% else %}
-        <button onclick="confirmReactivate({{ student.id|tojson }}, {{ student.get_full_name()|tojson }})" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-transition">
+        <button onclick="openDeleteModal({{ student.id|tojson }}, {{ student.get_full_name()|tojson }}, 'reactivate')" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-transition">
             <i class="fas fa-check-circle tw-mr-2"></i>
             Reactivate
         </button>
@@ -501,31 +501,29 @@
 </div>
 
 <!-- Recent Activity Timeline -->
-<div class="timeline-section tw-bg-white tw-rounded-xl tw-p-6 tw-shadow-sm tw-border tw-border-gray-100 tw-m-6">
+<div class="timeline-section tw-bg-white tw-rounded-xl tw-p-6 tw-shadow-sm tw-border tw-border-gray-100 tw-mx-6 tw-mb-6">
     <h5 class="tw-flex tw-items-center tw-gap-2 tw-text-lg tw-font-semibold tw-text-gray-900 tw-mb-4">
         <i class="fas fa-history tw-text-sky-500"></i>
         Recent Activity
     </h5>
 
-    <div class="timeline-item tw-flex tw-items-start tw-pb-4 tw-pl-4 tw-relative tw-border-l-2 tw-border-gray-200 last:tw-border-l-0">
-        <span class="tw-absolute tw-left-[-5px] tw-top-1 tw-w-2.5 tw-h-2.5 tw-rounded-full tw-bg-indigo-500"></span>
-        <div class="timeline-content tw-ml-4">
-            <div class="timeline-time tw-text-sm tw-text-gray-500 tw-font-medium">{{ student.created_at.strftime('%B %d, %Y at %I:%M %p') if student.created_at else 'Unknown' }}</div>
-            <p class="timeline-event tw-text-gray-800 tw-mb-0">Student record created</p>
-        </div>
-    </div>
+    <div class="tw-relative tw-pl-8 tw-space-y-6">
+        <div class="tw-absolute tw-left-[11px] tw-top-3 tw-bottom-3 tw-w-0.5 tw-bg-gray-200"></div>
 
-    {% if student.qr_code_path %}
-    <div class="timeline-item tw-flex tw-items-start tw-pb-4 tw-pl-4 tw-relative tw-border-l-2 tw-border-gray-200 last:tw-border-l-0">
-        <span class="tw-absolute tw-left-[-5px] tw-top-1 tw-w-2.5 tw-h-2.5 tw-rounded-full tw-bg-emerald-500"></span>
-        <div class="timeline-content tw-ml-4">
-            <div class="timeline-time tw-text-sm tw-text-gray-500 tw-font-medium">{{ student.created_at.strftime('%B %d, %Y at %I:%M %p') if student.created_at else 'Unknown' }}</div>
-            <p class="timeline-event tw-text-gray-800 tw-mb-0">QR Code generated</p>
+        <div class="tw-relative">
+            <span class="tw-absolute tw-left-[-26px] tw-top-1.5 tw-w-3 tw-h-3 tw-rounded-full tw-bg-indigo-500 tw-border-2 tw-border-white tw-shadow-sm"></span>
+            <div class="tw-text-sm tw-text-gray-500 tw-font-medium">{{ student.created_at.strftime('%B %d, %Y at %I:%M %p') if student.created_at else 'Unknown' }}</div>
+            <p class="tw-text-gray-800 tw-mb-0">Student record created</p>
         </div>
-    </div>
-    {% endif %}
 
-    <!-- Add more timeline items based on attendance records, updates, etc. -->
+        {% if student.qr_code_path %}
+        <div class="tw-relative">
+            <span class="tw-absolute tw-left-[-26px] tw-top-1.5 tw-w-3 tw-h-3 tw-rounded-full tw-bg-emerald-500 tw-border-2 tw-border-white tw-shadow-sm"></span>
+            <div class="tw-text-sm tw-text-gray-500 tw-font-medium">{{ student.created_at.strftime('%B %d, %Y at %I:%M %p') if student.created_at else 'Unknown' }}</div>
+            <p class="tw-text-gray-800 tw-mb-0">QR Code generated</p>
+        </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
 
