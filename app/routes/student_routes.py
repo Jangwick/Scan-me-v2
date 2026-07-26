@@ -3,7 +3,8 @@ Student Routes for ScanMe Attendance System
 Handles student management (CRUD operations)
 """
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+import os
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_required, current_user
 from app import db
 from app.models.student_model import Student
@@ -69,6 +70,8 @@ def list_students():
 @requires_professor_or_admin
 def add_student():
     """Add new student"""
+    modal = request.args.get('modal') == '1' or request.form.get('modal') == '1'
+    parent_template = 'modal_base.html' if modal else 'dashboard_base.html'
     if request.method == 'POST':
         student_data = {
             'student_no': request.form.get('student_no', '').strip(),
@@ -83,18 +86,24 @@ def add_student():
         # Validate data
         validation = validate_student_data(student_data)
         if not validation['valid']:
+            if modal:
+                return jsonify({'success': False, 'errors': validation['errors']}), 400
             for error in validation['errors']:
                 flash(error, 'error')
-            return render_template('students/add.html', student_data=student_data)
+            return render_template('students/add.html', student_data=student_data, parent_template=parent_template, modal=modal)
         
         # Check for existing student
         if Student.get_by_student_no(student_data['student_no']):
+            if modal:
+                return jsonify({'success': False, 'errors': ['Student number already exists.']}), 400
             flash('Student number already exists.', 'error')
-            return render_template('students/add.html', student_data=student_data)
+            return render_template('students/add.html', student_data=student_data, parent_template=parent_template, modal=modal)
         
         if Student.query.filter_by(email=student_data['email']).first():
+            if modal:
+                return jsonify({'success': False, 'errors': ['Email already exists.']}), 400
             flash('Email already exists.', 'error')
-            return render_template('students/add.html', student_data=student_data)
+            return render_template('students/add.html', student_data=student_data, parent_template=parent_template, modal=modal)
         
         try:
             # Create student
@@ -105,6 +114,8 @@ def add_student():
             # Generate QR code
             student.generate_qr_code()
             
+            if modal:
+                return jsonify({'success': True, 'message': f'Student {student.get_full_name()} added successfully!', 'redirect': url_for('students.list_students')})
             flash(f'Student {student.get_full_name()} added successfully!', 'success')
             return redirect(url_for('students.view_student', id=student.id))
         
@@ -112,7 +123,7 @@ def add_student():
             db.session.rollback()
             flash(f'Error adding student: {str(e)}', 'error')
     
-    return render_template('students/add.html', student_data={})
+    return render_template('students/add.html', student_data={}, parent_template=parent_template, modal=modal)
 
 @student_bp.route('/<int:id>')
 @login_required
@@ -121,13 +132,21 @@ def view_student(id):
     """View student details"""
     try:
         student = Student.query.get_or_404(id)
+        modal = request.args.get('modal') == '1'
+        parent_template = 'modal_base.html' if modal else 'dashboard_base.html'
+        
+        # Ensure QR code exists for display
+        if not student.qr_code_path or not os.path.exists(os.path.join(current_app.static_folder, student.qr_code_path)):
+            student.generate_qr_code()
         
         # Get attendance statistics
         attendance_stats = student.get_attendance_stats()
         
         return render_template('students/view.html', 
                              student=student,
-                             attendance_stats=attendance_stats)
+                             attendance_stats=attendance_stats,
+                             parent_template=parent_template,
+                             modal=modal)
     
     except Exception as e:
         flash(f'Error loading student: {str(e)}', 'error')
@@ -139,6 +158,8 @@ def view_student(id):
 def edit_student(id):
     """Edit student information"""
     student = Student.query.get_or_404(id)
+    modal = request.args.get('modal') == '1' or request.form.get('modal') == '1'
+    parent_template = 'modal_base.html' if modal else 'dashboard_base.html'
     
     if request.method == 'POST':
         student_data = {
@@ -153,9 +174,11 @@ def edit_student(id):
         # Validate data (use edit validation which doesn't require student_no)
         validation = validate_student_edit_data(student_data)
         if not validation['valid']:
+            if modal:
+                return jsonify({'success': False, 'errors': validation['errors']}), 400
             for error in validation['errors']:
                 flash(error, 'error')
-            return render_template('students/edit.html', student=student)
+            return render_template('students/edit.html', student=student, parent_template=parent_template, modal=modal)
         
         # Check for duplicate email (excluding current student)
         existing_email = Student.query.filter(
@@ -164,20 +187,24 @@ def edit_student(id):
         ).first()
         
         if existing_email:
+            if modal:
+                return jsonify({'success': False, 'errors': ['Email already exists.']}), 400
             flash('Email already exists.', 'error')
-            return render_template('students/edit.html', student=student)
+            return render_template('students/edit.html', student=student, parent_template=parent_template, modal=modal)
         
         try:
             # Update student
             student.update_info(**student_data)
             
+            if modal:
+                return jsonify({'success': True, 'message': f'Student {student.get_full_name()} updated successfully!', 'redirect': url_for('students.list_students')})
             flash(f'Student {student.get_full_name()} updated successfully!', 'success')
             return redirect(url_for('students.view_student', id=student.id))
         
         except Exception as e:
             flash(f'Error updating student: {str(e)}', 'error')
     
-    return render_template('students/edit.html', student=student)
+    return render_template('students/edit.html', student=student, parent_template=parent_template, modal=modal)
 
 @student_bp.route('/<int:id>/delete', methods=['POST'])
 @login_required

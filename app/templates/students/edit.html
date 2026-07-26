@@ -1,4 +1,4 @@
-{% extends "dashboard_base.html" %}
+{% extends parent_template|default("dashboard_base.html") %}
 
 {% block page_title %}Edit {{ student.get_full_name() }}{% endblock %}
 
@@ -275,65 +275,67 @@
 {% endblock %}
 
 {% block content %}
-<div class="edit-student-header">
-    <div class="d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-3">
-            <div class="student-avatar-small">
+<div class="edit-student-header tw-bg-gradient-to-r tw-from-amber-500 tw-to-orange-600 tw-text-white tw-p-6 md:tw-p-8 tw-rounded-t-2xl">
+    <div class="tw-flex tw-flex-col md:tw-flex-row md:tw-items-center md:tw-justify-between tw-gap-4">
+        <div class="tw-flex tw-items-center tw-gap-4">
+            <div class="tw-w-14 tw-h-14 tw-flex tw-items-center tw-justify-center tw-rounded-full tw-text-xl tw-font-bold tw-bg-white/20 tw-backdrop-blur tw-border tw-border-white/30">
                 {{ student.first_name[0] }}{{ student.last_name[0] }}
             </div>
             <div>
-                <h1 class="mb-1">
-                    <i class="fas fa-user-edit me-2"></i>
+                <h1 class="tw-text-2xl md:tw-text-3xl tw-font-bold tw-mb-1">
+                    <i class="fas fa-user-edit tw-mr-2"></i>
                     Edit Student
                 </h1>
-                <p class="mb-0 opacity-75">{{ student.get_full_name() }} - {{ student.student_no }}</p>
+                <p class="tw-mb-0 tw-text-white/80 tw-text-sm md:tw-text-base">{{ student.get_full_name() }} - {{ student.student_no }}</p>
             </div>
         </div>
-        <div class="d-flex gap-2">
-            <a href="{{ url_for('students.view_student', id=student.id) }}" class="btn-outline-secondary">
-                <i class="fas fa-eye"></i>
+        {% if not modal %}
+        <div class="tw-flex tw-gap-2">
+            <a href="{{ url_for('students.view_student', id=student.id) }}" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-border tw-border-white/40 hover:tw-bg-white/10 tw-transition">
+                <i class="fas fa-eye tw-mr-2"></i>
                 View Details
             </a>
-            <a href="{{ url_for('students.list_students') }}" class="btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i>
+            <a href="{{ url_for('students.list_students') }}" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-border tw-border-white/40 hover:tw-bg-white/10 tw-transition">
+                <i class="fas fa-arrow-left tw-mr-2"></i>
                 Back to List
             </a>
         </div>
+        {% endif %}
     </div>
 </div>
 
 <!-- Readonly Information -->
-<div class="readonly-info">
-    <h6>
-        <i class="fas fa-info-circle me-2"></i>
+<div class="readonly-info tw-bg-blue-50 tw-border tw-border-blue-100 tw-rounded-xl tw-p-4 tw-mx-6 tw-mt-4 tw-mb-4">
+    <h6 class="tw-flex tw-items-center tw-gap-2 tw-text-blue-900 tw-font-semibold tw-mb-2">
+        <i class="fas fa-info-circle"></i>
         Read-only Information
     </h6>
-    <p>
-        <strong>Student Number:</strong> {{ student.student_no }} (cannot be changed) |
-        <strong>Date Created:</strong> {{ student.created_at.strftime('%B %d, %Y') if student.created_at else 'Unknown' }} |
-        <strong>Status:</strong> {% if student.is_active %}Active{% else %}Inactive{% endif %}
+    <p class="tw-text-sm tw-text-blue-800 tw-mb-0">
+        <span class="tw-inline-block tw-mr-4"><strong>Student Number:</strong> {{ student.student_no }} (cannot be changed)</span>
+        <span class="tw-inline-block tw-mr-4"><strong>Date Created:</strong> {{ student.created_at.strftime('%B %d, %Y') if student.created_at else 'Unknown' }}</span>
+        <span class="tw-inline-block"><strong>Status:</strong> {% if student.is_active %}Active{% else %}Inactive{% endif %}</span>
     </p>
 </div>
 
 <!-- Change Detection -->
-<div id="form-changes" class="form-changes">
-    <h6>
-        <i class="fas fa-exclamation-triangle me-2"></i>
+<div id="form-changes" class="form-changes tw-bg-amber-50 tw-border tw-border-amber-100 tw-rounded-xl tw-p-4 tw-mx-6 tw-mb-4">
+    <h6 class="tw-flex tw-items-center tw-gap-2 tw-text-amber-900 tw-font-semibold tw-mb-2">
+        <i class="fas fa-exclamation-triangle"></i>
         Unsaved Changes Detected
     </h6>
-    <ul id="changes-list"></ul>
+    <ul id="changes-list" class="tw-text-sm tw-text-amber-800 tw-list-disc tw-list-inside tw-mb-0"></ul>
 </div>
 
-<form method="POST" class="form-container" id="edit-form">
+<form method="POST" action="{{ request.url }}" class="form-container tw-bg-white tw-rounded-b-2xl tw-shadow-lg tw-overflow-hidden" id="edit-form">
     <!-- Basic Information Section -->
-    <div class="form-section">
+    <div class="form-section tw-p-6 tw-bg-white tw-rounded-xl tw-mb-4">
         <h3 class="section-title">
             <i class="fas fa-user me-2"></i>
             Basic Information
         </h3>
 
-        <div class="form-row">
-            <div class="form-group">
+        <div class="form-row tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
+            <div class="form-group tw-mb-4">
                 <label for="first_name">
                     First Name <span class="required">*</span>
                 </label>
@@ -354,7 +356,7 @@
                 {% endif %}
             </div>
 
-            <div class="form-group">
+            <div class="form-group tw-mb-4">
                 <label for="last_name">
                     Last Name <span class="required">*</span>
                 </label>
@@ -376,7 +378,7 @@
             </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group tw-mb-4">
             <label for="email">
                 Email Address <span class="required">*</span>
             </label>
@@ -400,14 +402,14 @@
     </div>
 
     <!-- Academic Information Section -->
-    <div class="form-section">
+    <div class="form-section tw-p-6 tw-bg-white tw-rounded-xl tw-mb-4">
         <h3 class="section-title">
             <i class="fas fa-graduation-cap me-2"></i>
             Academic Information
         </h3>
 
-        <div class="form-row">
-            <div class="form-group">
+        <div class="form-row tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
+            <div class="form-group tw-mb-4">
                 <label for="department">
                     Department <span class="required">*</span>
                 </label>
@@ -433,7 +435,7 @@
                 {% endif %}
             </div>
 
-            <div class="form-group">
+            <div class="form-group tw-mb-4">
                 <label for="year_level">
                     Year Level <span class="required">*</span>
                 </label>
@@ -459,7 +461,7 @@
             </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group tw-mb-4">
             <label for="section">
                 Section <span class="required">*</span>
             </label>
@@ -483,7 +485,7 @@
     </div>
 
     <!-- Form Actions -->
-    <div class="form-actions">
+    <div class="form-actions tw-flex tw-flex-col-reverse md:tw-flex-row tw-items-center tw-justify-between tw-gap-4 tw-p-6 tw-bg-gray-50">
         <div>
             <small class="text-muted">
                 <i class="fas fa-info-circle me-1"></i>
@@ -491,12 +493,12 @@
             </small>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ url_for('students.view_student', id=student.id) }}" class="btn-secondary">
-                <i class="fas fa-times"></i>
+            <a href="{{ url_for('students.view_student', id=student.id) }}" class="tw-inline-flex tw-items-center tw-justify-center tw-px-5 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-gray-700 tw-bg-white tw-border tw-border-gray-300 hover:tw-bg-gray-50 tw-transition">
+                <i class="fas fa-times tw-mr-2"></i>
                 Cancel
             </a>
-            <button type="submit" class="btn-warning">
-                <i class="fas fa-save"></i>
+            <button type="submit" class="tw-inline-flex tw-items-center tw-justify-center tw-px-5 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-amber-600 hover:tw-bg-amber-700 tw-transition">
+                <i class="fas fa-save tw-mr-2"></i>
                 Update Student
             </button>
         </div>

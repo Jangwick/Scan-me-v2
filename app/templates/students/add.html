@@ -1,4 +1,4 @@
-{% extends "dashboard_base.html" %}
+{% extends parent_template|default("dashboard_base.html") %}
 
 {% block page_title %}Add New Student{% endblock %}
 
@@ -208,32 +208,34 @@
 {% endblock %}
 
 {% block content %}
-<div class="add-student-header">
-    <div class="d-flex justify-content-between align-items-center">
+<div class="add-student-header tw-bg-gradient-to-r tw-from-emerald-500 tw-to-teal-600 tw-text-white tw-p-6 md:tw-p-8 tw-rounded-t-2xl">
+    <div class="tw-flex tw-flex-col md:tw-flex-row md:tw-items-center md:tw-justify-between tw-gap-4">
         <div>
-            <h1 class="mb-1">
-                <i class="fas fa-user-plus me-2"></i>
+            <h1 class="tw-text-2xl md:tw-text-3xl tw-font-bold tw-mb-1">
+                <i class="fas fa-user-plus tw-mr-2"></i>
                 Add New Student
             </h1>
-            <p class="mb-0 opacity-75">Create a new student record and generate QR code</p>
+            <p class="tw-mb-0 tw-text-white/80 tw-text-sm md:tw-text-base">Create a new student record and generate QR code</p>
         </div>
+        {% if not modal %}
         <a href="{{ url_for('students.list_students') }}" class="btn btn-outline-light">
-            <i class="fas fa-arrow-left me-2"></i>
+            <i class="fas fa-arrow-left tw-mr-2"></i>
             Back to Students
         </a>
+        {% endif %}
     </div>
 </div>
 
-<form method="POST" class="form-container">
+<form method="POST" action="{{ request.url }}" class="form-container tw-bg-white tw-rounded-b-2xl tw-shadow-lg tw-overflow-hidden">
     <!-- Basic Information Section -->
-    <div class="form-section">
+    <div class="form-section tw-p-6 tw-bg-white tw-rounded-xl tw-mb-4">
         <h3 class="section-title">
             <i class="fas fa-user me-2"></i>
             Basic Information
         </h3>
 
-        <div class="form-row">
-            <div class="form-group">
+        <div class="form-row tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
+            <div class="form-group tw-mb-4">
                 <label for="student_no">
                     Student Number <span class="required">*</span>
                 </label>
@@ -255,7 +257,7 @@
                 {% endif %}
             </div>
 
-            <div class="form-group">
+            <div class="form-group tw-mb-4">
                 <label for="email">
                     Email Address <span class="required">*</span>
                 </label>
@@ -278,8 +280,8 @@
             </div>
         </div>
 
-        <div class="form-row">
-            <div class="form-group">
+        <div class="form-row tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
+            <div class="form-group tw-mb-4">
                 <label for="first_name">
                     First Name <span class="required">*</span>
                 </label>
@@ -300,7 +302,7 @@
                 {% endif %}
             </div>
 
-            <div class="form-group">
+            <div class="form-group tw-mb-4">
                 <label for="last_name">
                     Last Name <span class="required">*</span>
                 </label>
@@ -324,14 +326,14 @@
     </div>
 
     <!-- Academic Information Section -->
-    <div class="form-section">
+    <div class="form-section tw-p-6 tw-bg-white tw-rounded-xl tw-mb-4">
         <h3 class="section-title">
             <i class="fas fa-graduation-cap me-2"></i>
             Academic Information
         </h3>
 
-        <div class="form-row">
-            <div class="form-group">
+        <div class="form-row tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
+            <div class="form-group tw-mb-4">
                 <label for="department">
                     Department <span class="required">*</span>
                 </label>
@@ -357,7 +359,7 @@
                 {% endif %}
             </div>
 
-            <div class="form-group">
+            <div class="form-group tw-mb-4">
                 <label for="year_level">
                     Year Level <span class="required">*</span>
                 </label>
@@ -383,7 +385,7 @@
             </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group tw-mb-4">
             <label for="section">
                 Section <span class="required">*</span>
             </label>
@@ -407,7 +409,7 @@
     </div>
 
     <!-- Preview Section -->
-    <div class="form-section">
+    <div class="form-section tw-p-6 tw-bg-white tw-rounded-xl tw-mb-4">
         <h3 class="section-title">
             <i class="fas fa-eye me-2"></i>
             Preview
@@ -432,7 +434,7 @@
     </div>
 
     <!-- Form Actions -->
-    <div class="form-actions">
+    <div class="form-actions tw-flex tw-flex-col-reverse md:tw-flex-row tw-items-center tw-justify-between tw-gap-4 tw-p-6 tw-bg-gray-50">
         <div>
             <small class="text-muted">
                 <i class="fas fa-info-circle me-1"></i>
@@ -440,12 +442,12 @@
             </small>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ url_for('students.list_students') }}" class="btn-secondary">
-                <i class="fas fa-times"></i>
+            <a href="{{ url_for('students.list_students') }}" class="tw-inline-flex tw-items-center tw-justify-center tw-px-5 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-gray-700 tw-bg-white tw-border tw-border-gray-300 hover:tw-bg-gray-50 tw-transition">
+                <i class="fas fa-times tw-mr-2"></i>
                 Cancel
             </a>
-            <button type="submit" class="btn-primary">
-                <i class="fas fa-save"></i>
+            <button type="submit" class="tw-inline-flex tw-items-center tw-justify-center tw-px-5 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-transition">
+                <i class="fas fa-save tw-mr-2"></i>
                 Add Student
             </button>
         </div>

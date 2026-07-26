@@ -1,4 +1,4 @@
-{% extends "dashboard_base.html" %}
+{% extends parent_template|default("dashboard_base.html") %}
 
 {% block page_title %}{{ student.get_full_name() }} - Student Details{% endblock %}
 
@@ -304,62 +304,64 @@
 {% endblock %}
 
 {% block content %}
-<div class="student-header">
-    <div class="d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-3">
-            <div class="student-avatar-large">
+<div class="student-header tw-bg-gradient-to-r tw-from-indigo-500 tw-to-violet-600 tw-text-white tw-p-6 md:tw-p-8 tw-rounded-t-2xl">
+    <div class="tw-flex tw-flex-col md:tw-flex-row md:tw-items-center md:tw-justify-between tw-gap-4">
+        <div class="tw-flex tw-items-center tw-gap-4">
+            <div class="tw-w-20 tw-h-20 tw-flex tw-items-center tw-justify-center tw-rounded-full tw-text-2xl tw-font-bold tw-bg-white/20 tw-backdrop-blur tw-border tw-border-white/30">
                 {{ student.first_name[0] }}{{ student.last_name[0] }}
             </div>
             <div>
-                <h1 class="mb-1">{{ student.get_full_name() }}</h1>
-                <p class="mb-0 opacity-75">
-                    <i class="fas fa-hashtag me-1"></i>
+                <h1 class="tw-text-2xl md:tw-text-3xl tw-font-bold tw-mb-1">{{ student.get_full_name() }}</h1>
+                <p class="tw-mb-0 tw-text-white/80 tw-text-sm md:tw-text-base">
+                    <i class="fas fa-hashtag tw-mr-1"></i>
                     {{ student.student_no }}
                 </p>
             </div>
         </div>
-        <div class="d-flex gap-2">
-            <a href="{{ url_for('students.list_students') }}" class="btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i>
+        {% if not modal %}
+        <div class="tw-flex tw-gap-2">
+            <a href="{{ url_for('students.list_students') }}" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-border tw-border-white/40 hover:tw-bg-white/10 tw-transition">
+                <i class="fas fa-arrow-left tw-mr-2"></i>
                 Back to List
             </a>
-            <a href="{{ url_for('students.edit_student', id=student.id) }}" class="btn-primary">
-                <i class="fas fa-edit"></i>
+            <a href="{{ url_for('students.edit_student', id=student.id) }}" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-white/20 hover:tw-bg-white/30 tw-transition">
+                <i class="fas fa-edit tw-mr-2"></i>
                 Edit
             </a>
         </div>
+        {% endif %}
     </div>
 </div>
 
-<div class="info-cards">
+<div class="info-cards tw-grid tw-grid-cols-1 lg:tw-grid-cols-2 tw-gap-4 tw-p-6">
     <!-- Personal Information -->
-    <div class="info-card">
+    <div class="info-card tw-bg-white tw-rounded-xl tw-p-5 tw-shadow-sm tw-border tw-border-gray-100">
         <h5>
             <i class="fas fa-user text-primary"></i>
             Personal Information
         </h5>
-        <div class="info-item">
+        <div class="info-item tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-b-0">
             <span class="info-label">
                 <i class="fas fa-signature"></i>
                 Full Name
             </span>
             <span class="info-value">{{ student.get_full_name() }}</span>
         </div>
-        <div class="info-item">
+        <div class="info-item tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-b-0">
             <span class="info-label">
                 <i class="fas fa-envelope"></i>
                 Email
             </span>
             <span class="info-value">{{ student.email }}</span>
         </div>
-        <div class="info-item">
+        <div class="info-item tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-b-0">
             <span class="info-label">
                 <i class="fas fa-calendar-alt"></i>
                 Date Added
             </span>
             <span class="info-value">{{ student.created_at.strftime('%B %d, %Y') if student.created_at else 'Unknown' }}</span>
         </div>
-        <div class="info-item">
+        <div class="info-item tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-b-0">
             <span class="info-label">
                 <i class="fas fa-toggle-on"></i>
                 Status
@@ -371,26 +373,26 @@
     </div>
 
     <!-- Academic Information -->
-    <div class="info-card">
+    <div class="info-card tw-bg-white tw-rounded-xl tw-p-5 tw-shadow-sm tw-border tw-border-gray-100">
         <h5>
             <i class="fas fa-graduation-cap text-success"></i>
             Academic Information
         </h5>
-        <div class="info-item">
+        <div class="info-item tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-b-0">
             <span class="info-label">
                 <i class="fas fa-building"></i>
                 Department
             </span>
             <span class="info-value">{{ student.department }}</span>
         </div>
-        <div class="info-item">
+        <div class="info-item tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-b-0">
             <span class="info-label">
                 <i class="fas fa-users"></i>
                 Section
             </span>
             <span class="info-value">{{ student.section }}</span>
         </div>
-        <div class="info-item">
+        <div class="info-item tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-b-0">
             <span class="info-label">
                 <i class="fas fa-layer-group"></i>
                 Year Level
@@ -403,7 +405,7 @@
                 {% if student.year_level == 5 %}5th Year{% endif %}
             </span>
         </div>
-        <div class="info-item">
+        <div class="info-item tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-b-0">
             <span class="info-label">
                 <i class="fas fa-hashtag"></i>
                 Student Number
@@ -414,7 +416,7 @@
 </div>
 
 <!-- Attendance Statistics -->
-<div class="info-card">
+<div class="info-card tw-bg-white tw-rounded-xl tw-p-5 tw-shadow-sm tw-border tw-border-gray-100">
     <h5>
         <i class="fas fa-chart-bar text-warning"></i>
         Attendance Statistics
@@ -444,54 +446,54 @@
 </div>
 
 <!-- QR Code and Actions -->
-<div class="actions-card">
-    <div class="qr-code-section">
+<div class="actions-card tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-6 tw-p-6 tw-bg-white tw-rounded-b-2xl tw-shadow-lg">
+    <div class="qr-code-section tw-flex tw-flex-col tw-items-center tw-justify-center tw-p-6 tw-bg-gray-50 tw-rounded-xl tw-mb-0">
         {% if student.qr_code_path %}
-        <img src="{{ url_for('static', filename=student.qr_code_path) }}" 
-             alt="{{ student.get_full_name() }}'s QR Code" 
-             class="qr-code-image">
-        <h6>Student QR Code</h6>
-        <p class="text-muted">Scan this code for attendance</p>
+        <img src="{{ url_for('static', filename=student.qr_code_path) }}"
+             alt="{{ student.get_full_name() }}'s QR Code"
+             class="qr-code-image tw-w-48 tw-h-auto tw-rounded-lg tw-border-4 tw-border-white tw-shadow-md tw-mb-4">
+        <h6 class="tw-text-lg tw-font-semibold tw-text-gray-900 tw-mb-1">Student QR Code</h6>
+        <p class="tw-text-sm tw-text-gray-500 tw-mb-0">Scan this code for attendance</p>
         {% else %}
-        <div class="text-muted">
-            <i class="fas fa-qrcode fa-3x mb-3 opacity-50"></i>
-            <h6>QR Code Not Generated</h6>
-            <p>Generate a QR code for this student</p>
+        <div class="tw-flex tw-flex-col tw-items-center tw-justify-center tw-text-gray-500">
+            <i class="fas fa-qrcode tw-text-5xl tw-mb-3 tw-opacity-50"></i>
+            <h6 class="tw-text-lg tw-font-semibold tw-mb-1">QR Code Not Generated</h6>
+            <p class="tw-text-sm tw-mb-0">Generate a QR code for this student</p>
         </div>
         {% endif %}
     </div>
     
-    <div class="action-buttons">
-        <a href="{{ url_for('students.edit_student', id=student.id) }}" class="btn btn-primary">
-            <i class="fas fa-edit"></i>
+    <div class="action-buttons tw-flex tw-flex-col tw-gap-3">
+        <a href="{{ url_for('students.edit_student', id=student.id) }}" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-indigo-600 hover:tw-bg-indigo-700 tw-transition">
+            <i class="fas fa-edit tw-mr-2"></i>
             Edit Student
         </a>
-        
+
         {% if student.qr_code_path %}
-        <a href="{{ url_for('students.download_qr_code', id=student.id) }}" class="btn btn-success">
-            <i class="fas fa-download"></i>
+        <a href="{{ url_for('students.download_qr_code', id=student.id) }}" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-transition">
+            <i class="fas fa-download tw-mr-2"></i>
             Download QR
         </a>
         {% else %}
-        <button onclick="generateQRCode({{ student.id }})" class="btn btn-success">
-            <i class="fas fa-qrcode"></i>
+        <button onclick="generateQRCode({{ student.id|tojson }})" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-transition">
+            <i class="fas fa-qrcode tw-mr-2"></i>
             Generate QR Code
         </button>
         {% endif %}
-        
-        <a href="{{ url_for('attendance.view_student_attendance', student_id=student.id) }}" class="btn btn-warning">
-            <i class="fas fa-clock"></i>
+
+        <a href="{{ url_for('attendance.view_student_attendance', student_id=student.id) }}" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-amber-600 hover:tw-bg-amber-700 tw-transition">
+            <i class="fas fa-clock tw-mr-2"></i>
             View Attendance
         </a>
-        
+
         {% if student.is_active %}
-        <button onclick="confirmDeactivate({{ student.id }}, '{{ student.get_full_name() }}')" class="btn btn-danger">
-            <i class="fas fa-ban"></i>
+        <button onclick="confirmDeactivate({{ student.id|tojson }}, {{ student.get_full_name()|tojson }})" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-red-600 hover:tw-bg-red-700 tw-transition">
+            <i class="fas fa-ban tw-mr-2"></i>
             Deactivate
         </button>
         {% else %}
-        <button onclick="confirmReactivate({{ student.id }}, '{{ student.get_full_name() }}')" class="btn btn-success">
-            <i class="fas fa-check-circle"></i>
+        <button onclick="confirmReactivate({{ student.id|tojson }}, {{ student.get_full_name()|tojson }})" class="tw-inline-flex tw-items-center tw-justify-center tw-px-4 tw-py-2.5 tw-rounded-lg tw-text-sm tw-font-medium tw-text-white tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-transition">
+            <i class="fas fa-check-circle tw-mr-2"></i>
             Reactivate
         </button>
         {% endif %}
@@ -499,28 +501,30 @@
 </div>
 
 <!-- Recent Activity Timeline -->
-<div class="timeline-section">
-    <h5 class="mb-3">
-        <i class="fas fa-history text-info"></i>
+<div class="timeline-section tw-bg-white tw-rounded-xl tw-p-6 tw-shadow-sm tw-border tw-border-gray-100 tw-m-6">
+    <h5 class="tw-flex tw-items-center tw-gap-2 tw-text-lg tw-font-semibold tw-text-gray-900 tw-mb-4">
+        <i class="fas fa-history tw-text-sky-500"></i>
         Recent Activity
     </h5>
-    
-    <div class="timeline-item">
-        <div class="timeline-content">
-            <div class="timeline-time">{{ student.created_at.strftime('%B %d, %Y at %I:%M %p') if student.created_at else 'Unknown' }}</div>
-            <p class="timeline-event">Student record created</p>
+
+    <div class="timeline-item tw-flex tw-items-start tw-pb-4 tw-pl-4 tw-relative tw-border-l-2 tw-border-gray-200 last:tw-border-l-0">
+        <span class="tw-absolute tw-left-[-5px] tw-top-1 tw-w-2.5 tw-h-2.5 tw-rounded-full tw-bg-indigo-500"></span>
+        <div class="timeline-content tw-ml-4">
+            <div class="timeline-time tw-text-sm tw-text-gray-500 tw-font-medium">{{ student.created_at.strftime('%B %d, %Y at %I:%M %p') if student.created_at else 'Unknown' }}</div>
+            <p class="timeline-event tw-text-gray-800 tw-mb-0">Student record created</p>
         </div>
     </div>
-    
+
     {% if student.qr_code_path %}
-    <div class="timeline-item">
-        <div class="timeline-content">
-            <div class="timeline-time">{{ student.created_at.strftime('%B %d, %Y at %I:%M %p') if student.created_at else 'Unknown' }}</div>
-            <p class="timeline-event">QR Code generated</p>
+    <div class="timeline-item tw-flex tw-items-start tw-pb-4 tw-pl-4 tw-relative tw-border-l-2 tw-border-gray-200 last:tw-border-l-0">
+        <span class="tw-absolute tw-left-[-5px] tw-top-1 tw-w-2.5 tw-h-2.5 tw-rounded-full tw-bg-emerald-500"></span>
+        <div class="timeline-content tw-ml-4">
+            <div class="timeline-time tw-text-sm tw-text-gray-500 tw-font-medium">{{ student.created_at.strftime('%B %d, %Y at %I:%M %p') if student.created_at else 'Unknown' }}</div>
+            <p class="timeline-event tw-text-gray-800 tw-mb-0">QR Code generated</p>
         </div>
     </div>
     {% endif %}
-    
+
     <!-- Add more timeline items based on attendance records, updates, etc. -->
 </div>
 {% endblock %}
