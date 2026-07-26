@@ -29,10 +29,8 @@ def init_database():
                 admin_user = User(
                     username='admin',
                     email='admin@scanme.system',
-                    first_name='System',
-                    last_name='Administrator',
                     role='admin',
-                    password_hash=generate_password_hash('admin123'),
+                    password=generate_password_hash('admin123'),
                     is_active=True
                 )
                 db.session.add(admin_user)
