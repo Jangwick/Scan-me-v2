@@ -221,8 +221,8 @@ Temporary Items
 # ===========================
 
 # Flask App Configuration
-config.py
-config_local.py
+# config.py is safe to commit because it reads all secrets from environment variables
+# config_local.py
 .flaskenv
 
 # Database files

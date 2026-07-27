@@ -23,6 +23,10 @@ reportlab
 python-dotenv
 click
 
+# Production server
+psycopg2-binary
+gunicorn
+
 # Testing packages
 pytest
 pytest-flask
