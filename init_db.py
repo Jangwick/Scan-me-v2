@@ -47,33 +47,48 @@ def init_database():
                 
                 sample_rooms = [
                     {
-                        'name': 'Room 101',
+                        'room_number': '101',
+                        'room_name': 'Room 101',
                         'building': 'Main Building',
+                        'floor': 1,
                         'capacity': 50,
+                        'room_type': 'classroom',
                         'description': 'General classroom for lectures'
                     },
                     {
-                        'name': 'Computer Lab 1',
+                        'room_number': 'LAB-1',
+                        'room_name': 'Computer Lab 1',
                         'building': 'IT Building',
+                        'floor': 2,
                         'capacity': 30,
+                        'room_type': 'laboratory',
                         'description': 'Computer laboratory with 30 workstations'
                     },
                     {
-                        'name': 'Conference Room A',
+                        'room_number': 'CONF-A',
+                        'room_name': 'Conference Room A',
                         'building': 'Admin Building',
+                        'floor': 1,
                         'capacity': 25,
+                        'room_type': 'classroom',
                         'description': 'Meeting room with presentation equipment'
                     },
                     {
-                        'name': 'Auditorium',
+                        'room_number': 'AUD',
+                        'room_name': 'Auditorium',
                         'building': 'Main Building',
+                        'floor': 1,
                         'capacity': 200,
+                        'room_type': 'auditorium',
                         'description': 'Large auditorium for events and seminars'
                     },
                     {
-                        'name': 'Laboratory 201',
+                        'room_number': 'LAB-201',
+                        'room_name': 'Laboratory 201',
                         'building': 'Science Building',
+                        'floor': 2,
                         'capacity': 40,
+                        'room_type': 'laboratory',
                         'description': 'Science laboratory with equipment'
                     }
                 ]

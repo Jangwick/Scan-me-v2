@@ -31,7 +31,8 @@ class Room(db.Model):
     attendance_records = db.relationship('AttendanceRecord', backref='room', lazy=True, cascade='all, delete-orphan')
     sessions = db.relationship('AttendanceSession', backref='room', lazy=True, cascade='all, delete-orphan')
     
-    def __init__(self, room_number, building, floor, capacity=30, room_type='classroom', room_name=None):
+    def __init__(self, room_number, building, floor, capacity=30, room_type='classroom', room_name=None,
+                 description=None, equipment=None, is_active=True):
         """Initialize room with required fields"""
         self.room_number = room_number
         self.room_name = room_name  # Now optional
@@ -39,6 +40,9 @@ class Room(db.Model):
         self.floor = floor
         self.capacity = capacity
         self.room_type = room_type
+        self.description = description
+        self.equipment = equipment
+        self.is_active = is_active
     
     def get_full_name(self):
         """Get room's full display name"""
