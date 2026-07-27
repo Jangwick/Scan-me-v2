@@ -322,7 +322,7 @@
 
 {% block content %}
 <div class="analytics-header">
-    <div class="d-flex justify-content-between align-items-center">
+    <div class="d-flex flex-wrap flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
         <div>
             <h1 class="mb-1">
                 <i class="fas fa-chart-bar me-2"></i>
@@ -330,7 +330,7 @@
             </h1>
             <p class="mb-0 opacity-75">Insights and trends from attendance data</p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex flex-wrap gap-2">
             <a href="{{ url_for('attendance.reports') }}" class="btn btn-outline-light">
                 <i class="fas fa-chart-line"></i>
                 Reports
@@ -746,10 +746,17 @@ async function loadDepartmentBreakdown() {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    onResize: function(chart, newSize) {
+                        const newPosition = newSize.width < 576 ? 'bottom' : 'right';
+                        if (chart.options.plugins.legend.position !== newPosition) {
+                            chart.options.plugins.legend.position = newPosition;
+                            chart.update('none');
+                        }
+                    },
                     plugins: {
                         legend: {
                             display: true,
-                            position: 'right',
+                            position: window.innerWidth < 576 ? 'bottom' : 'right',
                             labels: {
                                 usePointStyle: true,
                                 padding: 15,

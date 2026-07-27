@@ -23,6 +23,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+    
     <style>
         :root {
             --sidebar-width: 280px;
@@ -203,7 +205,7 @@
 
         .page-title {
             margin: 0;
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 600;
             color: #2d3748;
         }
@@ -506,6 +508,9 @@
         </div>
     </nav>
     
+    <!-- Mobile sidebar overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
     <!-- Main Content -->
     <main class="main-content">
         <!-- Topbar -->
@@ -517,28 +522,21 @@
                 <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
             </div>
             
-            <div class="topbar-actions">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search students, rooms..." id="globalSearch">
+            <div class="user-dropdown dropdown ms-auto">
+                <div class="user-avatar" data-bs-toggle="dropdown" aria-expanded="false">
+                    {{ current_user.username[0].upper() }}
                 </div>
-                
-                <div class="user-dropdown dropdown">
-                    <div class="user-avatar" data-bs-toggle="dropdown" aria-expanded="false">
-                        {{ current_user.username[0].upper() }}
-                    </div>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><span class="dropdown-header">{{ current_user.get_display_name() }}</span></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ url_for('main.profile') }}">
-                            <i class="fas fa-user me-2"></i>Profile</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for('admin.system_settings') }}">
-                            <i class="fas fa-cog me-2"></i>Settings</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="#" onclick="confirmLogout()">
-                            <i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
-                    </ul>
-                </div>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><span class="dropdown-header">{{ current_user.get_display_name() }}</span></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ url_for('main.profile') }}">
+                        <i class="fas fa-user me-2"></i>Profile</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('admin.system_settings') }}">
+                        <i class="fas fa-cog me-2"></i>Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="confirmLogout()">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                </ul>
             </div>
         </header>
         
@@ -565,11 +563,33 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-    
+
+    <script>
+        // Wrap any unwrapped tables in a responsive container
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('table').forEach(function(table) {
+                if (table.closest('.table-responsive')) return;
+                const wrapper = document.createElement('div');
+                wrapper.className = 'table-responsive';
+                table.parentNode.insertBefore(wrapper, table);
+                wrapper.appendChild(table);
+            });
+        });
+    </script>
+
     <script>
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
             sidebar.classList.toggle('show');
+            if (overlay) overlay.classList.toggle('show');
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('show');
+            if (overlay) overlay.classList.remove('show');
         }
         
         function confirmLogout() {
@@ -578,32 +598,27 @@
             }
         }
         
-        // Global search functionality
-        document.getElementById('globalSearch').addEventListener('input', function(e) {
-            const query = e.target.value;
-            if (query.length > 2) {
-                // Implement search functionality
-                console.log('Searching for:', query);
-            }
-        });
-        
         // Close sidebar when clicking outside on mobile
         document.addEventListener('click', function(e) {
             const sidebar = document.getElementById('sidebar');
             const toggle = document.querySelector('.sidebar-toggle');
-            
+            const overlay = document.getElementById('sidebarOverlay');
+
             if (window.innerWidth <= 768) {
                 if (!sidebar.contains(e.target) && !toggle.contains(e.target)) {
                     sidebar.classList.remove('show');
+                    if (overlay) overlay.classList.remove('show');
                 }
             }
         });
-        
+
         // Handle window resize
         window.addEventListener('resize', function() {
             const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
             if (window.innerWidth > 768) {
                 sidebar.classList.remove('show');
+                if (overlay) overlay.classList.remove('show');
             }
         });
     </script>

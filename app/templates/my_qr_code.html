@@ -38,7 +38,7 @@
                         <img src="data:image/png;base64,{{ qr_data }}" 
                              alt="My QR Code" 
                              class="img-fluid"
-                             style="max-width: 300px; max-height: 300px;">
+                             style="max-height: 300px;">
                     </div>
                 </div>
 
@@ -55,48 +55,48 @@
                                 {% if user_type == 'student' and user_data.get('student_no') %}
                                 <div class="row">
                                     <div class="col-sm-4"><strong>Name:</strong></div>
-                                    <div class="col-sm-8">{{ user_data.get('name', 'N/A') }}</div>
+                                    <div class="col-sm-8 text-break">{{ user_data.get('name', 'N/A') }}</div>
                                 </div>
                                 <hr>
                                 <div class="row">
                                     <div class="col-sm-4"><strong>Student No:</strong></div>
-                                    <div class="col-sm-8">{{ user_data.get('student_no', 'N/A') }}</div>
+                                    <div class="col-sm-8 text-break">{{ user_data.get('student_no', 'N/A') }}</div>
                                 </div>
                                 <hr>
                                 <div class="row">
                                     <div class="col-sm-4"><strong>Department:</strong></div>
-                                    <div class="col-sm-8">{{ user_data.get('department', 'N/A') }}</div>
+                                    <div class="col-sm-8 text-break">{{ user_data.get('department', 'N/A') }}</div>
                                 </div>
                                 <hr>
                                 <div class="row">
                                     <div class="col-sm-4"><strong>Section:</strong></div>
-                                    <div class="col-sm-8">{{ user_data.get('section', 'N/A') }}</div>
+                                    <div class="col-sm-8 text-break">{{ user_data.get('section', 'N/A') }}</div>
                                 </div>
                                 <hr>
                                 <div class="row">
                                     <div class="col-sm-4"><strong>Year Level:</strong></div>
-                                    <div class="col-sm-8">{{ user_data.get('year_level', 'N/A') }}</div>
+                                    <div class="col-sm-8 text-break">{{ user_data.get('year_level', 'N/A') }}</div>
                                 </div>
                                 {% elif user_type == 'student' %}
                                 <!-- Student with basic user info -->
                                 <div class="row">
                                     <div class="col-sm-4"><strong>Name:</strong></div>
-                                    <div class="col-sm-8">{{ user_data.get('display_name', user_data.get('username', 'N/A')) }}</div>
+                                    <div class="col-sm-8 text-break">{{ user_data.get('display_name', user_data.get('username', 'N/A')) }}</div>
                                 </div>
                                 <hr>
                                 <div class="row">
                                     <div class="col-sm-4"><strong>Username:</strong></div>
-                                    <div class="col-sm-8">{{ user_data.get('username', 'N/A') }}</div>
+                                    <div class="col-sm-8 text-break">{{ user_data.get('username', 'N/A') }}</div>
                                 </div>
                                 <hr>
                                 <div class="row">
                                     <div class="col-sm-4"><strong>Email:</strong></div>
-                                    <div class="col-sm-8">{{ user_data.get('email', 'N/A') }}</div>
+                                    <div class="col-sm-8 text-break">{{ user_data.get('email', 'N/A') }}</div>
                                 </div>
                                 <hr>
                                 <div class="row">
                                     <div class="col-sm-4"><strong>Role:</strong></div>
-                                    <div class="col-sm-8">
+                                    <div class="col-sm-8 text-break">
                                         <span class="badge bg-primary">
                                             Student
                                         </span>
@@ -111,22 +111,22 @@
                                 {% else %}
                                 <div class="row">
                                     <div class="col-sm-4"><strong>Name:</strong></div>
-                                    <div class="col-sm-8">{{ user_data.get('display_name', 'N/A') }}</div>
+                                    <div class="col-sm-8 text-break">{{ user_data.get('display_name', 'N/A') }}</div>
                                 </div>
                                 <hr>
                                 <div class="row">
                                     <div class="col-sm-4"><strong>Username:</strong></div>
-                                    <div class="col-sm-8">{{ user_data.get('username', 'N/A') }}</div>
+                                    <div class="col-sm-8 text-break">{{ user_data.get('username', 'N/A') }}</div>
                                 </div>
                                 <hr>
                                 <div class="row">
                                     <div class="col-sm-4"><strong>Email:</strong></div>
-                                    <div class="col-sm-8">{{ user_data.get('email', 'N/A') }}</div>
+                                    <div class="col-sm-8 text-break">{{ user_data.get('email', 'N/A') }}</div>
                                 </div>
                                 <hr>
                                 <div class="row">
                                     <div class="col-sm-4"><strong>Role:</strong></div>
-                                    <div class="col-sm-8">
+                                    <div class="col-sm-8 text-break">
                                         <span class="badge bg-{{ 'danger' if user_data.get('role') == 'admin' else 'info' }}">
                                             {{ user_data.get('role', 'N/A').title() }}
                                         </span>

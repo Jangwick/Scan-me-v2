@@ -140,19 +140,19 @@
         {% if recent_users %}
         <ul class="tw-list-none tw-p-0 tw-m-0">
             {% for user in recent_users %}
-            <li class="tw-flex tw-items-center tw-gap-4 tw-py-4 tw-border-b tw-border-gray-100 last:tw-border-b-0">
+            <li class="tw-flex tw-flex-col tw-items-start sm:tw-flex-row sm:tw-items-center tw-gap-2 sm:tw-gap-4 tw-py-4 tw-border-b tw-border-gray-100 last:tw-border-b-0">
                 <div class="tw-w-10 tw-h-10 tw-rounded-full tw-bg-gradient-to-br tw-from-rose-500 tw-to-red-700 tw-text-white tw-flex tw-items-center tw-justify-center tw-font-semibold tw-flex-shrink-0">
                     {{ user.username[0].upper() if user.username else 'U' }}
                 </div>
-                <div class="tw-flex-1">
-                    <p class="tw-text-sm tw-text-gray-900 tw-mb-1">
+                <div class="tw-w-full sm:tw-flex-1 tw-min-w-0">
+                    <p class="tw-text-sm tw-text-gray-900 tw-mb-1 tw-break-words">
                         <strong>{{ user.username or 'Unknown User' }}</strong> joined the system
                     </p>
-                    <p class="tw-text-xs tw-text-gray-500 tw-mb-0">
+                    <p class="tw-text-xs tw-text-gray-500 tw-mb-0 tw-break-words">
                         {{ user.email }} • {{ user.role.title() if user.role else 'No Role' }}
                     </p>
                 </div>
-                <div class="tw-text-xs tw-text-gray-400 tw-whitespace-nowrap">
+                <div class="tw-text-xs tw-text-gray-400 tw-whitespace-nowrap tw-self-end sm:tw-self-auto sm:tw-text-right">
                     {{ user.created_at.strftime('%b %d, %Y') if user.created_at else 'Unknown' }}
                 </div>
             </li>

@@ -1,0 +1,303 @@
+/*
+ScanMe Attendance System - Responsive Overrides
+Used alongside Bootstrap 5 and Tailwind (tw-) utility classes.
+*/
+
+/* ----------------------------------------------------------------
+   Sidebar overlay for mobile navigation
+   ---------------------------------------------------------------- */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+.sidebar-overlay.show {
+    display: block;
+}
+
+/* ----------------------------------------------------------------
+   Topbar and layout on small screens
+   ---------------------------------------------------------------- */
+@media (max-width: 768px) {
+    .topbar {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .topbar-actions {
+        order: 3;
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .topbar > .d-flex.align-items-center {
+        flex: 1 1 auto;
+    }
+
+    .topbar > .d-flex.align-items-center .user-dropdown {
+        margin-left: auto !important;
+    }
+
+    .report-title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .search-box {
+        display: none;
+    }
+
+    .page-title {
+        font-size: 1.15rem;
+    }
+
+    .content-area {
+        padding: 1rem !important;
+    }
+
+    /* Reduce sidebar width when open on mobile */
+    .sidebar {
+        width: 260px;
+    }
+}
+
+/* ----------------------------------------------------------------
+   Card grids that adapt to screen size
+   ---------------------------------------------------------------- */
+.dashboard-summary,
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+@media (max-width: 576px) {
+    .dashboard-summary,
+    .card-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ----------------------------------------------------------------
+   Tables - keep them inside the viewport on small screens
+   ---------------------------------------------------------------- */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+}
+
+.table-responsive table,
+.table-responsive .table {
+    width: 100%;
+    min-width: 600px;
+    margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+    .table-responsive th,
+    .table-responsive td,
+    .table th,
+    .table td {
+        white-space: nowrap;
+        font-size: 0.85rem;
+        padding: 0.5rem;
+    }
+
+    /* Fallback for tables that are not already wrapped */
+    table:not(.table-responsive table):not(.table-responsive .table) {
+        width: 100% !important;
+        table-layout: fixed;
+    }
+
+    table:not(.table-responsive table):not(.table-responsive .table) th,
+    table:not(.table-responsive table):not(.table-responsive .table) td {
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        white-space: normal;
+        font-size: 0.85rem;
+    }
+}
+
+/* ----------------------------------------------------------------
+   Forms - stack columns vertically on mobile
+   ---------------------------------------------------------------- */
+.form-row,
+.row.g-3 {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.form-row > .form-group,
+.row.g-3 > [class*="col-"] {
+    flex: 1 1 100%;
+    min-width: 0;
+}
+
+@media (min-width: 768px) {
+    .form-row > .form-group,
+    .row.g-3 > [class*="col-md-"] {
+        flex: 1 1 0%;
+    }
+}
+
+/* ----------------------------------------------------------------
+   Images and QR codes should never overflow
+   ---------------------------------------------------------------- */
+img, svg, canvas, .qr-code, video {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ----------------------------------------------------------------
+   Modals - full width and padded on small screens
+   ---------------------------------------------------------------- */
+@media (max-width: 576px) {
+    .modal-dialog,
+    .modal-dialog.modal-sm,
+    .modal-dialog.modal-lg,
+    .modal-dialog.modal-xl,
+    .modal-dialog-centered {
+        margin: 0.25rem;
+        max-width: 100% !important;
+        min-width: auto;
+    }
+
+    .modal-content {
+        border-radius: 0.5rem;
+    }
+
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding: 1rem;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .modal-footer .btn,
+    .modal-footer .tw-inline-flex {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ----------------------------------------------------------------
+   Buttons and action groups on mobile
+   ---------------------------------------------------------------- */
+@media (max-width: 576px) {
+    .btn-group,
+    .d-flex.gap-2,
+    .d-flex.gap-3 {
+        flex-direction: column;
+        width: 100%;
+        align-items: stretch;
+    }
+
+    .btn-group > .btn,
+    .d-flex.gap-2 > .btn,
+    .d-flex.gap-3 > .btn,
+    .tw-flex.gap-2 > .tw-inline-flex,
+    .tw-flex.gap-3 > .tw-inline-flex,
+    .d-flex > .btn:not(.dropdown-toggle) {
+        width: 100%;
+        justify-content: center;
+        margin: 0 !important;
+    }
+
+    .btn .fas,
+    .btn .fab,
+    .btn .far,
+    .btn i,
+    .tw-inline-flex i {
+        margin-right: 0.25rem !important;
+    }
+
+    .btn {
+        white-space: normal;
+    }
+
+    /* Tighten modal forms so fields don't overflow on 320px screens */
+    body .form-container {
+        padding: 0.75rem;
+    }
+
+    body .form-container .form-section {
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    body .form-container .form-group {
+        margin-bottom: 0.75rem;
+    }
+
+    body .form-container .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    body .form-container .row > [class*="col-"] {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    /* Schedule/session form sections */
+    body .form-section {
+        padding: 0.75rem;
+    }
+
+    body .form-section .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    body .form-section .row > [class*="col-"] {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    body .time-input-group {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    body .time-separator {
+        text-align: center;
+    }
+
+    /* Sessions grid text wrapping */
+    #sessionsGrid h3 {
+        min-width: 0;
+    }
+
+    #sessionsGrid h3,
+    #sessionsGrid p span,
+    #sessionsGrid .tw-font-semibold {
+        overflow-wrap: break-word;
+        word-break: break-word;
+    }
+}
+
+/* ----------------------------------------------------------------
+   Utility helpers
+   ---------------------------------------------------------------- */
+@media (max-width: 768px) {
+    .desktop-only {
+        display: none !important;
+    }
+}
+
+@media (min-width: 769px) {
+    .mobile-only {
+        display: none !important;
+    }
+}

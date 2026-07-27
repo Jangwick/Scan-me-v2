@@ -457,27 +457,25 @@
 <!-- Header Section -->
 <div class="tw-bg-gradient-to-br tw-from-emerald-500 tw-to-teal-600 tw-text-white tw-p-8 tw-rounded-3xl tw-mb-8 tw-shadow-xl tw-relative tw-overflow-hidden">
     <div class="tw-w-full">
-        <div class="tw-flex tw-flex-col lg:tw-flex-row tw-items-start lg:tw-items-center tw-justify-between tw-gap-6">
-            <div class="tw-w-full lg:tw-flex-1">
-                <h1 class="tw-text-3xl tw-font-bold tw-mb-2">
-                    <i class="fas fa-clock me-3"></i>
-                    Attendance Sessions
-                </h1>
-                <p class="tw-text-base tw-text-white/90 tw-mb-0">Manage and monitor your attendance sessions in real-time</p>
-            </div>
-            <div class="tw-w-full lg:tw-w-auto tw-flex tw-flex-wrap tw-gap-3">
-                <div class="tw-flex tw-flex-wrap tw-gap-2">
-                    <a href="{{ url_for('attendance.reports') }}" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-semibold tw-text-white tw-border tw-border-white/40 hover:tw-bg-white/10 tw-transition">
-                        <i class="fas fa-chart-line"></i>
-                        Reports
-                    </a>
-                    <a href="{{ url_for('attendance.add_session') }}" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-semibold tw-text-white tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-transition">
-                        <i class="fas fa-plus-circle"></i>
-                        New Session
-                    </a>
-                </div>
-            </div>
-        </div>
+        <h1 class="tw-text-3xl tw-font-bold tw-mb-2">
+            <i class="fas fa-clock me-3"></i>
+            Attendance Sessions
+        </h1>
+        <p class="tw-text-base tw-text-white/90 tw-mb-0">Manage and monitor your attendance sessions in real-time</p>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="tw-flex tw-flex-wrap tw-justify-end tw-gap-3 tw-mb-6">
+    <div class="tw-flex tw-flex-wrap tw-gap-2">
+        <a href="{{ url_for('attendance.reports') }}" class="tw-hidden sm:tw-inline-flex tw-items-center tw-justify-center tw-w-full sm:tw-w-auto tw-gap-2 tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-semibold tw-text-emerald-700 tw-border tw-border-emerald-300 hover:tw-bg-emerald-50 tw-transition">
+            <i class="fas fa-chart-line"></i>
+            Reports
+        </a>
+        <a href="{{ url_for('attendance.add_session') }}" class="tw-inline-flex tw-items-center tw-justify-center tw-w-full sm:tw-w-auto tw-gap-2 tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-semibold tw-text-white tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-transition">
+            <i class="fas fa-plus-circle"></i>
+            New Session
+        </a>
     </div>
 </div>
 
@@ -515,47 +513,53 @@
                 {{ session.session_name }}
             </h3>
             <p class="tw-flex tw-flex-wrap tw-items-center tw-gap-2 tw-text-sm tw-text-gray-500 tw-mt-2">
-                <span><i class="fas fa-book tw-me-2"></i>{{ session.subject }}</span>
+                <span class="tw-break-words tw-min-w-0"><i class="fas fa-book tw-me-2"></i>{{ session.subject }}</span>
                 <span class="tw-text-gray-500">•</span>
-                <span><i class="fas fa-user-tie tw-me-2"></i>{{ session.instructor }}</span>
+                <span class="tw-break-words tw-min-w-0"><i class="fas fa-user-tie tw-me-2"></i>{{ session.instructor }}</span>
             </p>
         </div>
         
         <div class="tw-bg-white">
             <div class="tw-p-5">
-                <div class="tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-0">
+                <div class="tw-flex tw-flex-col tw-items-start sm:tw-flex-row sm:tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-0">
                     <span class="tw-text-sm tw-text-gray-500 tw-flex tw-items-center tw-gap-2">
                         <i class="fas fa-door-open"></i>
                         Room
                     </span>
-                    <span class="tw-font-semibold tw-text-gray-900">{{ session.room.get_full_name() if session.room else 'N/A' }}</span>
+                    <div class="tw-w-full tw-mt-1 sm:tw-mt-0 sm:tw-flex-1 sm:tw-text-right">
+                        <span class="tw-font-semibold tw-text-gray-900">{{ session.room.get_full_name() if session.room else 'N/A' }}</span>
+                    </div>
                 </div>
                 
-                <div class="tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-0">
+                <div class="tw-flex tw-flex-col tw-items-start sm:tw-flex-row sm:tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-0">
                     <span class="tw-text-sm tw-text-gray-500 tw-flex tw-items-center tw-gap-2">
                         <i class="fas fa-calendar-day"></i>
                         Date
                     </span>
-                    <span class="tw-font-semibold tw-text-gray-900">{{ session.start_time.strftime('%B %d, %Y') }}</span>
+                    <div class="tw-w-full tw-mt-1 sm:tw-mt-0 sm:tw-flex-1 sm:tw-text-right">
+                        <span class="tw-font-semibold tw-text-gray-900">{{ session.start_time.strftime('%B %d, %Y') }}</span>
+                    </div>
                 </div>
                 
-                <div class="tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-0">
+                <div class="tw-flex tw-flex-col tw-items-start sm:tw-flex-row sm:tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-0">
                     <span class="tw-text-sm tw-text-gray-500 tw-flex tw-items-center tw-gap-2">
                         <i class="fas fa-clock"></i>
                         Time
                     </span>
-                    <span class="tw-font-semibold tw-text-gray-900">
-                        {{ session.start_time.strftime('%I:%M %p') }} - 
-                        {{ session.end_time.strftime('%I:%M %p') }}
-                    </span>
+                    <div class="tw-w-full tw-mt-1 sm:tw-mt-0 sm:tw-flex-1 sm:tw-text-right">
+                        <span class="tw-font-semibold tw-text-gray-900">
+                            {{ session.start_time.strftime('%I:%M %p') }} - 
+                            {{ session.end_time.strftime('%I:%M %p') }}
+                        </span>
+                    </div>
                 </div>
                 
-                <div class="tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-0">
+                <div class="tw-flex tw-flex-col tw-items-start sm:tw-flex-row sm:tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-0">
                     <span class="tw-text-sm tw-text-gray-500 tw-flex tw-items-center tw-gap-2">
                         <i class="fas fa-users"></i>
                         Attendance
                     </span>
-                    <div class="tw-flex-1 tw-text-right">
+                    <div class="tw-w-full tw-mt-2 sm:tw-mt-0 sm:tw-flex-1 sm:tw-text-right">
                         <span class="tw-font-semibold tw-text-gray-900">
                             {{ session.get_attendance_count() }} / {{ session.expected_students or 0 }}
                             {% if session.expected_students and session.expected_students > 0 %}
@@ -576,32 +580,34 @@
                     </div>
                 </div>
                 
-                <div class="tw-flex tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-0">
+                <div class="tw-flex tw-flex-col tw-items-start sm:tw-flex-row sm:tw-items-center tw-justify-between tw-py-3 tw-border-b tw-border-gray-100 last:tw-border-0">
                     <span class="tw-text-sm tw-text-gray-500 tw-flex tw-items-center tw-gap-2">
                         <i class="fas fa-info-circle"></i>
                         Status
                     </span>
-                    <span class="tw-inline-flex tw-items-center tw-gap-1 tw-px-2.5 tw-py-1 tw-rounded-full tw-text-xs tw-font-semibold session-status {{ session.get_status_class() }}">
-                        {% if session.get_status() == 'active' %}
-                            <i class="fas fa-circle-notch fa-spin"></i>
-                            Active
-                        {% elif session.get_status() == 'upcoming' %}
-                            <i class="fas fa-clock"></i>
-                            Upcoming
-                        {% elif session.get_status() == 'ended' %}
-                            <i class="fas fa-check-circle"></i>
-                            Ended
-                        {% else %}
-                            <i class="fas fa-circle"></i>
-                            {{ session.get_status() }}
-                        {% endif %}
-                    </span>
+                    <div class="tw-w-full tw-mt-1 sm:tw-mt-0 sm:tw-flex-1 sm:tw-text-right">
+                        <span class="tw-inline-flex tw-items-center tw-gap-1 tw-px-2.5 tw-py-1 tw-rounded-full tw-text-xs tw-font-semibold session-status {{ session.get_status_class() }}">
+                            {% if session.get_status() == 'active' %}
+                                <i class="fas fa-circle-notch fa-spin"></i>
+                                Active
+                            {% elif session.get_status() == 'upcoming' %}
+                                <i class="fas fa-clock"></i>
+                                Upcoming
+                            {% elif session.get_status() == 'ended' %}
+                                <i class="fas fa-check-circle"></i>
+                                Ended
+                            {% else %}
+                                <i class="fas fa-circle"></i>
+                                {{ session.get_status() }}
+                            {% endif %}
+                        </span>
+                    </div>
                 </div>
             </div>
             
             <div class="tw-flex tw-flex-wrap tw-gap-2 tw-p-5 tw-bg-gray-50 tw-border-t tw-border-gray-100">
                 <button type="button"
-                   class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-semibold tw-text-white tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-transition"
+                   class="tw-inline-flex tw-items-center tw-justify-center tw-w-full sm:tw-w-auto tw-gap-2 tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-semibold tw-text-white tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-transition"
                    data-modal-url="{{ url_for('attendance.view_session', session_id=session.id, modal=1) }}">
                     <i class="fas fa-eye"></i>
                     View Details
@@ -609,14 +615,14 @@
                 
                 {% if session.is_session_active() %}
                 <a href="{{ url_for('scanner.scan_page') }}" 
-                   class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-semibold tw-text-emerald-600 tw-bg-white tw-border tw-border-emerald-200 hover:tw-bg-emerald-50 tw-transition">
+                   class="tw-inline-flex tw-items-center tw-justify-center tw-w-full sm:tw-w-auto tw-gap-2 tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-semibold tw-text-emerald-600 tw-bg-white tw-border tw-border-emerald-200 hover:tw-bg-emerald-50 tw-transition">
                     <i class="fas fa-qrcode"></i>
                     Scan
                 </a>
                 {% endif %}
                 
                 <button type="button"
-                   class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-semibold tw-text-emerald-600 tw-bg-white tw-border tw-border-emerald-200 hover:tw-bg-emerald-50 tw-transition"
+                   class="tw-inline-flex tw-items-center tw-justify-center tw-w-full sm:tw-w-auto tw-gap-2 tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-semibold tw-text-emerald-600 tw-bg-white tw-border tw-border-emerald-200 hover:tw-bg-emerald-50 tw-transition"
                    data-modal-url="{{ url_for('attendance.edit_session', id=session.id, modal=1) }}">
                     <i class="fas fa-edit"></i>
                     Edit
@@ -624,7 +630,7 @@
                 
                 {% if not session.is_ended() %}
                 <button onclick="endSession({{ session.id }}, '{{ session.session_name }}')" 
-                        class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-semibold tw-text-red-600 tw-bg-white tw-border tw-border-red-200 hover:tw-bg-red-50 tw-transition">
+                        class="tw-inline-flex tw-items-center tw-justify-center tw-w-full sm:tw-w-auto tw-gap-2 tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-semibold tw-text-red-600 tw-bg-white tw-border tw-border-red-200 hover:tw-bg-red-50 tw-transition">
                     <i class="fas fa-stop-circle"></i>
                     End
                 </button>
